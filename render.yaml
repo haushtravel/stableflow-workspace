@@ -1,0 +1,21 @@
+services:
+  # 1. Backend Go Web Service
+  - type: web
+    name: stableflow-backend
+    env: go
+    rootDir: stableflow-backend-go
+    buildCommand: go build -o stableflow-backend-go
+    startCommand: ./stableflow-backend-go
+    envVars:
+      - key: PORT
+        value: 8081
+
+  # 2. Frontend Static Site
+  - type: static
+    name: stableflow-frontend
+    rootDir: stableflow-tourist-ui
+    publishPath: .
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://stableflow-backend.onrender.com/api/*
