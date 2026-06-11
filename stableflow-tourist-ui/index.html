@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spree: Prototipo Interactivo "Modo Turista"</title>
+  <link rel="stylesheet" href="styles.css?v=9">
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <div class="desktop-wrapper">
+    
+    <div class="desktop-header">
+      <h1>Spree</h1>
+      <p>Simulador interactivo del Modo Turista: Onboarding, validación de tarjeta 3DS2 y pago regional.</p>
+      
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; width: 100%;">
+        <a href="admin.html" target="_blank" class="admin-link-badge" style="margin-top: 0;">
+          <i class="fa-solid fa-gauge-high"></i> Panel de Administración
+        </a>
+        
+        <div style="border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 12px; width: 100%;">
+          <div class="download-label" data-i18n="download_app_label" style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; text-align: left;">Descarga la App de Spree (Simulador)</div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-download" data-platform="ios" aria-label="Download iOS" style="font-size: 0.72rem; padding: 6px 12px; border-radius: 20px;">
+              <i class="fa-brands fa-apple"></i> App Store
+            </button>
+            <button class="btn-download" data-platform="android" aria-label="Download Android" style="font-size: 0.72rem; padding: 6px 12px; border-radius: 20px;">
+              <i class="fa-brands fa-google-play"></i> Google Play
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teléfono Móvil Simulado (iOS Mockup Bezel) -->
+    <div class="phone-mockup">
+      <!-- Notch / Dynamic Island -->
+      <div class="phone-notch"></div>
+      
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <div class="status-time" id="status-time">19:44</div>
+        <div class="status-bar-icons">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-three-quarters"></i>
+        </div>
+      </div>
+
+      <!-- App Container -->
+      <div class="app-container">
+        
+        <!-- PANTALLA 1: ONBOARDING -->
+        <div class="screen active" id="screen-onboarding">
+          <div class="screen-header-lang">
+            <button class="btn-lang-selector" id="btn-lang-onboarding" aria-label="Select Language">
+              <i class="fa-solid fa-globe"></i>
+            </button>
+          </div>
+          
+          <div class="logo-container">
+            <img src="spree_logo.png?v=2" alt="Spree Logo" class="logo-img">
+            <div class="logo-tagline" data-i18n="logo_tagline">Tu compañero de viaje inteligente</div>
+          </div>
+
+          <div id="onboarding-step-1">
+            <h2 data-i18n="welcome_title">Bienvenido</h2>
+            <p class="subtitle" data-i18n="welcome_desc">Registra tu número para comenzar a operar en LATAM como un local.</p>
+            
+            <div class="input-group">
+              <span class="input-label" data-i18n="phone_label">NÚMERO DE TELÉFONO</span>
+              <input type="tel" class="input-field" id="phone-number" placeholder="+39 333 123 4567" value="+39 312 998 8776">
+            </div>
+            
+            <button class="btn-primary" id="btn-send-otp">
+              <span data-i18n="btn_send_otp">Enviar Código Verificación</span> <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+
+          <div id="onboarding-step-2" style="display: none;">
+            <h2 data-i18n="verify_title">Verifica tu Código</h2>
+            <p class="subtitle" data-i18n="verify_desc">Hemos enviado un SMS con un código OTP de 4 dígitos a tu celular.</p>
+            <div id="otp-simulator-helper" style="font-size: 0.75rem; color: var(--ios-gray-text); text-align: center; margin: 4px 0 10px 0; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 4px; border: 1px dashed rgba(255,255,255,0.1);" data-i18n="otp_simulator_helper">Simulación SMS: Esperando código...</div>
+            
+            <div class="otp-box">
+              <input type="text" maxlength="1" class="otp-input" value="4">
+              <input type="text" maxlength="1" class="otp-input" value="9">
+              <input type="text" maxlength="1" class="otp-input" value="3">
+              <input type="text" maxlength="1" class="otp-input" value="0">
+            </div>
+
+            <button class="btn-primary" id="btn-verify-otp">
+              <span data-i18n="btn_verify_otp">Verificar y Continuar</span> <i class="fa-solid fa-check"></i>
+            </button>
+            <button class="btn-secondary" style="margin-top: 10px;" id="btn-back-otp" data-i18n="btn_back">Atrás</button>
+          </div>
+        </div>
+
+        <!-- PANTALLA 2: PRELOAD / CARGA -->
+        <div class="screen" id="screen-preload">
+          <div id="preload-main-flow">
+            <h2 data-i18n="preload_title">Fondea tu Cuenta</h2>
+            <p class="subtitle" data-i18n="preload_desc">Define tu presupuesto. Los fondos se guardarán en USDc y podrás reembolsarlos cuando quieras.</p>
+
+            <div class="input-group">
+              <span class="input-label" data-i18n="preload_amount_label">MONTO A CARGAR (USD)</span>
+              <div class="amount-selector">
+                <div class="amount-btn" data-value="100">$100</div>
+                <div class="amount-btn selected" data-value="200">$200</div>
+                <div class="amount-btn" data-value="500">$500</div>
+              </div>
+              <input type="number" class="input-field" id="custom-amount" data-i18n-placeholder="preload_custom_amount_placeholder" placeholder="Otro monto (USD)" value="200">
+            </div>
+
+            <span class="input-label" style="display:block; margin-bottom: 6px;" data-i18n="preload_payment_method_label">MEDIO DE PAGO</span>
+            <div class="card-selector" id="preload-pay-methods">
+              <div class="pay-option selected" data-type="googlepay">
+                <i class="fa-brands fa-apple-pay" style="font-size: 1.6rem; color: #FFF;"></i>
+                <div>
+                  <div style="font-weight:600; font-size:0.85rem;" data-i18n="preload_pay_gp">Apple Pay / Google Pay</div>
+                  <div style="font-size:0.7rem; color: var(--text-muted);" data-i18n="preload_pay_gp_desc">Biometría activa</div>
+                </div>
+              </div>
+              <div class="pay-option" data-type="card" id="option-saved-cards">
+                <i class="fa-solid fa-credit-card"></i>
+                <div>
+                  <div style="font-weight:600; font-size:0.85rem;" data-i18n="preload_pay_card">Tarjeta de Crédito / Débito</div>
+                  <div style="font-size:0.7rem; color: var(--text-muted);" id="active-card-label">Sanpaolo Visa •••• 4321</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECCIÓN COMPLEMENTARIA: GESTIÓN DE TARJETAS (Visible cuando se elige tarjeta) -->
+          <div id="card-manager-section" style="display: none; margin-bottom: 14px;">
+            <div id="saved-cards-view">
+              <div class="input-label" style="margin-bottom: 6px;" data-i18n="cards_saved_title">Tus Tarjetas Guardadas</div>
+              <div class="saved-cards-container" id="saved-cards-list">
+                <!-- Renderizado dinámicamente -->
+              </div>
+              
+              <button class="btn-secondary" id="btn-add-card-toggle" style="margin-top: 8px; font-size:0.8rem; padding: 6px 12px; display:flex; align-items:center; justify-content:center; gap: 5px;">
+                <i class="fa-solid fa-plus"></i> <span data-i18n="btn_add_card">Añadir Nueva Tarjeta</span>
+              </button>
+            </div>
+
+            <!-- FORMULARIO DE NUEVA TARJETA CON VISTA PREVIA -->
+            <div id="card-form-container" style="display: none; margin-top: 14px; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 12px; border: 1px solid var(--divider-color);">
+              
+              <!-- Tarjeta Virtual Interactiva (Glassmorphic) -->
+              <div class="virtual-card-preview" id="virtual-card-preview">
+                <div class="vcard-header">
+                  <span class="vcard-bank" data-i18n="vcard_bank">SecurePay Bank</span>
+                  <i class="fa-brands fa-cc-visa" id="vcard-logo" style="font-size: 1.5rem;"></i>
+                </div>
+                <div class="vcard-chip-container">
+                  <div class="vcard-chip"></div>
+                </div>
+                <div class="vcard-number" id="vcard-number-display">•••• •••• •••• ••••</div>
+                <div class="vcard-footer">
+                  <div class="vcard-holder">
+                    <span class="vcard-label" data-i18n="vcard_holder_label">TITULAR</span>
+                    <span class="vcard-holder-name" id="vcard-name-display" data-i18n="vcard_holder_default">NOMBRE APELLIDO</span>
+                  </div>
+                  <div class="vcard-expiry">
+                    <span class="vcard-label" data-i18n="vcard_expiry_label">VENCE</span>
+                    <span class="vcard-expiry-val" id="vcard-expiry-display">MM/YY</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Inputs del Formulario -->
+              <div class="input-group" style="margin-top: 12px;">
+                <span class="input-label" data-i18n="card_holder_input_label">Nombre del Titular</span>
+                <input type="text" class="input-field" id="card-holder-input" data-i18n-placeholder="card_holder_placeholder" placeholder="JUAN PEREZ">
+              </div>
+
+              <div class="input-group">
+                <span class="input-label" data-i18n="card_number_input_label">Número de Tarjeta</span>
+                <input type="text" class="input-field" id="card-number-input" data-i18n-placeholder="card_number_placeholder" placeholder="4242 4242 4242 4242" maxlength="19">
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="input-group">
+                  <span class="input-label" data-i18n="card_expiry_input_label">Vencimiento</span>
+                  <input type="text" class="input-field" id="card-expiry-input" placeholder="MM/YY" maxlength="5">
+                </div>
+                <div class="input-group">
+                  <span class="input-label" data-i18n="card_cvc_input_label">CVC</span>
+                  <input type="password" class="input-field" id="card-cvc-input" placeholder="•••" maxlength="4">
+                </div>
+              </div>
+
+              <!-- Contenedor para mostrar errores de validación sin usar alert() -->
+              <div id="card-form-error" style="color: var(--error-color); font-size: 0.72rem; margin-top: 6px; text-align: center; display: none; background: rgba(255, 69, 58, 0.1); padding: 6px; border-radius: 6px; border: 0.5px solid rgba(255, 69, 58, 0.2);"></div>
+
+              <div style="display:flex; gap: 8px; margin-top: 8px;">
+                <button class="btn-primary" id="btn-save-card" style="margin-top:0; font-size: 0.8rem; padding: 8px; flex: 1;" data-i18n="btn_save_card">Tokenizar y Guardar</button>
+                <button class="btn-secondary" id="btn-cancel-card" style="font-size: 0.8rem; padding: 8px; flex: 1;" data-i18n="btn_cancel">Cancelar</button>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-primary" id="btn-preload-confirm">
+            <span data-i18n="btn_preload_confirm">Autorizar Carga</span> <i class="fa-solid fa-lock"></i>
+          </button>
+        </div>
+
+        <!-- PANTALLA 3: DASHBOARD -->
+        <div class="screen" id="screen-dashboard">
+          <div class="dashboard-header">
+            <div class="user-avatar">IT</div>
+            <div class="location-badge" id="location-toggle" style="cursor: pointer;">
+              <span id="flag-icon">🇦🇷</span> <span id="location-name">Buenos Aires, AR</span> <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <button class="btn-lang-selector" id="btn-lang-dashboard" aria-label="Select Language">
+              <i class="fa-solid fa-globe"></i>
+            </button>
+          </div>
+
+          <div class="balance-card">
+            <div class="balance-label" data-i18n="balance_label">Presupuesto Disponible</div>
+            <div class="balance-value" id="balance-USDc">$0.00 <span style="font-size: 1.1rem; color: var(--ios-gray-text);">USDc</span></div>
+            <div class="balance-fiat" id="balance-fiat-eq">≈ $0.00 ARS</div>
+          </div>
+
+          <div class="action-grid">
+            <button class="action-btn-primary" id="btn-action-scan">
+              <i class="fa-solid fa-qrcode"></i> <span data-i18n="btn_scan_qr">Escanear QR</span>
+            </button>
+            <button class="action-btn-secondary" id="btn-action-transfer">
+              <i class="fa-solid fa-paper-plane"></i> <span id="transfer-btn-text" data-i18n="btn_transfer_default">Enviar CBU/Alias</span>
+            </button>
+          </div>
+
+          <div class="transactions-header">
+            <span data-i18n="transactions_title">Actividad Reciente</span>
+          </div>
+
+          <!-- Historial de Transacciones (Grouped Cell Style) -->
+          <div class="tx-group" id="tx-list">
+            <!-- Cargado dinámicamente -->
+          </div>
+        </div>
+
+        <!-- PANTALLA 4: SCAN & CHECKOUT -->
+        <div class="screen" id="screen-scan">
+          <div class="dashboard-header">
+            <h2 id="checkout-title" data-i18n="scan_payment_title">Escanear Pago</h2>
+            <i class="fa-solid fa-xmark" id="btn-close-checkout" style="font-size: 1.2rem; cursor: pointer; color: var(--text-muted);"></i>
+          </div>
+
+          <!-- MOCK CAMERA SCANNER -->
+          <div id="scan-view">
+            <p class="subtitle" style="margin-bottom: 12px;" data-i18n="scan_subtitle">Apunta al código QR del comercio</p>
+            <div class="scan-camera">
+              <div class="scan-overlay">
+                <i class="fa-solid fa-expand"></i>
+              </div>
+            </div>
+            <span class="input-label" style="display:block; margin-bottom: 6px;" data-i18n="scan_demo_title">QRs DE PRUEBA (Toca uno para simular)</span>
+            <div class="qr-selector-list">
+              <div class="qr-demo-card" data-country="ars" data-amount="36000" data-merchant="Restaurante El Gaucho">
+                <div>
+                  <div style="font-weight:600; font-size:0.85rem;">Restaurante El Gaucho (MP QR)</div>
+                  <div style="font-size:0.7rem; color: var(--text-muted);">Argentina ➔ $36,000 ARS</div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color: var(--ios-white);"></i>
+              </div>
+              <div class="qr-demo-card" data-country="brl" data-amount="80" data-merchant="Quiosque Copacabana">
+                <div>
+                  <div style="font-weight:600; font-size:0.85rem;">Quiosque Copacabana (Pix QR)</div>
+                  <div style="font-size:0.7rem; color: var(--text-muted);">Brasil ➔ R$80 BRL</div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color: var(--ios-white);"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- RESOLVING VIEW (Simulación de decodificación de QR local) -->
+          <div id="resolving-view" style="display: none; padding: 30px 10px; text-align: center;">
+            <div class="spinner" style="margin: 0 auto 20px auto;"></div>
+            <h3 id="resolving-title" style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;" data-i18n="js_resolving_qr">Decodificando Código QR...</h3>
+            <p class="subtitle" id="resolving-subtitle" style="font-size: 0.78rem;">Conectando con red Mercado Pago/MODO...</p>
+          </div>
+
+          <!-- CHECKOUT VIEW -->
+          <div id="checkout-view" style="display: none;">
+            <p class="subtitle" id="checkout-merchant">Destinatario: Restaurante El Gaucho</p>
+            
+            <div class="checkout-details">
+              <div class="detail-row">
+                <span class="detail-label" data-i18n="details_origin_network">Red de Origen</span>
+                <span class="detail-val" id="checkout-origin-network">Mercado Pago QR</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label" data-i18n="details_resolved_destination">Destino Resuelto</span>
+                <span class="detail-val" style="font-family: monospace; font-size: 0.7rem;" id="checkout-destination-detail">CVU 0000003100012345678901</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label" data-i18n="checkout_fiat_label">Monto en Fíat Local</span>
+                <span class="detail-val" id="checkout-fiat-amount">$36,000.00 ARS</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label" data-i18n="checkout_fx_label">Tipo de Cambio</span>
+                <span class="detail-val" id="checkout-fx-rate">$1,200.00 ARS = 1 USDc</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label" data-i18n="checkout_fee_label">Comisión de Servicio (3%)</span>
+                <span class="detail-val" id="checkout-fee">$0.90 USDc</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label" data-i18n="checkout_gas_label">Costo de Red (Gas)</span>
+                <span class="detail-val" id="checkout-gas">$0.10 USDc</span>
+              </div>
+              <div class="total-row">
+                <span class="total-label" data-i18n="checkout_total_label">Total a Debitar</span>
+                <span class="detail-val" id="checkout-total-usd">$31.00 USDc</span>
+              </div>
+            </div>
+
+            <!-- Slide To Pay Button -->
+            <div class="slide-to-pay-container" id="slide-to-pay-container">
+              <div class="slide-fill" id="slide-fill"></div>
+              <div class="slide-handle" id="slide-handle">
+                <i class="fa-solid fa-angles-right"></i>
+              </div>
+              <span class="slide-text" id="slide-text" data-i18n="slide_to_pay">Desliza para Confirmar Pago</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANTALLA 5: REFUND / CASH OUT -->
+        <div class="screen" id="screen-refund">
+          <h2 data-i18n="refund_title">Reembolsar Fondos</h2>
+          <p class="subtitle" data-i18n="refund_desc">¿Terminaste tu viaje? Devuelve tu saldo no utilizado en USDc directo a tu tarjeta de origen.</p>
+
+          <div class="premium-card cashout-summary">
+            <div style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 4px; text-transform:uppercase; letter-spacing:0.5px;" data-i18n="refund_balance_label">Saldo Remanente</div>
+            <div style="font-size: 1.8rem; font-weight:700;" id="refund-balance-display">$200.00 USDc</div>
+          </div>
+
+          <div class="checkout-details">
+            <div class="detail-row">
+              <span class="detail-label" data-i18n="refund_destination_label">Tarjeta Destino</span>
+              <span class="detail-val">Sanpaolo Visa •••• 4321</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label" data-i18n="refund_fee_label">Comisión de Retiro (1.5%)</span>
+              <span class="detail-val" id="refund-fee-display">$3.00 USDc</span>
+            </div>
+            <div class="total-row">
+              <span class="total-label" style="color: var(--ios-white);" data-i18n="refund_receive_label">Monto a Recibir (USD)</span>
+              <span class="detail-val" id="refund-receive-display">$197.00 USD</span>
+            </div>
+          </div>
+
+          <button class="btn-primary" id="btn-refund-execute">
+            <span data-i18n="btn_refund_execute">Confirmar Reembolso</span> <i class="fa-solid fa-rotate-left"></i>
+          </button>
+        </div>
+
+        <!-- PANTALLA 5B: SOPORTE Y REPORTES -->
+        <div class="screen" id="screen-support">
+          <h2 data-i18n="support_title">Centro de Soporte</h2>
+          <p class="subtitle" data-i18n="support_desc" style="margin-bottom: 12px;">¿Tienes algún problema con un pago o recarga? Envíanos un reporte e investigaremos de inmediato.</p>
+
+          <!-- iOS Style Segmented Control -->
+          <div class="segmented-control">
+            <button class="segment-btn active" data-tab="tab-chat" id="btn-tab-chat" data-i18n="support_tab_chat">Chat de Soporte</button>
+            <button class="segment-btn" data-tab="tab-ticket" id="btn-tab-ticket" data-i18n="support_tab_ticket">Crear Ticket</button>
+          </div>
+
+          <!-- Chatbot View -->
+          <div id="support-chat-view" class="chat-view-container">
+            <div class="chat-history" id="chat-history">
+              <!-- Globos de chat dinámicos -->
+            </div>
+            <div class="chat-input-bar">
+              <input type="text" class="chat-input-field" id="chat-message-input" data-i18n-placeholder="chat_placeholder" placeholder="Pregúntale al bot de Spree...">
+              <button class="btn-chat-send" id="btn-chat-send" aria-label="Send Message">
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Formal Ticket View (Original Form) -->
+          <div id="support-ticket-view" style="display: none;">
+            <div class="input-group">
+              <span class="input-label" data-i18n="support_category_label">CATEGORÍA</span>
+              <select class="input-field" id="support-category" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--card-border); appearance: none; padding: 10px;">
+                <option value="Pago" data-i18n="support_cat_payment">Pago fallido / error QR</option>
+                <option value="Carga" data-i18n="support_cat_load">Carga no acreditada</option>
+                <option value="Onboarding" data-i18n="support_cat_auth">Problema de inicio / SMS</option>
+                <option value="Soporte" data-i18n="support_cat_other">Otros asuntos</option>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <span class="input-label" data-i18n="support_subject_label">ASUNTO</span>
+              <input type="text" class="input-field" id="support-subject" data-i18n-placeholder="support_subject_placeholder" placeholder="Ej: No veo reflejado mi pago">
+            </div>
+
+            <div class="input-group">
+              <span class="input-label" data-i18n="support_message_label">DESCRIPCIÓN DEL PROBLEMA</span>
+              <textarea class="input-field" id="support-message" data-i18n-placeholder="support_message_placeholder" placeholder="Escribe aquí los detalles..." style="min-height: 80px; resize: none; font-family: inherit; font-size: 0.85rem; padding: 10px;"></textarea>
+            </div>
+
+            <div id="support-success-msg" style="color: var(--ios-green); font-size: 0.75rem; margin-top: 6px; text-align: center; display: none; background: rgba(52, 199, 89, 0.1); padding: 8px; border-radius: 8px; border: 0.5px solid rgba(52, 199, 89, 0.2);"></div>
+
+            <button class="btn-primary" id="btn-submit-support" style="margin-top: 14px;">
+              <span data-i18n="btn_send_incident">Enviar Reporte</span> <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- PANTALLA: MARKETPLACE ("VIAJE") -->
+        <div class="screen" id="screen-marketplace">
+          <h2 data-i18n="market_title">Mejora tu Viaje</h2>
+          <p class="subtitle" data-i18n="market_desc">Servicios turísticos esenciales para adquirir directamente con tu saldo de USDc.</p>
+
+          <div class="marketplace-categories">
+            <button class="category-tab active" data-category="all" data-i18n="market_cat_all">Todos</button>
+            <button class="category-tab" data-category="connectivity" data-i18n="market_cat_connectivity">Conectividad</button>
+            <button class="category-tab" data-category="insurance" data-i18n="market_cat_insurance">Seguros</button>
+            <button class="category-tab" data-category="tours" data-i18n="market_cat_tours">Tours</button>
+          </div>
+
+          <!-- Filtros de Civitatis para tours (inicialmente ocultos) -->
+          <div id="civitatis-filters-wrapper" style="display: none; margin-bottom: 12px; animation: fadeIn 0.2s;">
+            <div class="input-group" style="margin-bottom: 8px;">
+              <input type="text" class="civitatis-search-bar" id="market-tours-search" data-i18n-placeholder="market_tours_search_placeholder" placeholder="Buscar tours o traslados en Civitatis...">
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between;">
+              <span style="font-size: 0.72rem; color: var(--text-muted);" data-i18n="market_tours_city_filter">Filtrar por ciudad:</span>
+              <div style="display: flex; gap: 6px;" id="civitatis-city-filters">
+                <button class="city-pill active" data-city="all">Todos</button>
+                <button class="city-pill" data-city="buenos_aires">B. Aires 🇦🇷</button>
+                <button class="city-pill" data-city="rio">Río 🇧🇷</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="market-item-grid" id="market-items-container">
+            <!-- Cargado dinámicamente desde app.js -->
+          </div>
+        </div>
+
+        <!-- PANTALLA 6: PROCESSING / SUCCESS ANIMATION -->
+        <div class="screen" id="screen-processing" style="justify-content: center;">
+          <div class="processing-container" id="proc-loading">
+            <div class="spinner"></div>
+            <h3 id="proc-loading-title" data-i18n="proc_loading_title">Procesando Transacción...</h3>
+            <p class="subtitle" id="proc-loading-text" data-i18n="proc_loading_text">Conectando con el Host y validando liquidez local.</p>
+          </div>
+
+          <div class="processing-container" id="proc-success" style="display: none;">
+            <div class="success-icon">
+              <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 id="proc-success-title" data-i18n="proc_success_title">¡Transacción Exitosa!</h3>
+            <p class="subtitle" id="proc-success-text" data-i18n="proc_success_text">El comercio recibió la transferencia de ARS inmediatamente.</p>
+            
+            <div class="premium-card" id="proc-success-details" style="font-size:0.75rem; text-align:left; background: rgba(255,255,255,0.02); line-height: 1.4;">
+              <!-- Llenado dinámico -->
+            </div>
+            
+            <button class="btn-primary" id="btn-success-close" data-i18n="btn_success_close">Volver al Inicio</button>
+          </div>
+        </div>
+
+        <!-- BARRA DE NAVEGACIÓN INFERIOR (Solo activa tras Onboarding) -->
+        <div class="bottom-nav" id="app-bottom-nav" style="display: none;">
+          <div class="nav-item active" data-screen="screen-dashboard">
+            <i class="fa-solid fa-wallet"></i>
+            <span data-i18n="nav_wallet">Billetera</span>
+          </div>
+          <div class="nav-item" data-screen="screen-preload">
+            <i class="fa-solid fa-circle-plus"></i>
+            <span data-i18n="nav_load">Cargar</span>
+          </div>
+          <div class="nav-item" data-screen="screen-marketplace">
+            <i class="fa-solid fa-suitcase"></i>
+            <span data-i18n="nav_travel">Viaje</span>
+          </div>
+          <div class="nav-item" data-screen="screen-refund">
+            <i class="fa-solid fa-circle-arrow-down"></i>
+            <span data-i18n="nav_withdraw">Retirar</span>
+          </div>
+          <div class="nav-item" data-screen="screen-support">
+            <i class="fa-solid fa-circle-question"></i>
+            <span data-i18n="nav_support">Soporte</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- MODAL DE SIMULACIÓN 3DS2 (Banco Emisor del Exterior - Estilo iOS Alert) -->
+      <div class="modal-overlay" id="bank-modal-overlay">
+        <div class="bank-modal">
+          <div class="bank-header">
+            <i class="fa-solid fa-building-columns" style="font-size: 1.2rem;"></i>
+            3D Secure SecurePay
+          </div>
+          <div class="bank-body">
+            <p><span data-i18n="bank_modal_confirm">Confirma el pago para recargar presupuesto en</span> <strong>Spree</strong>.</p>
+            <div class="bank-amount" id="bank-modal-amount">$200.00 USD</div>
+            <div style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 8px;">Titular: Sanpaolo Debit Visa</div>
+          </div>
+          <button class="bank-btn-confirm" id="btn-bank-confirm" data-i18n="btn_authorize">Autorizar</button>
+          <button class="bank-btn-cancel" id="btn-bank-cancel" data-i18n="btn_cancel">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- NUEVO MODAL DE COMPRA EN MARKETPLACE -->
+      <div class="modal-overlay" id="purchase-modal-overlay">
+        <div class="bank-modal">
+          <div class="bank-header">
+            <i class="fa-solid fa-bag-shopping" style="font-size: 1.2rem;"></i>
+            <span data-i18n="purchase_modal_title">Confirmar Compra</span>
+          </div>
+          <div class="bank-body">
+            <p data-i18n="purchase_modal_body">¿Adquirir el servicio seleccionado usando tu presupuesto pre-cargado?</p>
+            <div class="bank-amount" id="purchase-modal-item-name" style="font-size: 0.9rem; margin: 6px 0 2px 0; font-weight:600;">eSIM Regional</div>
+            <div class="bank-amount" id="purchase-modal-amount" style="font-size:1.25rem; font-weight:700;">$15.00 USDc</div>
+          </div>
+          <button class="bank-btn-confirm" id="btn-purchase-confirm" data-i18n="btn_confirm_pay">Confirmar y Pagar</button>
+          <button class="bank-btn-cancel" id="btn-purchase-cancel" data-i18n="btn_cancel">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- MODAL DE SELECCIÓN/COTIZACIÓN DE SEGURO CHUBB -->
+      <div class="modal-overlay" id="insurance-modal-overlay">
+        <div class="bank-modal" style="text-align: left; max-width: 90%; padding: 18px; border-radius: 20px;">
+          <div class="bank-header" style="justify-content: space-between; border-bottom: 0.5px solid var(--divider-color); padding-bottom: 10px; margin-bottom: 14px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <i class="fa-solid fa-shield-heart" style="color: var(--ios-green); font-size: 1.25rem;"></i>
+              <span data-i18n="market_insurance_modal_title" style="font-weight:700; font-size:0.95rem;">Cotizar Seguro Médico</span>
+            </div>
+            <i class="fa-solid fa-xmark" id="btn-close-insurance" style="cursor:pointer; color:var(--text-muted); font-size:1.1rem; padding: 4px;"></i>
+          </div>
+          
+          <div class="input-group">
+            <span class="input-label" data-i18n="market_insurance_country_label">PAÍS DE DESTINO</span>
+            <select class="input-field" id="insurance-country" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--card-border); padding: 10px; border-radius:10px;">
+              <option value="Argentina">Argentina 🇦🇷</option>
+              <option value="Brasil">Brasil 🇧🇷</option>
+              <option value="Global">Global 🌐</option>
+            </select>
+          </div>
+          
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div class="input-group">
+              <span class="input-label" data-i18n="market_insurance_days_label">DÍAS DE VIAJE</span>
+              <input type="number" class="input-field" id="insurance-days" value="10" min="1" max="90" style="padding: 10px; border-radius:10px;">
+            </div>
+            <div class="input-group">
+              <span class="input-label" data-i18n="market_insurance_age_label">EDAD</span>
+              <input type="number" class="input-field" id="insurance-age" value="30" min="1" max="99" style="padding: 10px; border-radius:10px;">
+            </div>
+          </div>
+          
+          <div class="premium-card" style="background: rgba(52, 199, 89, 0.05); border: 1px dashed rgba(52, 199, 89, 0.2); padding: 10px 14px; margin-bottom: 14px; border-radius: 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.75rem; color: var(--text-muted);" data-i18n="market_insurance_price_per_day">Costo diario</span>
+              <span style="font-size:0.85rem; font-weight:700; color: var(--ios-green);">$3.00 USDc</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; border-top: 0.5px solid rgba(255,255,255,0.05); padding-top:6px;">
+              <span style="font-size:0.75rem; font-weight:600; color:#fff;">Total a pagar:</span>
+              <span style="font-size:1.1rem; font-weight:800; color:#fff;" id="insurance-total-cost">$30.00 USDc</span>
+            </div>
+          </div>
+          
+          <button class="bank-btn-confirm" id="btn-insurance-quote-buy" style="background: var(--ios-green); margin-top:0; font-size:0.85rem; padding: 12px; border-radius:12px; width: 100%; border:none; color:#fff; font-weight:600; cursor:pointer;" data-i18n="market_insurance_btn_buy">Contratar con Chubb</button>
+        </div>
+      </div>
+
+      <!-- MODAL DE SELECCIÓN DE IDIOMA (Estilo iOS Action Sheet) -->
+      <div class="modal-overlay" id="language-modal-overlay">
+        <div class="lang-picker-sheet">
+          <div class="lang-sheet-header">
+            <span data-i18n="lang_picker_title">Seleccionar Idioma</span>
+          </div>
+          <div class="lang-options-list">
+            <button class="lang-option-btn selected" data-lang="es">
+              <span class="lang-flag">🇪🇸</span> <span class="lang-name">Español</span>
+              <i class="fa-solid fa-check check-icon"></i>
+            </button>
+            <button class="lang-option-btn" data-lang="en">
+              <span class="lang-flag">🇬🇧</span> <span class="lang-name">English</span>
+              <i class="fa-solid fa-check check-icon"></i>
+            </button>
+            <button class="lang-option-btn" data-lang="it">
+              <span class="lang-flag">🇮🇹</span> <span class="lang-name">Italiano</span>
+              <i class="fa-solid fa-check check-icon"></i>
+            </button>
+            <button class="lang-option-btn" data-lang="fr">
+              <span class="lang-flag">🇫🇷</span> <span class="lang-name">Français</span>
+              <i class="fa-solid fa-check check-icon"></i>
+            </button>
+            <button class="lang-option-btn" data-lang="de">
+              <span class="lang-flag">🇩🇪</span> <span class="lang-name">Deutsch</span>
+              <i class="fa-solid fa-check check-icon"></i>
+            </button>
+          </div>
+          <button class="lang-sheet-cancel" id="btn-lang-modal-cancel" data-i18n="btn_cancel">Cancelar</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="translations.js?v=11"></script>
+  <script src="app.js?v=11"></script>
+</body>
+</html>
+

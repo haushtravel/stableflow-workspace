@@ -1,0 +1,2082 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spree: Panel de Administración y Control</title>
+  <!-- Google Fonts Outfit & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --bg-main: #0B0B0C;
+      --bg-card: #121214;
+      --bg-card-hover: #19191C;
+      --bg-system-gray: #1E1E22;
+      --border-color: #26262B;
+      --text-main: #FFFFFF;
+      --text-muted: #8E8E93;
+      --ios-green: #34C759;
+      --ios-blue: #007AFF;
+      --ios-red: #FF453A;
+      --font-family: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      line-height: 1.5;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-main);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    /* Layout Wrapper */
+    .admin-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 24px;
+      min-height: calc(100vh - 48px);
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      height: fit-content;
+      position: sticky;
+      top: 24px;
+    }
+
+    .brand-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding-left: 8px;
+    }
+
+    .brand-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      background: var(--text-main);
+      color: var(--bg-main);
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-tagline {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .nav-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-item {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-family);
+      font-size: 0.88rem;
+      font-weight: 500;
+      text-align: left;
+      padding: 12px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.15s;
+      width: 100%;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-main);
+    }
+
+    .nav-item.active {
+      background: var(--text-main);
+      color: var(--bg-main);
+      font-weight: 600;
+    }
+
+    .nav-item i {
+      font-size: 1rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      border-top: 1px solid var(--border-color);
+      padding-top: 16px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-left: 8px;
+    }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--ios-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--ios-green);
+    }
+
+    .status-dot.offline {
+      background-color: var(--ios-red);
+      box-shadow: 0 0 8px var(--ios-red);
+    }
+
+    /* Main Content Area */
+    .content-area {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Dashboard Header */
+    .content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-info h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .header-info p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .refresh-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-refresh {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+
+    .btn-refresh:hover {
+      background: var(--bg-card-hover);
+    }
+
+    /* Metrics Row */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: transparent;
+    }
+
+    .metric-card.earnings::after {
+      background: var(--ios-green);
+    }
+
+    .metric-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-main);
+      font-family: var(--font-family);
+    }
+
+    .metric-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .trend-up {
+      color: var(--ios-green);
+    }
+
+    /* Dashboard Panes */
+    .pane {
+      display: none;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .pane.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card Panels */
+    .panel-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .panel-card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Table Styling */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    .admin-table th {
+      border-bottom: 1.5px solid var(--border-color);
+      padding: 12px 16px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.5px;
+    }
+
+    .admin-table td {
+      border-bottom: 1px solid var(--border-color);
+      padding: 14px 16px;
+      color: var(--text-main);
+    }
+
+    .admin-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    .status-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-badge.success {
+      background: rgba(52, 199, 89, 0.1);
+      color: var(--ios-green);
+    }
+
+    .status-badge.warning {
+      background: rgba(255, 69, 58, 0.1);
+      color: var(--ios-red);
+    }
+
+    .font-mono {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+    }
+
+    /* Earnings breakdown layout */
+    .earnings-split {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .earnings-split-card {
+      background: var(--bg-system-gray);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border: 0.5px solid rgba(255,255,255,0.03);
+    }
+
+    .split-title {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .split-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .split-desc {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    /* Support Ticket Tray */
+    .tickets-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .ticket-row {
+      border: 1px solid var(--border-color);
+      background: var(--bg-system-gray);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.15s;
+    }
+
+    .ticket-row:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .ticket-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ticket-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .ticket-badge {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.68rem;
+    }
+
+    .ticket-title {
+      font-weight: 600;
+      font-size: 0.92rem;
+      color: var(--text-main);
+    }
+
+    .ticket-message {
+      font-size: 0.8rem;
+      color: #D1D1D6;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 12px;
+      border-radius: 8px;
+      line-height: 1.4;
+      font-family: inherit;
+    }
+
+    .ticket-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn-action-primary {
+      background: var(--text-main);
+      color: var(--bg-main);
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-family: var(--font-family);
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+
+    .btn-action-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-action-primary:disabled {
+      background: var(--border-color);
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    /* Simulator Controls Layout */
+    .simulator-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .sim-card {
+      background: var(--bg-system-gray);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .sim-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sim-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    .btn-simulate {
+      background: transparent;
+      border: 1.5px solid var(--text-main);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .btn-simulate:hover {
+      background: var(--text-main);
+      color: var(--bg-main);
+    }
+
+    .btn-simulate:active {
+      transform: scale(0.98);
+    }
+
+    /* Empty state */
+    .empty-state {
+      padding: 40px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .empty-state i {
+      font-size: 2rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .admin-wrapper {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+      }
+    }
+
+    /* Monitoring Pane Custom Styles */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .telemetry-card {
+      background: var(--bg-system-gray);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .telemetry-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .telemetry-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      margin-top: 4px;
+    }
+    .telemetry-subtext {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    .provider-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .provider-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+    .provider-card:hover {
+      background: var(--bg-card-hover);
+    }
+    .provider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .provider-name {
+      font-weight: 600;
+      font-size: 0.92rem;
+      display: flex;
+      align-items: center;
+    }
+    .provider-status-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .provider-status-badge.operational {
+      background: rgba(52, 199, 89, 0.1);
+      color: var(--ios-green);
+    }
+    .provider-status-badge.latency_warning {
+      background: rgba(255, 159, 10, 0.1);
+      color: #FF9F0A;
+    }
+    .provider-status-badge.down {
+      background: rgba(255, 69, 58, 0.1);
+      color: var(--ios-red);
+    }
+    .provider-detail-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+    .provider-detail-value {
+      color: var(--text-main);
+      font-family: var(--font-mono);
+    }
+
+    /* Terminal Styles */
+    .terminal-console {
+      background: #000000;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: #34C759;
+      min-height: 250px;
+      max-height: 350px;
+      overflow-y: auto;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+    }
+    .terminal-line {
+      margin-bottom: 4px;
+      line-height: 1.4;
+      word-break: break-all;
+    }
+    .terminal-line .timestamp {
+      color: var(--text-muted);
+      margin-right: 6px;
+    }
+    .terminal-line .success {
+      color: #34C759;
+    }
+    .terminal-line .warning {
+      color: #FF9F0A;
+    }
+    .terminal-line .error {
+      color: var(--ios-red);
+    }
+
+    /* Incident Simulator buttons in Simulator tab */
+    .provider-control-card {
+      background: var(--bg-system-gray);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .provider-control-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+    }
+    .provider-control-btn-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      width: 100%;
+    }
+    .btn-control {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--font-family);
+      text-align: center;
+    }
+    .btn-control:hover {
+      color: var(--text-main);
+      border-color: var(--text-muted);
+    }
+    .btn-control.active-operational {
+      background: rgba(52, 199, 89, 0.15);
+      color: var(--ios-green);
+      border-color: var(--ios-green);
+    }
+    .btn-control.active-warning {
+      background: rgba(255, 159, 10, 0.15);
+      color: #FF9F0A;
+      border-color: #FF9F0A;
+    }
+    .btn-control.active-down {
+      background: rgba(255, 69, 58, 0.15);
+      color: var(--ios-red);
+      border-color: var(--ios-red);
+    }
+
+    /* Flow Visualizer Styles */
+    .flow-visualizer-container {
+      position: relative;
+      background: #000000;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 30px;
+      min-height: 320px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .flow-svg-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .flow-nodes-grid {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 1000px;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-template-rows: repeat(3, 100px);
+      align-items: center;
+      justify-items: center;
+      gap: 10px;
+    }
+    .flow-node-wrapper {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .flow-node {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      width: 76px;
+      height: 76px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 0.62rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-align: center;
+      cursor: default;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    .flow-node i {
+      font-size: 1.35rem;
+      color: var(--text-main);
+      transition: transform 0.2s;
+    }
+    .flow-node span {
+      font-size: 0.58rem;
+      white-space: nowrap;
+      max-width: 70px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .flow-node.active-pulse {
+      transform: scale(1.18);
+      border-color: var(--ios-green);
+      box-shadow: 0 0 20px rgba(52, 199, 89, 0.5);
+      background: #142d1b;
+      color: var(--text-main);
+    }
+    .flow-node.active-pulse i {
+      color: var(--ios-green);
+      transform: scale(1.1);
+    }
+    .flow-node.tourist { border-color: var(--text-muted); }
+    .flow-node.stripe { border-color: #635BFF; }
+    .flow-node.stripe i { color: #635BFF; }
+    .flow-node.bridge { border-color: #007AFF; }
+    .flow-node.bridge i { color: #007AFF; }
+    .flow-node.custody { border-color: var(--ios-green); }
+    .flow-node.custody i { color: var(--ios-green); }
+    .flow-node.polygon { border-color: #8247E5; }
+    .flow-node.polygon i { color: #8247E5; }
+    .flow-node.bitso { border-color: #FFCC00; }
+    .flow-node.bitso i { color: #FFCC00; }
+    .flow-node.merchant { border-color: #FF453A; }
+    .flow-node.merchant i { color: #FF453A; }
+
+    .btn-trace {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-trace:hover {
+      background: rgba(255,255,255,0.06);
+      color: var(--text-main);
+      border-color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-wrapper">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand-container">
+        <div class="brand-title">Spree <span class="brand-badge">Admin</span></div>
+        <div class="brand-tagline">Panel de Control General</div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-pane="pane-dashboard">
+          <i class="fa-solid fa-chart-pie"></i> Dashboard
+        </button>
+        <button class="nav-item" data-pane="pane-preloads">
+          <i class="fa-solid fa-credit-card"></i> Administración Cargas
+        </button>
+        <button class="nav-item" data-pane="pane-incidents">
+          <i class="fa-solid fa-circle-exclamation"></i> Incidencias Soporte
+        </button>
+        <button class="nav-item" data-pane="pane-monitoring">
+          <i class="fa-solid fa-network-wired"></i> Estado de Red y API
+        </button>
+        <button class="nav-item" data-pane="pane-simulator">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Centro de Simulación
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="connection-status">
+          <div class="status-dot" id="status-dot"></div>
+          <span id="status-text">Conectado a API</span>
+        </div>
+        <div>Servidor: Port 8081</div>
+        <div>Versión del Prototipo: v1.1</div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="content-area">
+      
+      <!-- Header -->
+      <header class="content-header">
+        <div class="header-info">
+          <h2 id="pane-title">Dashboard del Negocio</h2>
+          <p id="pane-subtitle">Métricas agregadas en tiempo real de ingresos y operación.</p>
+        </div>
+        <div class="refresh-actions">
+          <span style="font-size: 0.72rem; color: var(--text-muted);" id="last-update">Actualizado hace unos instantes</span>
+          <button class="btn-refresh" id="btn-refresh-data">
+            <i class="fa-solid fa-arrows-rotate"></i> Actualizar
+          </button>
+        </div>
+      </header>
+
+      <!-- Key Metrics Row (Static across views for easy tracking) -->
+      <section class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-title">Volumen Procesado (Gasto)</span>
+          <span class="metric-value font-mono" id="metric-volume">$0.00</span>
+          <span class="metric-sub"><i class="fa-solid fa-arrow-trend-up trend-up"></i> Compras locales</span>
+        </div>
+        <div class="metric-card earnings">
+          <span class="metric-title">Ganancias Totales Spree</span>
+          <span class="metric-value font-mono" id="metric-earnings" style="color: var(--ios-green);">$0.00</span>
+          <span class="metric-sub" style="color: var(--ios-green);"><i class="fa-solid fa-piggy-bank"></i> Fees Netos USDC</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-title">Descargas Totales App</span>
+          <span class="metric-value font-mono" id="metric-downloads">0</span>
+          <span class="metric-sub" id="metric-downloads-split">0 iOS • 0 Android</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-title">Incidencias Abiertas</span>
+          <span class="metric-value font-mono" id="metric-incidents" style="color: var(--ios-red);">0</span>
+          <span class="metric-sub" id="metric-incidents-resolved">0 resueltas</span>
+        </div>
+      </section>
+
+      <!-- PANES (Dinamismo Tabulado) -->
+
+      <!-- PANE 1: DASHBOARD -->
+      <div class="pane active" id="pane-dashboard">
+        
+        <div class="panel-card">
+          <div class="panel-card-title">Desglose de Ganancias del Negocio (USDC)</div>
+          
+          <div class="earnings-split">
+            <div class="earnings-split-card">
+              <span class="split-title"><i class="fa-solid fa-download"></i> COMISIONES DE CARGA</span>
+              <span class="split-value" id="split-preload">$0.00</span>
+              <span class="split-desc">1% fee por fondeo con tarjeta de crédito/débito</span>
+            </div>
+            <div class="earnings-split-card">
+              <span class="split-title"><i class="fa-solid fa-cart-shopping"></i> COMISIONES DE SERVICIO</span>
+              <span class="split-value" id="split-service">$0.00</span>
+              <span class="split-desc">3% fee sobre consumos QR fíat en el comercio</span>
+            </div>
+            <div class="earnings-split-card">
+              <span class="split-title"><i class="fa-solid fa-money-bill-transfer"></i> SPREAD CAMBIARIO (FX)</span>
+              <span class="split-value" id="split-spread">$0.00</span>
+              <span class="split-desc">Ganancia sobre spread en cotizaciones Bitso</span>
+            </div>
+            <div class="earnings-split-card">
+              <span class="split-title"><i class="fa-solid fa-arrow-rotate-left"></i> COMISIONES DE REEMBOLSO</span>
+              <span class="split-value" id="split-refund">$0.00</span>
+              <span class="split-desc">1.5% fee sobre el saldo sobrante al retirar</span>
+            </div>
+          </div>
+
+          <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4; border-left: 3px solid var(--border-color); padding-left: 14px;">
+            <strong>Fórmula de Rentabilidad:</strong> Las ganancias totales son colectadas en USDC directamente de forma atómica en Polygon. Con la comisión de carga del 1% activa, se reduce el costo de adquisición de Stripe internacional y el punto de equilibrio baja de $130 USD a solo <strong>$90 USD</strong> procesados por turista.
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-card-title">Embudo de Conversión (Simulaciones)</div>
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom: 4px;">
+                <span>Clicks en Descarga (iOS / App Store)</span>
+                <span id="conversion-ios-count" style="font-weight:600;">0</span>
+              </div>
+              <div style="width: 100%; height: 8px; background: var(--bg-system-gray); border-radius: 4px; overflow:hidden;">
+                <div id="conversion-ios-bar" style="height:100%; width: 0%; background: var(--text-main); border-radius:4px; transition: width 0.3s;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom: 4px;">
+                <span>Clicks en Descarga (Android / Google Play)</span>
+                <span id="conversion-android-count" style="font-weight:600;">0</span>
+              </div>
+              <div style="width: 100%; height: 8px; background: var(--bg-system-gray); border-radius: 4px; overflow:hidden;">
+                <div id="conversion-android-bar" style="height:100%; width: 0%; background: var(--text-muted); border-radius:4px; transition: width 0.3s;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PANE 2: PRELOADS -->
+      <div class="pane" id="pane-preloads">
+        <div class="panel-card">
+          <div class="panel-card-title">Historial de Fondeos y Comisiones de Carga</div>
+          <div class="table-container">
+            <table class="admin-table" id="preloads-table">
+              <thead>
+                <tr>
+                  <th>Transacción ID</th>
+                  <th>Fecha</th>
+                  <th>Monto Fíat (USD)</th>
+                  <th>Fee Fondeo (1%)</th>
+                  <th>USDC Acreditado</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="preloads-table-body">
+                <!-- Dinámico -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE 3: INCIDENTS -->
+      <div class="pane" id="pane-incidents">
+        <div class="panel-card">
+          <div class="panel-card-title">Bandeja de Tickets y Reclamos de Soporte</div>
+          <div class="tickets-container" id="incidents-list">
+            <!-- Dinámico -->
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE: MONITORING -->
+      <div class="pane" id="pane-monitoring">
+        <!-- Telemetry Spree Core -->
+        <div class="panel-card">
+          <div class="panel-card-title">Métricas de Servidores y Core</div>
+          <div class="telemetry-grid">
+            <div class="telemetry-card">
+              <span class="telemetry-label"><i class="fa-solid fa-microchip"></i> CPU Core</span>
+              <span class="telemetry-value" id="monitoring-cpu">0.0%</span>
+              <span class="telemetry-subtext">Carga física simulada</span>
+            </div>
+            <div class="telemetry-card">
+              <span class="telemetry-label"><i class="fa-solid fa-memory"></i> Memoria RAM</span>
+              <span class="telemetry-value" id="monitoring-memory">0.0 MB</span>
+              <span class="telemetry-subtext">Uso de Heap Go runtime</span>
+            </div>
+            <div class="telemetry-card">
+              <span class="telemetry-label"><i class="fa-solid fa-clock"></i> Uptime Core</span>
+              <span class="telemetry-value" id="monitoring-uptime">00:00:00</span>
+              <span class="telemetry-subtext">Tiempo desde encendido</span>
+            </div>
+            <div class="telemetry-card">
+              <span class="telemetry-label"><i class="fa-solid fa-gauge-high"></i> RPS</span>
+              <span class="telemetry-value" id="monitoring-rps">0.00 rps</span>
+              <span class="telemetry-subtext">Peticiones por segundo</span>
+            </div>
+            <div class="telemetry-card">
+              <span class="telemetry-label"><i class="fa-solid fa-cubes"></i> Polygon Block</span>
+              <span class="telemetry-value" id="monitoring-block">#0</span>
+              <span class="telemetry-subtext">Sincronización de nodo</span>
+            </div>
+            <div class="telemetry-card">
+              <span class="telemetry-label"><i class="fa-solid fa-fire"></i> Gas Price</span>
+              <span class="telemetry-value" id="monitoring-gas">0 Gwei</span>
+              <span class="telemetry-subtext">Tarifa promedio de red</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Connectivity cards for Stripe, Bridge, Bitso, Twilio, Polygon -->
+        <div class="panel-card">
+          <div class="panel-card-title">Integraciones Financieras y APIs Externas</div>
+          <div class="provider-grid" id="providers-container">
+            <!-- Dinámico -->
+          </div>
+        </div>
+
+        <!-- Modelador Gráfico de Flujo en Tiempo Real -->
+        <div class="panel-card">
+          <div class="panel-card-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Modelador Gráfico de Flujo de Operaciones (Tiempo Real)</span>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-trace" onclick="traceFlow('load')"><i class="fa-solid fa-circle-arrow-down" style="color: var(--ios-green); margin-right: 4px;"></i> Carga Tarjeta</button>
+              <button class="btn-trace" onclick="traceFlow('pay')"><i class="fa-solid fa-qrcode" style="color: #8247E5; margin-right: 4px;"></i> Gasto QR</button>
+              <button class="btn-trace" onclick="traceFlow('refund')"><i class="fa-solid fa-rotate-left" style="color: #FF453A; margin-right: 4px;"></i> Reembolso</button>
+            </div>
+          </div>
+          <div class="flow-visualizer-container">
+            <!-- Capa de Líneas de Conexión SVG -->
+            <svg class="flow-svg-overlay" id="flow-svg"></svg>
+            
+            <div class="flow-nodes-grid">
+              <!-- Nodos del Flujo -->
+              <div class="flow-node-wrapper" style="grid-column: 1; grid-row: 2;">
+                <div class="flow-node tourist" id="node-tourist">
+                  <i class="fa-solid fa-mobile-screen-button"></i>
+                  <span>Turista (App)</span>
+                </div>
+              </div>
+              
+              <div class="flow-node-wrapper" style="grid-column: 2; grid-row: 1;">
+                <div class="flow-node stripe" id="node-stripe">
+                  <i class="fa-brands fa-stripe"></i>
+                  <span>Stripe</span>
+                </div>
+              </div>
+              
+              <div class="flow-node-wrapper" style="grid-column: 4; grid-row: 1;">
+                <div class="flow-node bridge" id="node-bridge">
+                  <i class="fa-solid fa-right-left"></i>
+                  <span>Bridge.xyz</span>
+                </div>
+              </div>
+
+              <div class="flow-node-wrapper" style="grid-column: 6; grid-row: 2;">
+                <div class="flow-node custody" id="node-custody">
+                  <i class="fa-solid fa-shield-halved"></i>
+                  <span>Fireblocks</span>
+                </div>
+              </div>
+              
+              <div class="flow-node-wrapper" style="grid-column: 4; grid-row: 2;">
+                <div class="flow-node polygon" id="node-polygon">
+                  <i class="fa-solid fa-cube"></i>
+                  <span>Polygon Network</span>
+                </div>
+              </div>
+
+              <div class="flow-node-wrapper" style="grid-column: 4; grid-row: 3;">
+                <div class="flow-node bitso" id="node-bitso">
+                  <i class="fa-solid fa-coins"></i>
+                  <span>Bitso Business</span>
+                </div>
+              </div>
+
+              <div class="flow-node-wrapper" style="grid-column: 2; grid-row: 3;">
+                <div class="flow-node merchant" id="node-merchant">
+                  <i class="fa-solid fa-store"></i>
+                  <span>Comercio Local</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="flow-log-box" id="flow-description" style="margin-top: 16px; min-height: 48px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.8rem; color: var(--text-muted); text-align: center; font-family: var(--font-family); line-height: 1.4;">
+            Presiona uno de los botones superiores o realiza una transacción desde la app del turista para visualizar el flujo de datos.
+          </div>
+        </div>
+
+        <!-- Terminal Console -->
+        <div class="panel-card">
+          <div class="panel-card-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Terminal de Monitoreo y Conectividad (Live Pings)</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted);"><i class="fa-solid fa-circle fa-spin" style="color: var(--ios-green);"></i> Escuchando eventos...</span>
+          </div>
+          <div class="terminal-console" id="monitoring-console">
+            <!-- Logs continuos -->
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE 4: SIMULATOR -->
+      <div class="pane" id="pane-simulator">
+        <div class="panel-card">
+          <div class="panel-card-title">Centro de Simulación de Métricas en 1-Clic</div>
+          <p class="subtitle" style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 20px;">
+            Utiliza estas herramientas para inyectar transacciones, clics de descarga o incidencias de soporte directamente en la base de datos de Go. Esto te permitirá validar la actualización en tiempo real de los números, tablas y gráficos del panel.
+          </p>
+
+          <div class="simulator-grid">
+            <div class="sim-card">
+              <span class="sim-title"><i class="fa-solid fa-download" style="color: var(--ios-blue);"></i> Simular Descarga App</span>
+              <p class="sim-desc">Simula que un turista pulsa el botón de instalar en el onboarding móvil de Spree, incrementando los clics del store.</p>
+              <button class="btn-simulate" data-sim="download">Generar Descarga</button>
+            </div>
+            
+            <div class="sim-card">
+              <span class="sim-title"><i class="fa-solid fa-credit-card" style="color: var(--ios-green);"></i> Simular Pre-carga</span>
+              <p class="sim-desc">Simula un depósito fiduciario por tarjeta, aplicando la comisión de carga del 1% y sumando balance al wallet del backend.</p>
+              <button class="btn-simulate" data-sim="preload">Generar Fondeo</button>
+            </div>
+
+            <div class="sim-card">
+              <span class="sim-title"><i class="fa-solid fa-qrcode" style="color: var(--text-main);"></i> Simular Pago QR</span>
+              <p class="sim-desc">Genera una transacción de pago en Mercado Pago (ARS) o Pix (BRL), aplicando la comisión de servicio del 3% y spread cambiario.</p>
+              <button class="btn-simulate" data-sim="pay">Generar Gasto QR</button>
+            </div>
+
+            <div class="sim-card">
+              <span class="sim-title"><i class="fa-solid fa-circle-exclamation" style="color: var(--ios-red);"></i> Simular Incidencia</span>
+              <p class="sim-desc">Crea un reporte de soporte simulando que un usuario envía una queja o consulta técnica desde la app.</p>
+              <button class="btn-simulate" data-sim="incident">Generar Ticket</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-card" style="margin-top: 24px;">
+          <div class="panel-card-title">Simulación de Incidentes de Red y API (Modelo Rémora)</div>
+          <p class="subtitle" style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 20px;">
+            Simula latencia alta o caídas totales en los servicios de terceros que conectan la billetera Spree con la infraestructura bancaria y blockchain local.
+          </p>
+          <div class="simulator-grid" id="incident-simulators">
+            <!-- Stripe -->
+            <div class="provider-control-card">
+              <div class="provider-control-name"><i class="fa-brands fa-stripe" style="color: #635BFF; font-size: 1.25rem; margin-right: 8px; width: 20px;"></i> Stripe API</div>
+              <div class="provider-control-btn-group" data-provider="stripe">
+                <button class="btn-control btn-status" data-status="operational">Operativo</button>
+                <button class="btn-control btn-status" data-status="latency_warning">Lento</button>
+                <button class="btn-control btn-status" data-status="down">Caído</button>
+              </div>
+            </div>
+
+            <!-- Bridge -->
+            <div class="provider-control-card">
+              <div class="provider-control-name"><i class="fa-solid fa-link" style="color: #007AFF; margin-right: 8px; width: 20px;"></i> Bridge.xyz</div>
+              <div class="provider-control-btn-group" data-provider="bridge">
+                <button class="btn-control btn-status" data-status="operational">Operativo</button>
+                <button class="btn-control btn-status" data-status="latency_warning">Lento</button>
+                <button class="btn-control btn-status" data-status="down">Caído</button>
+              </div>
+            </div>
+
+            <!-- Bitso -->
+            <div class="provider-control-card">
+              <div class="provider-control-name"><i class="fa-solid fa-coins" style="color: #FFCC00; margin-right: 8px; width: 20px;"></i> Bitso API</div>
+              <div class="provider-control-btn-group" data-provider="bitso">
+                <button class="btn-control btn-status" data-status="operational">Operativo</button>
+                <button class="btn-control btn-status" data-status="latency_warning">Lento</button>
+                <button class="btn-control btn-status" data-status="down">Caído</button>
+              </div>
+            </div>
+
+            <!-- Twilio -->
+            <div class="provider-control-card">
+              <div class="provider-control-name"><i class="fa-solid fa-comment-sms" style="color: #F22F46; margin-right: 8px; width: 20px;"></i> Twilio SMS</div>
+              <div class="provider-control-btn-group" data-provider="twilio">
+                <button class="btn-control btn-status" data-status="operational">Operativo</button>
+                <button class="btn-control btn-status" data-status="latency_warning">Lento</button>
+                <button class="btn-control btn-status" data-status="down">Caído</button>
+              </div>
+            </div>
+
+            <!-- Polygon Node -->
+            <div class="provider-control-card">
+              <div class="provider-control-name"><i class="fa-solid fa-cube" style="color: #8247E5; margin-right: 8px; width: 20px;"></i> Polygon RPC</div>
+              <div class="provider-control-btn-group" data-provider="polygon">
+                <button class="btn-control btn-status" data-status="operational">Operativo</button>
+                <button class="btn-control btn-status" data-status="latency_warning">Lento</button>
+                <button class="btn-control btn-status" data-status="down">Caído</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <script>
+    const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:8081'
+      : '';
+
+    async function fetchWithAdminAuth(url, options = {}) {
+      options.headers = options.headers || {};
+      options.headers['Authorization'] = 'Bearer admin_secret_token_123';
+      return fetch(url, options);
+    }
+    let activePane = "pane-dashboard";
+    let isConnected = true;
+
+    // --- GRAPHICAL FLOW VISUALIZER ENGINE ---
+    const connections = [
+      ["node-tourist", "node-stripe"],
+      ["node-stripe", "node-bridge"],
+      ["node-bridge", "node-polygon"],
+      ["node-polygon", "node-custody"],
+      ["node-custody", "node-tourist"],
+      ["node-tourist", "node-polygon"],
+      ["node-custody", "node-bitso"],
+      ["node-bitso", "node-merchant"],
+      ["node-merchant", "node-tourist"]
+    ];
+
+    function drawStaticConnections() {
+      const svg = document.getElementById('flow-svg');
+      if (!svg) return;
+      
+      const oldLines = svg.querySelectorAll('.static-connection-line');
+      oldLines.forEach(l => l.remove());
+      
+      const rectContainer = svg.getBoundingClientRect();
+      if (rectContainer.width === 0 || rectContainer.height === 0) return;
+      
+      connections.forEach(pair => {
+        const fromEl = document.getElementById(pair[0]);
+        const toEl = document.getElementById(pair[1]);
+        if (!fromEl || !toEl) return;
+        
+        const rectFrom = fromEl.getBoundingClientRect();
+        const rectTo = toEl.getBoundingClientRect();
+        
+        const x1 = rectFrom.left + rectFrom.width / 2 - rectContainer.left;
+        const y1 = rectFrom.top + rectFrom.height / 2 - rectContainer.top;
+        const x2 = rectTo.left + rectTo.width / 2 - rectContainer.left;
+        const y2 = rectTo.top + rectTo.height / 2 - rectContainer.top;
+        
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+        line.setAttribute("stroke", "var(--border-color)");
+        line.setAttribute("stroke-width", "1.5");
+        line.setAttribute("class", "static-connection-line");
+        
+        svg.insertBefore(line, svg.firstChild);
+      });
+    }
+
+    function pulseConnection(fromNodeId, toNodeId, color = '#34C759', duration = '0.7s') {
+      const fromEl = document.getElementById(fromNodeId);
+      const toEl = document.getElementById(toNodeId);
+      const svg = document.getElementById('flow-svg');
+      if (!fromEl || !toEl || !svg) return;
+      
+      const rectContainer = svg.getBoundingClientRect();
+      if (rectContainer.width === 0 || rectContainer.height === 0) return;
+      
+      const rectFrom = fromEl.getBoundingClientRect();
+      const rectTo = toEl.getBoundingClientRect();
+      
+      const x1 = rectFrom.left + rectFrom.width / 2 - rectContainer.left;
+      const y1 = rectFrom.top + rectFrom.height / 2 - rectContainer.top;
+      const x2 = rectTo.left + rectTo.width / 2 - rectContainer.left;
+      const y2 = rectTo.top + rectTo.height / 2 - rectContainer.top;
+      
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      const d = `M ${x1} ${y1} L ${x2} ${y2}`;
+      path.setAttribute("d", d);
+      path.setAttribute("stroke", color);
+      path.setAttribute("stroke-width", "3");
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("opacity", "0.8");
+      
+      path.style.strokeDasharray = "10, 150";
+      path.style.strokeDashoffset = "0";
+      
+      const animate = document.createElementNS("http://www.w3.org/2000/svg", "animate");
+      animate.setAttribute("attributeName", "stroke-dashoffset");
+      animate.setAttribute("values", "0; -160");
+      animate.setAttribute("dur", duration);
+      animate.setAttribute("repeatCount", "1");
+      animate.setAttribute("fill", "freeze");
+      path.appendChild(animate);
+      
+      svg.appendChild(path);
+      
+      fromEl.classList.add('active-pulse');
+      setTimeout(() => fromEl.classList.remove('active-pulse'), 300);
+      
+      setTimeout(() => {
+        toEl.classList.add('active-pulse');
+        setTimeout(() => toEl.classList.remove('active-pulse'), 300);
+      }, parseFloat(duration) * 1000 - 200);
+      
+      setTimeout(() => {
+        path.remove();
+      }, parseFloat(duration) * 1000);
+    }
+
+    let isTracing = false;
+    async function traceFlow(type) {
+      if (isTracing) return;
+      isTracing = true;
+      
+      const descEl = document.getElementById('flow-description');
+      const delay = 650;
+      
+      const traceBtns = document.querySelectorAll('.btn-trace');
+      traceBtns.forEach(b => b.disabled = true);
+      
+      if (type === 'load' || type === 'preload') {
+        descEl.innerHTML = `<span style="color: var(--ios-green); font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Paso 1:</span> Turista autoriza pre-carga con tarjeta por <strong>Stripe</strong>.`;
+        pulseConnection("node-tourist", "node-stripe", "var(--ios-green)", "0.7s");
+        await sleep(delay);
+        
+        descEl.innerHTML = `<span style="color: var(--ios-green); font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Paso 2:</span> Stripe notifica cobro fiduciario al orquestador <strong>Bridge.xyz</strong>.`;
+        pulseConnection("node-stripe", "node-bridge", "var(--ios-green)", "0.7s");
+        await sleep(delay);
+        
+        descEl.innerHTML = `<span style="color: var(--ios-green); font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Paso 3:</span> Bridge convierte USD fiduciarios a tokens USDC y los emite en <strong>Polygon Network</strong>.`;
+        pulseConnection("node-bridge", "node-polygon", "var(--ios-green)", "0.7s");
+        await sleep(delay);
+        
+        descEl.innerHTML = `<span style="color: var(--ios-green); font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Paso 4:</span> <strong>Fireblocks Custodia MPC</strong> firma la recepción y asegura las claves en bóveda HSM.`;
+        pulseConnection("node-polygon", "node-custody", "var(--ios-green)", "0.7s");
+        await sleep(delay);
+        
+        descEl.innerHTML = `<span style="color: var(--ios-green); font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Paso 5:</span> Balance USDC acreditado exitosamente en la Billetera del Turista. ¡Carga exitosa!`;
+        pulseConnection("node-custody", "node-tourist", "var(--ios-green)", "0.7s");
+        await sleep(delay);
+        
+      } else if (type === 'pay') {
+        descEl.innerHTML = `<span style="color: #8247E5; font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Paso 1:</span> Turista escanea QR del comercio y envía débito USDC a <strong>Polygon Network</strong>.`;
+        pulseConnection("node-tourist", "node-polygon", "#8247E5", "0.7s");
+        await sleep(delay);
+        
+        descEl.innerHTML = `<span style="color: #8247E5; font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Paso 2:</span> <strong>Fireblocks MPC</strong> firma criptográficamente la transferencia de débito de USDC.`;
+        pulseConnection("node-polygon", "node-custody", "#8247E5", "0.7s");
+        await sleep(delay);
+        
+        descEl.innerHTML = `<span style="color: #8247E5; font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Paso 3:</span> USDC son transferidos a la API de liquidación de <strong>Bitso Business</strong>.`;
+        pulseConnection("node-custody", "node-bitso", "#8247E5", "0.7s");
+        await sleep(delay);
+        
+        descEl.innerHTML = `<span style="color: #8247E5; font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Paso 4:</span> Bitso liquida USDC a fíat local y envía transferencia Pix/CVU al <strong>Comercio Local</strong>.`;
+        pulseConnection("node-bitso", "node-merchant", "#8247E5", "0.7s");
+        await sleep(delay);
+        
+        descEl.innerHTML = `<span style="color: #8247E5; font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Paso 5:</span> Pago confirmado instantáneamente en el comercio y voucher enviado a la App del Turista.`;
+        pulseConnection("node-merchant", "node-tourist", "#8247E5", "0.7s");
+        await sleep(delay);
+        
+      } else if (type === 'refund') {
+        descEl.innerHTML = `<span style="color: #FF453A; font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Paso 1:</span> Turista solicita reembolso de fondos. Backend bloquea USDC en <strong>Polygon Network</strong>.`;
+        pulseConnection("node-tourist", "node-polygon", "#FF453A", "0.7s");
+        await sleep(delay);
+        
+        descEl.innerHTML = `<span style="color: #FF453A; font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Paso 2:</span> <strong>Fireblocks MPC</strong> firma la transacción de devolución.`;
+        pulseConnection("node-polygon", "node-custody", "#FF453A", "0.7s");
+        await sleep(delay);
+        
+        descEl.innerHTML = `<span style="color: #FF453A; font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Paso 3:</span> Los fondos en USDC se transfieren de vuelta al ramp fiduciario <strong>Bridge.xyz</strong>.`;
+        pulseConnection("node-custody", "node-bridge", "#FF453A", "0.7s");
+        await sleep(delay);
+        
+        descEl.innerHTML = `<span style="color: #FF453A; font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Paso 4:</span> Bridge procesa la reversión y solicita a <strong>Stripe</strong> la devolución de crédito a la tarjeta origen.`;
+        pulseConnection("node-bridge", "node-stripe", "#FF453A", "0.7s");
+        await sleep(delay);
+        
+        descEl.innerHTML = `<span style="color: #FF453A; font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Paso 5:</span> Reembolso procesado en el banco emisor. Fondos devueltos a la tarjeta origen en 2-5 días hábiles.`;
+        pulseConnection("node-stripe", "node-tourist", "#FF453A", "0.7s");
+        await sleep(delay);
+      }
+      
+      traceBtns.forEach(b => b.disabled = false);
+      isTracing = false;
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
+    window.traceFlow = traceFlow;
+
+    // Títulos y Subtítulos de las secciones
+    const paneHeaders = {
+      "pane-dashboard": {
+        title: "Dashboard del Negocio",
+        subtitle: "Métricas agregadas en tiempo real de ingresos y operación."
+      },
+      "pane-preloads": {
+        title: "Administración de Cargas",
+        subtitle: "Historial completo de depósitos con comisiones del 1% aplicadas."
+      },
+      "pane-incidents": {
+        title: "Bandeja de Incidencias de Soporte",
+        subtitle: "Gestión de incidencias y tickets técnicos levantados por los turistas."
+      },
+      "pane-monitoring": {
+        title: "Monitoreo de Red y APIs Externas",
+        subtitle: "Estado de conectividad e infraestructura en tiempo real del modelo Rémora."
+      },
+      "pane-simulator": {
+        title: "Centro de Simulación de Métricas",
+        subtitle: "Herramientas de testeo rápido para inyectar datos sintéticos en caliente."
+      }
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initNavigation();
+      fetchData();
+      
+      // Inicializar consola de logs de red
+      initTerminalLogs();
+      // Obtener telemetría de salud y pings inmediatamente, y luego cada 3 segundos
+      fetchHealth();
+      setInterval(fetchHealth, 3000);
+
+      // Obtener logs reales del servidor Go en vivo
+      fetchLogs();
+      setInterval(fetchLogs, 2000);
+      
+      // Auto refresh stats cada 10 segundos
+      setInterval(fetchData, 10000);
+
+      document.getElementById("btn-refresh-data").addEventListener("click", () => {
+        const btn = document.getElementById("btn-refresh-data");
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Cargando...`;
+        btn.disabled = true;
+        Promise.all([fetchData(), fetchHealth(), fetchLogs()]).finally(() => {
+          btn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> Actualizar`;
+          btn.disabled = false;
+        });
+      });
+
+      initSimulator();
+      initIncidentSimulator();
+      
+      // Redibujar conexiones si cambia el tamaño de pantalla
+      window.addEventListener("resize", () => {
+        if (activePane === "pane-monitoring") {
+          drawStaticConnections();
+        }
+      });
+      // Primer dibujado estático si arranca en monitoreo
+      setTimeout(() => {
+        if (activePane === "pane-monitoring") {
+          drawStaticConnections();
+        }
+      }, 300);
+    });
+
+    // Tabulados
+    function initNavigation() {
+      const navItems = document.querySelectorAll(".nav-item");
+      navItems.forEach(item => {
+        item.addEventListener("click", () => {
+          navItems.forEach(i => i.classList.remove("active"));
+          item.classList.add("active");
+
+          const target = item.getAttribute("data-pane");
+          activePane = target;
+
+          // Toggle visible pane
+          const panes = document.querySelectorAll(".pane");
+          panes.forEach(p => p.classList.remove("active"));
+          document.getElementById(target).classList.add("active");
+
+          // Update header
+          const h = paneHeaders[target];
+          document.getElementById("pane-title").innerText = h.title;
+          document.getElementById("pane-subtitle").innerText = h.subtitle;
+
+          renderViewSpecificData();
+          
+          if (target === "pane-monitoring") {
+            setTimeout(drawStaticConnections, 80);
+          }
+        });
+      });
+    }
+
+    // Consulta de datos al backend en Go
+    async function fetchData() {
+      try {
+        const resStats = await fetchWithAdminAuth(`${API_BASE}/api/admin/stats`);
+        if (!resStats.ok) throw new Error("Error fetching stats");
+        const stats = await resStats.json();
+        
+        isConnected = true;
+        updateStatusIndicator();
+
+        // Update stats row
+        document.getElementById("metric-volume").innerText = `$${stats.total_volume.toFixed(2)} USDC`;
+        document.getElementById("metric-earnings").innerText = `$${stats.total_earnings.toFixed(2)} USDC`;
+        document.getElementById("metric-downloads").innerText = (stats.downloads_ios + stats.downloads_android).toString();
+        document.getElementById("metric-downloads-split").innerText = `${stats.downloads_ios} iOS • ${stats.downloads_android} Android`;
+        document.getElementById("metric-incidents").innerText = stats.incidents_open.toString();
+        document.getElementById("metric-incidents-resolved").innerText = `${stats.incidents_resolved} resueltas`;
+
+        // Update Dashboard details
+        document.getElementById("split-preload").innerText = `$${stats.earnings_preload.toFixed(2)}`;
+        document.getElementById("split-service").innerText = `$${stats.earnings_service.toFixed(2)}`;
+        document.getElementById("split-spread").innerText = `$${stats.earnings_spread.toFixed(2)}`;
+        document.getElementById("split-refund").innerText = `$${stats.earnings_refund.toFixed(2)}`;
+
+        // Conversion bars
+        const totalDl = stats.downloads_ios + stats.downloads_android || 1;
+        document.getElementById("conversion-ios-count").innerText = `${stats.downloads_ios} clicks`;
+        document.getElementById("conversion-ios-bar").style.width = `${(stats.downloads_ios / totalDl) * 100}%`;
+        document.getElementById("conversion-android-count").innerText = `${stats.downloads_android} clicks`;
+        document.getElementById("conversion-android-bar").style.width = `${(stats.downloads_android / totalDl) * 100}%`;
+
+        document.getElementById("last-update").innerText = `Actualizado: ${new Date().toLocaleTimeString()}`;
+
+        // Render data specific to current tab
+        renderViewSpecificData();
+      } catch (err) {
+        console.error("Connection error to Go API:", err);
+        isConnected = false;
+        updateStatusIndicator();
+      }
+    }
+
+    function updateStatusIndicator() {
+      const dot = document.getElementById("status-dot");
+      const text = document.getElementById("status-text");
+      if (isConnected) {
+        dot.classList.remove("offline");
+        text.innerText = "Conectado a API";
+      } else {
+        dot.classList.add("offline");
+        text.innerText = "API Desconectada (Offline)";
+      }
+    }
+
+    // Renderizado según la pestaña activa
+    async function renderViewSpecificData() {
+      if (!isConnected) return;
+
+      if (activePane === "pane-preloads") {
+        try {
+          const res = await fetchWithAdminAuth(`${API_BASE}/api/admin/preloads`);
+          if (res.ok) {
+            const preloads = await res.json();
+            const body = document.getElementById("preloads-table-body");
+            body.innerHTML = "";
+
+            if (preloads.length === 0) {
+              body.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-muted);">No hay cargas registradas</td></tr>`;
+              return;
+            }
+
+            preloads.forEach(tx => {
+              const row = document.createElement("tr");
+              
+              row.innerHTML = `
+                <td class="font-mono">${tx.id}</td>
+                <td>${tx.date}</td>
+                <td class="font-mono">$${parseFloat(tx.fiat).toFixed(2)}</td>
+                <td class="font-mono" style="color: var(--ios-green); font-weight: 500;">+$${tx.fee_usdc.toFixed(2)}</td>
+                <td class="font-mono" style="font-weight: 600;">$${parseFloat(tx.usdc).toFixed(2)} USDC</td>
+                <td><span class="status-badge success"><i class="fa-solid fa-circle-check"></i> ${tx.status}</span></td>
+              `;
+              body.appendChild(row);
+            });
+          }
+        } catch (err) {
+          console.error("Error loading preloads:", err);
+        }
+      } else if (activePane === "pane-incidents") {
+        try {
+          const res = await fetchWithAdminAuth(`${API_BASE}/api/admin/incidents`);
+          if (res.ok) {
+            const incidents = await res.json();
+            const list = document.getElementById("incidents-list");
+            list.innerHTML = "";
+
+            if (incidents.length === 0) {
+              list.innerHTML = `
+                <div class="empty-state">
+                  <i class="fa-regular fa-face-smile"></i>
+                  <span>No hay incidencias de soporte reportadas</span>
+                </div>
+              `;
+              return;
+            }
+
+            incidents.forEach(inc => {
+              const div = document.createElement("div");
+              div.className = "ticket-row";
+
+              const btnDisabled = inc.status === "resolved" ? "disabled" : "";
+              const btnLabel = inc.status === "resolved" 
+                ? `<i class="fa-solid fa-check"></i> Resuelto` 
+                : `<i class="fa-regular fa-circle-check"></i> Resolver Ticket`;
+              
+              const badgeStyle = inc.category === "Pago" 
+                ? "border: 0.5px solid var(--ios-red); color: var(--ios-red);" 
+                : inc.category === "Carga" 
+                  ? "border: 0.5px solid var(--ios-green); color: var(--ios-green);" 
+                  : "border: 0.5px solid var(--ios-blue); color: var(--ios-blue);";
+
+              div.innerHTML = `
+                <div class="ticket-header">
+                  <div class="ticket-meta">
+                    <span class="ticket-badge" style="${badgeStyle}">${inc.category.toUpperCase()}</span>
+                    <span>ID: <strong class="font-mono">${inc.id}</strong></span>
+                    <span>•</span>
+                    <span>Usuario: <strong>${inc.phone}</strong></span>
+                    <span>•</span>
+                    <span>${inc.date}</span>
+                  </div>
+                  <div>
+                    <span class="status-badge ${inc.status === 'resolved' ? 'success' : 'warning'}">
+                      <i class="fa-solid ${inc.status === 'resolved' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i> 
+                      ${inc.status === 'resolved' ? 'Resuelto' : 'Abierto'}
+                    </span>
+                  </div>
+                </div>
+                <div class="ticket-title">${inc.subject}</div>
+                <div class="ticket-message">${inc.message}</div>
+                <div class="ticket-actions">
+                  <button class="btn-action-primary" ${btnDisabled} onclick="resolveTicket('${inc.id}', this)">
+                    ${btnLabel}
+                  </button>
+                </div>
+              `;
+              list.appendChild(div);
+            });
+          }
+        } catch (err) {
+          console.error("Error loading incidents:", err);
+        }
+      }
+    }
+
+    // Resolver un Ticket
+    async function resolveTicket(id, btn) {
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`;
+      btn.disabled = true;
+
+      try {
+        const res = await fetchWithAdminAuth(`${API_BASE}/api/admin/incidents/resolve`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id })
+        });
+        if (res.ok) {
+          // Success feedback
+          fetchData();
+        } else {
+          alert("Error al resolver la incidencia");
+          btn.innerHTML = `<i class="fa-regular fa-circle-check"></i> Resolver Ticket`;
+          btn.disabled = false;
+        }
+      } catch (err) {
+        console.error("Error resolving ticket:", err);
+        btn.innerHTML = `<i class="fa-regular fa-circle-check"></i> Resolver Ticket`;
+        btn.disabled = false;
+      }
+    }
+    // Asignar al contexto global para eventos onclick dinámicos
+    window.resolveTicket = resolveTicket;
+
+    // Inicializador del simulador 1-Clic
+    function initSimulator() {
+      const simBtns = document.querySelectorAll(".btn-simulate");
+      simBtns.forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const action = btn.getAttribute("data-sim");
+          const originalText = btn.innerHTML;
+          
+          btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Simulando...`;
+          btn.disabled = true;
+
+          try {
+            const res = await fetchWithAdminAuth(`${API_BASE}/api/admin/simulate`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action })
+            });
+            if (res.ok) {
+              await fetchData();
+              btn.innerHTML = `<i class="fa-solid fa-check"></i> ¡Simulado!`;
+              
+              // Si la acción es de fondeo o pago, redirigir y mostrar visualización
+              if (action === "preload" || action === "pay") {
+                setTimeout(() => {
+                  const monTab = document.querySelector('[data-pane="pane-monitoring"]');
+                  if (monTab) {
+                    monTab.click();
+                    setTimeout(() => {
+                      traceFlow(action);
+                    }, 250);
+                  }
+                }, 500);
+              }
+            } else {
+              btn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Error`;
+            }
+          } catch (err) {
+            console.error("Error running simulation:", err);
+            btn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Error`;
+          }
+
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          }, 1500);
+        });
+      });
+    }
+
+    // --- MONITOREO Y TELEMETRÍA ---
+    async function fetchHealth() {
+      try {
+        const res = await fetchWithAdminAuth(`${API_BASE}/api/admin/health`);
+        if (!res.ok) throw new Error("Error fetching system health");
+        const health = await res.json();
+        
+        isConnected = true;
+        updateStatusIndicator();
+
+        // Actualizar UI
+        updateTelemetryUI(health);
+        updateProvidersUI(health.providers);
+        updateSimulatorButtonsState(health.providers);
+      } catch (err) {
+        console.error("Error fetching system health:", err);
+        // No forzamos desconexión de inmediato para evitar falsos parpadeos,
+        // pero reflejamos en consola el timeout/error de red.
+        writeToConsole(`ERROR: Fallo al comunicarse con el backend de monitoreo core: ${err.message}`, "error");
+      }
+    }
+
+    function updateTelemetryUI(health) {
+      const cpuEl = document.getElementById("monitoring-cpu");
+      const memEl = document.getElementById("monitoring-memory");
+      const uptimeEl = document.getElementById("monitoring-uptime");
+      const rpsEl = document.getElementById("monitoring-rps");
+      const blockEl = document.getElementById("monitoring-block");
+      const gasEl = document.getElementById("monitoring-gas");
+
+      if (cpuEl) cpuEl.innerText = `${health.cpu_pct.toFixed(1)}%`;
+      if (memEl) memEl.innerText = `${health.memory_mb.toFixed(1)} MB`;
+      
+      // Formato HH:MM:SS para Uptime
+      if (uptimeEl) {
+        const hrs = Math.floor(health.uptime_sec / 3600);
+        const mins = Math.floor((health.uptime_sec % 3600) / 60);
+        const secs = health.uptime_sec % 60;
+        uptimeEl.innerText = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      }
+      
+      if (rpsEl) rpsEl.innerText = `${health.rps.toFixed(2)} rps`;
+      if (blockEl) blockEl.innerText = `#${health.current_block}`;
+      if (gasEl) gasEl.innerText = `${health.polygon_gas_price} Gwei`;
+    }
+
+    function updateProvidersUI(providers) {
+      const container = document.getElementById("providers-container");
+      if (!container) return;
+
+      container.innerHTML = "";
+      
+      // Lista ordenada de proveedores
+      const keys = ["stripe", "bridge", "bitso", "twilio", "polygon"];
+      
+      keys.forEach(key => {
+        const p = providers[key];
+        if (!p) return;
+
+        const card = document.createElement("div");
+        card.className = "provider-card";
+        
+        let statusClass = "operational";
+        let statusText = "Operativo";
+        let statusIcon = "fa-circle-check";
+        
+        if (p.status === "latency_warning") {
+          statusClass = "latency_warning";
+          statusText = "Latencia Alta";
+          statusIcon = "fa-triangle-exclamation";
+        } else if (p.status === "down") {
+          statusClass = "down";
+          statusText = "Caído";
+          statusIcon = "fa-circle-xmark";
+        }
+
+        // Icono estético por proveedor
+        let providerIcon = "fa-link";
+        if (key === "stripe") providerIcon = "fa-brands fa-stripe";
+        else if (key === "bitso") providerIcon = "fa-solid fa-coins";
+        else if (key === "twilio") providerIcon = "fa-solid fa-comment-sms";
+        else if (key === "polygon") providerIcon = "fa-solid fa-cube";
+
+        card.innerHTML = `
+          <div class="provider-header">
+            <span class="provider-name"><i class="${providerIcon}" style="margin-right: 8px; font-size: 1.15rem; width: 20px; text-align: center;"></i> ${p.name}</span>
+            <span class="provider-status-badge ${statusClass}">
+              <i class="fa-solid ${statusIcon}"></i> ${statusText}
+            </span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+            <div class="provider-detail-item">
+              <span>Latencia:</span>
+              <span class="provider-detail-value" style="color: ${p.status === 'down' ? 'var(--ios-red)' : p.status === 'latency_warning' ? '#FF9F0A' : 'var(--ios-green)'}">
+                ${p.status === 'down' ? 'N/A' : p.latency_ms + ' ms'}
+              </span>
+            </div>
+            <div class="provider-detail-item">
+              <span>Último Test:</span>
+              <span class="provider-detail-value">${p.last_check}</span>
+            </div>
+            <div class="provider-detail-item">
+              <span>Versión API:</span>
+              <span class="provider-detail-value">${p.api_version}</span>
+            </div>
+            <div class="provider-detail-item" style="flex-direction: column; gap: 2px; border-top: 1px dashed var(--border-color); padding-top: 6px; margin-top: 4px;">
+              <span style="font-size: 0.68rem; opacity: 0.6;">API Endpoint:</span>
+              <span class="provider-detail-value" style="font-size: 0.65rem; word-break: break-all; opacity: 0.8; font-weight: normal;">${p.endpoint}</span>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Terminal log generator (Real-time live server console logs integration)
+    function writeToConsole(message, type = "success") {
+      const consoleEl = document.getElementById("monitoring-console");
+      if (!consoleEl) return;
+
+      const timestamp = new Date().toLocaleTimeString();
+      const lineHtml = `<div class="terminal-line"><span class="timestamp">[${timestamp}]</span><span class="${type}">${message}</span></div>`;
+      
+      consoleEl.innerHTML += lineHtml;
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    function initTerminalLogs() {
+      const consoleEl = document.getElementById("monitoring-console");
+      if (!consoleEl) return;
+      consoleEl.innerHTML = `<div class="terminal-line"><span class="timestamp">[${new Date().toLocaleTimeString()}]</span><span class="success">Conectando con el stream de logs en vivo del servidor Go...</span></div>`;
+    }
+
+    async function fetchLogs() {
+      if (!isConnected) return;
+      try {
+        const res = await fetchWithAdminAuth(`${API_BASE}/api/admin/logs`);
+        if (!res.ok) return;
+        const logs = await res.json();
+        
+        const consoleEl = document.getElementById("monitoring-console");
+        if (!consoleEl) return;
+        
+        consoleEl.innerHTML = "";
+        logs.forEach(line => {
+          let formattedLine = line;
+          let typeClass = "success";
+          
+          if (line.includes("[Security WARNING]") || line.includes("WARN") || line.includes("warning")) {
+            typeClass = "warning";
+          } else if (line.includes("Error") || line.includes("failed") || line.includes("CRITICAL") || line.includes("error")) {
+            typeClass = "error";
+          }
+          
+          // Formatear si tiene timestamp de Go (ej. 2026/06/07 15:17:15)
+          if (line.length > 20 && line.charAt(4) === '/' && line.charAt(7) === '/') {
+            const dateStr = line.substring(0, 19);
+            const msgStr = line.substring(20);
+            formattedLine = `<span class="timestamp">[${dateStr}]</span><span class="${typeClass}">${msgStr}</span>`;
+          } else {
+            formattedLine = `<span class="${typeClass}">${formattedLine}</span>`;
+          }
+          
+          const div = document.createElement("div");
+          div.className = "terminal-line";
+          div.innerHTML = formattedLine;
+          consoleEl.appendChild(div);
+        });
+        
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+      } catch (err) {
+        console.error("Error fetching live logs:", err);
+      }
+    }
+
+    // Incident Simulator active classes
+    function updateSimulatorButtonsState(providers) {
+      const btnGroups = document.querySelectorAll(".provider-control-btn-group");
+      btnGroups.forEach(group => {
+        const provider = group.getAttribute("data-provider");
+        const p = providers[provider];
+        if (!p) return;
+
+        const buttons = group.querySelectorAll(".btn-status");
+        buttons.forEach(btn => {
+          const status = btn.getAttribute("data-status");
+          
+          btn.classList.remove("active-operational", "active-warning", "active-down");
+          
+          if (p.status === status) {
+            if (status === "operational") {
+              btn.classList.add("active-operational");
+            } else if (status === "latency_warning") {
+              btn.classList.add("active-warning");
+            } else if (status === "down") {
+              btn.classList.add("active-down");
+            }
+          }
+        });
+      });
+    }
+
+    function initIncidentSimulator() {
+      const buttons = document.querySelectorAll(".provider-control-btn-group .btn-status");
+      buttons.forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const group = btn.closest(".provider-control-btn-group");
+          const provider = group.getAttribute("data-provider");
+          const status = btn.getAttribute("data-status");
+
+          const origText = btn.innerText;
+          btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+          
+          try {
+            const res = await fetchWithAdminAuth(`${API_BASE}/api/admin/simulate-incident`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ provider, status })
+            });
+            if (res.ok) {
+              await fetchHealth();
+              
+              let logMsg = `Incident Control: forced '${provider}' status to '${status.toUpperCase()}'`;
+              let logType = "success";
+              if (status === "down") logType = "error";
+              else if (status === "latency_warning") logType = "warning";
+              
+              writeToConsole(logMsg, logType);
+            } else {
+              console.error("Simulation request failed");
+            }
+          } catch (err) {
+            console.error("Incident simulator connection error:", err);
+          } finally {
+            btn.innerText = origText;
+          }
+        });
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Variables de entorno sensibles (claves de Stripe y Twilio)
+.env
+*.env
+stableflow-backend-go/.env
+
+# Binarios e instaladores compilados de Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+stableflow-backend-go/stableflow-backend-go.exe
+stableflow-backend-go/stableflow-backend-go
+
+# Archivos temporales de logs y del IDE
+*.log
+.idea/
+.vscode/
+node_modules/
+.DS_Store
