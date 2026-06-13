@@ -97,6 +97,75 @@
             </button>
             <button class="btn-secondary" style="margin-top: 10px;" id="btn-back-otp" data-i18n="btn_back">Atrás</button>
           </div>
+
+          <!-- PANTALLA 1-B: KYC TIER SELECTION (Tier 1 Express vs Tier 2 Passport NFC) -->
+          <div id="onboarding-step-3" style="display: none;">
+            <div class="kyc-success-icon" style="margin: 15px 0;">
+              <i class="fa-solid fa-circle-check" style="font-size: 3rem; color: var(--success-color); display: block; text-align: center;"></i>
+            </div>
+            <h2 data-i18n="kyc_welcome_title" style="text-align: center; font-size: 1.25rem;">¡Registro Exitoso!</h2>
+            <p class="subtitle" data-i18n="kyc_welcome_desc" style="text-align: center; margin-bottom: 15px;">Hemos verificado tu número. Selecciona el nivel de acceso para tu billetera Spree.</p>
+            
+            <div class="kyc-options">
+              <!-- Tier 1 option -->
+              <div class="kyc-option-card selected" id="kyc-opt-tier1">
+                <div class="kyc-option-header">
+                  <span class="kyc-option-title" data-i18n="kyc_express_title">Acceso Express (Tier 1)</span>
+                  <span class="kyc-option-badge active" data-i18n="kyc_active_badge">Activo</span>
+                </div>
+                <p class="kyc-option-desc" data-i18n="kyc_express_desc">Límite de recarga de $150 USDc. Pagos básicos por código QR local. Ideal para gastos cotidianos pequeños.</p>
+              </div>
+
+              <!-- Tier 2 option -->
+              <div class="kyc-option-card" id="kyc-opt-tier2">
+                <div class="kyc-option-header">
+                  <span class="kyc-option-title" data-i18n="kyc_full_title">Nivel Completo (Tier 2)</span>
+                  <span class="kyc-option-badge recommend" data-i18n="kyc_recommend_badge">Recomendado</span>
+                </div>
+                <p class="kyc-option-desc" data-i18n="kyc_full_desc">Sin límites de balance. Habilita el Marketplace (eSIM, Seguro Chubb y reservas de tours Civitatis).</p>
+              </div>
+            </div>
+
+            <button class="btn-primary" id="btn-kyc-action" style="margin-top: 20px;">
+              <span data-i18n="btn_continue_express">Continuar con Nivel Express</span> <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+
+          <!-- PANTALLA 1-C: PASSPORT CAMERA SCAN & NFC READER SIMULATION -->
+          <div id="onboarding-step-4" style="display: none; text-align: center;">
+            <h2 data-i18n="passport_scan_title">Verificación de Pasaporte</h2>
+            <p class="subtitle" data-i18n="passport_scan_subtitle">Escanea la zona de datos de tu pasaporte e inicia la lectura NFC.</p>
+            
+            <div class="passport-scan-container" style="position: relative; height: 180px; background: #1C1C1E; border-radius: 12px; margin: 20px 0; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 2px solid #2C2C2E;">
+              <div class="scan-laser" style="position: absolute; left: 0; right: 0; height: 4px; background: rgba(48, 209, 88, 0.7); box-shadow: 0 0 10px rgba(48, 209, 88, 0.8); animation: scanAnimation 3s infinite linear; display: none;" id="scan-laser-line"></div>
+              
+              <!-- Scanning Camera View Mock -->
+              <div id="passport-scan-cam" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+                <i class="fa-solid fa-passport" style="font-size: 3rem; color: var(--ios-gray-light);"></i>
+                <div style="font-size: 0.85rem; color: var(--ios-gray-text);" data-i18n="passport_scan_placeholder">Apunta la cámara al pasaporte...</div>
+              </div>
+
+              <!-- NFC Reading View Mock -->
+              <div id="passport-scan-nfc" style="display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+                <i class="fa-solid fa-wifi fa-rotate-90" style="font-size: 3rem; color: var(--success-color); animation: pulseAnimation 1.5s infinite ease-in-out;"></i>
+                <div style="font-size: 0.85rem; color: var(--success-color); font-weight: 500;" data-i18n="passport_nfc_reading">Leyendo chip NFC... Mantén tu teléfono cerca</div>
+              </div>
+
+              <!-- Success Check -->
+              <div id="passport-scan-success" style="display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+                <i class="fa-solid fa-circle-check" style="font-size: 3.5rem; color: var(--success-color);"></i>
+                <div style="font-size: 0.85rem; color: var(--ios-white); font-weight: 500;" data-i18n="passport_scan_success_label">¡Pasaporte validado por eIDV!</div>
+              </div>
+            </div>
+
+            <!-- Scanner Status logs -->
+            <div id="passport-scan-log" style="font-family: monospace; font-size: 0.72rem; color: var(--ios-gray-text); text-align: left; height: 75px; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 6px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;">
+              &gt; Esperando inicio...
+            </div>
+
+            <button class="btn-primary" id="btn-start-passport-scan" data-i18n="btn_start_scan">Escanear Zona MRZ</button>
+            <button class="btn-secondary" style="margin-top: 10px;" id="btn-back-to-kyc-select" data-i18n="btn_back">Atrás</button>
+          </div>
         </div>
 
         <!-- PANTALLA 2: PRELOAD / CARGA -->
@@ -131,8 +200,70 @@
                   <div style="font-size:0.7rem; color: var(--text-muted);" id="active-card-label">Sanpaolo Visa •••• 4321</div>
                 </div>
               </div>
+              <div class="pay-option" data-type="bank" id="option-bank-transfer">
+                <i class="fa-solid fa-building-columns"></i>
+                <div>
+                  <div style="font-weight:600; font-size:0.85rem;" data-i18n="preload_pay_bank">Transferencia ACH / SEPA</div>
+                  <div style="font-size:0.7rem; color: var(--text-muted);" data-i18n="preload_pay_bank_desc">Costo de red nulo (Bridge)</div>
+                </div>
+              </div>
             </div>
           </div>
+
+          <!-- SECCIÓN COMPLEMENTARIA: TRANSFERENCIA BANCARIA (Visible cuando se elige transferencia) -->
+          <div id="bank-transfer-section" style="display: none; margin-bottom: 14px; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 12px; border: 1px solid var(--divider-color);">
+            <div class="input-label" style="margin-bottom: 8px;" data-i18n="bank_transfer_title">Cuenta Virtual de Fondeo (Bridge)</div>
+            
+            <div class="bank-details-tabs" style="display: flex; gap: 8px; margin-bottom: 10px;">
+              <button class="bank-tab-btn active" data-bank="us" style="flex: 1; padding: 6px; font-size: 0.72rem; border-radius: 6px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--divider-color); cursor: pointer;">EE.UU. (USD ACH)</button>
+              <button class="bank-tab-btn" data-bank="eu" style="flex: 1; padding: 6px; font-size: 0.72rem; border-radius: 6px; background: transparent; color: var(--text-muted); border: 1px solid transparent; cursor: pointer;">Europa (EUR SEPA)</button>
+            </div>
+
+            <!-- Datos USD -->
+            <div id="bank-details-us" style="display: block; font-size: 0.72rem; line-height: 1.5; color: var(--text-main);">
+              <div style="display: flex; justify-content: space-between; border-bottom: 0.5px solid rgba(255,255,255,0.05); padding: 4px 0;">
+                <span style="color: var(--text-muted);" data-i18n="bank_routing">Ruta (Routing):</span>
+                <strong style="font-family: monospace;">021000021</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 0.5px solid rgba(255,255,255,0.05); padding: 4px 0;">
+                <span style="color: var(--text-muted);" data-i18n="bank_account">Nº Cuenta:</span>
+                <strong style="font-family: monospace;">123456789012</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 0.5px solid rgba(255,255,255,0.05); padding: 4px 0;">
+                <span style="color: var(--text-muted);" data-i18n="bank_name">Banco:</span>
+                <strong>Evolve Bank & Trust</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+                <span style="color: var(--text-muted);" data-i18n="bank_beneficiary">Beneficiario:</span>
+                <strong>Spree / Igor Rossi</strong>
+              </div>
+            </div>
+
+            <!-- Datos EUR -->
+            <div id="bank-details-eu" style="display: none; font-size: 0.72rem; line-height: 1.5; color: var(--text-main);">
+              <div style="display: flex; justify-content: space-between; border-bottom: 0.5px solid rgba(255,255,255,0.05); padding: 4px 0;">
+                <span style="color: var(--text-muted);">IBAN:</span>
+                <strong style="font-family: monospace; font-size: 0.65rem;">DE89 3704 0044 0532 0130 00</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 0.5px solid rgba(255,255,255,0.05); padding: 4px 0;">
+                <span style="color: var(--text-muted);">BIC/SWIFT:</span>
+                <strong style="font-family: monospace;">SOLODE21XXX</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 0.5px solid rgba(255,255,255,0.05); padding: 4px 0;">
+                <span style="color: var(--text-muted);" data-i18n="bank_name">Banco:</span>
+                <strong>Solaris SE</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+                <span style="color: var(--text-muted);" data-i18n="bank_beneficiary">Beneficiario:</span>
+                <strong>Spree / Igor Rossi</strong>
+              </div>
+            </div>
+            
+            <div style="font-size: 0.62rem; color: var(--ios-green); margin-top: 8px; text-align: center; background: rgba(52, 199, 89, 0.05); padding: 6px; border-radius: 6px; border: 0.5px solid rgba(52, 199, 89, 0.1);" data-i18n="bank_transfer_helper">
+              Deposita en esta cuenta y se acreditará automáticamente sin costo de adquirencia.
+            </div>
+          </div>
+
 
           <!-- SECCIÓN COMPLEMENTARIA: GESTIÓN DE TARJETAS (Visible cuando se elige tarjeta) -->
           <div id="card-manager-section" style="display: none; margin-bottom: 14px;">
@@ -319,6 +450,17 @@
               <div class="total-row">
                 <span class="total-label" data-i18n="checkout_total_label">Total a Debitar</span>
                 <span class="detail-val" id="checkout-total-usd">$31.00 USDc</span>
+              </div>
+            </div>
+
+            <!-- Exchange Rate Savings Indicator -->
+            <div class="savings-indicator-container" id="checkout-savings-indicator-box" style="margin: 15px 0; background: rgba(48, 209, 88, 0.1); border: 1px solid rgba(48, 209, 88, 0.25); padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 10px;">
+              <div class="savings-icon" style="background: rgba(48, 209, 88, 0.2); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--success-color); flex-shrink: 0;">
+                <i class="fa-solid fa-piggy-bank" style="font-size: 1rem;"></i>
+              </div>
+              <div class="savings-text-wrapper" style="text-align: left;">
+                <div style="font-size: 0.78rem; font-weight: 600; color: var(--success-color);" data-i18n="checkout_savings_title">¡Ahorro Cambiario!</div>
+                <div style="font-size: 0.7rem; color: var(--ios-white); opacity: 0.9;" id="checkout-savings-desc-text">Obtienes un cambio de dólar paralelo, ahorrando $X.XX USD frente a tarjetas tradicionales.</div>
               </div>
             </div>
 

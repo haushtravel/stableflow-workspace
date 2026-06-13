@@ -260,10 +260,12 @@ type WalletState struct {
 	Downloads    DownloadStats `json:"downloads"`
 	Providers    map[string]NetworkProvider `json:"providers"`
 	ChatSessions map[string]*ChatSession    `json:"chat_sessions"`
+	KYCTier      int           `json:"kyc_tier"`
 }
 
 var state = &WalletState{
 	Balance: 611.90,
+	KYCTier: 1,
 	Transactions: []Transaction{
 		{
 			ID:         "tr_checkout_1",
@@ -759,6 +761,7 @@ func handleVerifyOTP(w http.ResponseWriter, r *http.Request) {
 type BalanceRes struct {
 	Balance float64            `json:"balance"`
 	Rates   map[string]float64 `json:"rates"`
+	KYCTier int                `json:"kyc_tier"`
 }
 
 func handleGetBalance(w http.ResponseWriter, r *http.Request) {
@@ -772,14 +775,52 @@ func handleGetBalance(w http.ResponseWriter, r *http.Request) {
 
 	state.RLock()
 	bal := state.Balance
+	kyc := state.KYCTier
 	state.RUnlock()
 
 	res := BalanceRes{
 		Balance: bal,
 		Rates:   fxRates,
+		KYCTier: kyc,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res)
+}
+
+// Handler: Actualizar Nivel de KYC
+type UpdateKYCReq struct {
+	Tier int `json:"tier"`
+}
+
+func handleUpdateKYC(w http.ResponseWriter, r *http.Request) {
+	if setupCORS(&w, r) {
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req UpdateKYCReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "JSON inválido o malformado", http.StatusBadRequest)
+		return
+	}
+
+	if req.Tier < 1 || req.Tier > 2 {
+		http.Error(w, "Nivel de KYC inválido", http.StatusBadRequest)
+		return
+	}
+
+	state.Lock()
+	state.KYCTier = req.Tier
+	state.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"kyc_tier": req.Tier,
+	})
 }
 
 // Handler: Obtener Historial de Transacciones
@@ -810,7 +851,7 @@ type PreloadReq struct {
 type PreloadRes struct {
 	Success      bool    `json:"success"`
 	TxID         string  `json:"tx_id"`
-	ReceivedUSDC float64 `json:"received_usdc"`
+	ReceivedUSDC float64 `json:"received_USDc"`
 	Balance      float64 `json:"balance"`
 }
 
@@ -953,14 +994,20 @@ func handlePreload(w http.ResponseWriter, r *http.Request) {
 
 	nowStr := "Hoy, " + time.Now().Format("15:04")
 
-	fee := req.Amount * 0.01
+	feePercent := 0.01
+	merchantName := "Pre-carga Tarjeta"
+	if req.PaymentMethod == "bank" {
+		feePercent = 0.003
+		merchantName = "Depósito Bancario (Bridge)"
+	}
+	fee := req.Amount * feePercent
 	netAmount := req.Amount - fee
 
 	state.Lock()
 	state.Balance += netAmount
 	newTx := Transaction{
 		ID:         txID,
-		Merchant:   "Pre-carga Tarjeta",
+		Merchant:   merchantName,
 		Fiat:       fmt.Sprintf("%.2f", req.Amount),
 		FiatSymbol: "$",
 		USDC:       fmt.Sprintf("%.2f", netAmount),
@@ -2337,6 +2384,7 @@ func main() {
 	http.HandleFunc("/api/wallet/preload", sessionMiddleware(handlePreload))
 	http.HandleFunc("/api/wallet/checkout", sessionMiddleware(handleCheckout))
 	http.HandleFunc("/api/wallet/refund", sessionMiddleware(handleRefund))
+	http.HandleFunc("/api/wallet/kyc", sessionMiddleware(handleUpdateKYC))
 	http.HandleFunc("/api/admin/stats", adminMiddleware(handleAdminStats))
 	http.HandleFunc("/api/admin/preloads", adminMiddleware(handleAdminPreloads))
 	http.HandleFunc("/api/admin/incidents", adminMiddleware(handleAdminIncidents))

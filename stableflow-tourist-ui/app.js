@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initLanguage();
   initNavigation();
   initOnboarding();
+  initKycOnboarding();
   initPreload();
   initDashboard();
   initCheckout();
@@ -300,8 +301,7 @@ function initOnboarding() {
         if (data.token) {
           localStorage.setItem('spree_session_token', data.token);
         }
-        switchScreen('screen-dashboard');
-        document.getElementById('app-bottom-nav').style.display = 'flex';
+        showKycSelection();
         await syncStateWithBackend();
       } else {
         alert(data.message || dict.js_invalid_code);
@@ -310,8 +310,7 @@ function initOnboarding() {
       console.warn("Backend Go desconectado. Validando localmente para simulación.");
       if (code === "4930") {
         localStorage.setItem('spree_session_token', 'mock_token_4930');
-        switchScreen('screen-dashboard');
-        document.getElementById('app-bottom-nav').style.display = 'flex';
+        showKycSelection();
         updateBalanceUI();
         renderTransactions();
       } else {
@@ -323,7 +322,7 @@ function initOnboarding() {
       btnVerifyOtp.disabled = false;
     }
   });
-  
+
   const otpInputs = document.querySelectorAll('.otp-input');
   otpInputs.forEach((input, index) => {
     input.addEventListener('keyup', (e) => {
@@ -334,7 +333,218 @@ function initOnboarding() {
   });
 }
 
-// --- FLUJO 2: PRELOAD / CARGA (CON 3DS2 CON STRIPE) ---
+// --- FLUJO 1-B: KYC TIERING & PASSPORT SCAN SIMULATION ---
+let selectedKycTier = 1; // 1: Express, 2: Documental
+
+function showKycSelection() {
+  const step2 = document.getElementById('onboarding-step-2');
+  const step3 = document.getElementById('onboarding-step-3');
+  if (step2 && step3) {
+    step2.style.display = 'none';
+    step3.style.display = 'block';
+  }
+}
+
+function initKycOnboarding() {
+  const optTier1 = document.getElementById('kyc-opt-tier1');
+  const optTier2 = document.getElementById('kyc-opt-tier2');
+  const btnKycAction = document.getElementById('btn-kyc-action');
+  
+  if (optTier1 && optTier2) {
+    optTier1.addEventListener('click', () => {
+      optTier1.classList.add('selected');
+      optTier2.classList.remove('selected');
+      selectedKycTier = 1;
+      
+      const dict = translations[state.lang] || translations['es'];
+      btnKycAction.innerHTML = `<span>${dict.btn_continue_express || "Continuar con Nivel Express"}</span> <i class="fa-solid fa-arrow-right"></i>`;
+    });
+    
+    optTier2.addEventListener('click', () => {
+      optTier2.classList.add('selected');
+      optTier1.classList.remove('selected');
+      selectedKycTier = 2;
+      
+      const dict = translations[state.lang] || translations['es'];
+      btnKycAction.innerHTML = `<span>${dict.btn_verify_passport || "Verificar Pasaporte (Nivel Completo)"}</span> <i class="fa-solid fa-arrow-right"></i>`;
+    });
+  }
+  
+  if (btnKycAction) {
+    btnKycAction.addEventListener('click', async () => {
+      if (selectedKycTier === 1) {
+        state.kycTier = 1;
+        await saveKycTierOnBackend(1);
+        finishOnboarding();
+      } else {
+        const step3 = document.getElementById('onboarding-step-3');
+        const step4 = document.getElementById('onboarding-step-4');
+        if (step3 && step4) {
+          step3.style.display = 'none';
+          step4.style.display = 'block';
+          resetPassportScanUI();
+        }
+      }
+    });
+  }
+  
+  const btnBackToKycSelect = document.getElementById('btn-back-to-kyc-select');
+  if (btnBackToKycSelect) {
+    btnBackToKycSelect.addEventListener('click', () => {
+      const step3 = document.getElementById('onboarding-step-3');
+      const step4 = document.getElementById('onboarding-step-4');
+      if (step3 && step4) {
+        step4.style.display = 'none';
+        step3.style.display = 'block';
+      }
+    });
+  }
+  
+  const btnStartPassportScan = document.getElementById('btn-start-passport-scan');
+  if (btnStartPassportScan) {
+    btnStartPassportScan.addEventListener('click', () => {
+      if (btnStartPassportScan.getAttribute('data-finished') === 'true') {
+        finishOnboarding();
+      } else {
+        runPassportScanSimulation();
+      }
+    });
+  }
+}
+
+async function saveKycTierOnBackend(tier) {
+  try {
+    const token = localStorage.getItem('spree_session_token');
+    await fetch(`${API_BASE}/api/wallet/kyc`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ tier })
+    });
+  } catch (err) {
+    console.warn("No se pudo sincronizar el KYC tier con el backend Go.");
+  }
+}
+
+function finishOnboarding() {
+  switchScreen('screen-dashboard');
+  document.getElementById('app-bottom-nav').style.display = 'flex';
+  
+  const step1 = document.getElementById('onboarding-step-1');
+  const step2 = document.getElementById('onboarding-step-2');
+  const step3 = document.getElementById('onboarding-step-3');
+  const step4 = document.getElementById('onboarding-step-4');
+  if (step1) step1.style.display = 'block';
+  if (step2) step2.style.display = 'none';
+  if (step3) step3.style.display = 'none';
+  if (step4) step4.style.display = 'none';
+}
+
+function resetPassportScanUI() {
+  const btn = document.getElementById('btn-start-passport-scan');
+  if (btn) {
+    btn.removeAttribute('data-finished');
+    btn.disabled = false;
+    const dict = translations[state.lang] || translations['es'];
+    btn.innerText = dict.btn_start_scan || "Escanear Zona MRZ";
+  }
+  
+  const cam = document.getElementById('passport-scan-cam');
+  const nfc = document.getElementById('passport-scan-nfc');
+  const success = document.getElementById('passport-scan-success');
+  const laser = document.getElementById('scan-laser-line');
+  const log = document.getElementById('passport-scan-log');
+  
+  if (cam) cam.style.display = 'flex';
+  if (nfc) nfc.style.display = 'none';
+  if (success) success.style.display = 'none';
+  if (laser) laser.style.display = 'none';
+  if (log) log.innerHTML = `&gt; Esperando inicio...`;
+}
+
+function runPassportScanSimulation() {
+  const btn = document.getElementById('btn-start-passport-scan');
+  const log = document.getElementById('passport-scan-log');
+  const laser = document.getElementById('scan-laser-line');
+  const cam = document.getElementById('passport-scan-cam');
+  const nfc = document.getElementById('passport-scan-nfc');
+  
+  if (btn) btn.disabled = true;
+  if (laser) laser.style.display = 'block';
+  
+  const messages = [
+    { t: 0, msg: "&gt; Iniciando cámara eIDV en modo de escaneo de alta resolución..." },
+    { t: 800, msg: "&gt; Buscando zona de lectura mecánica (MRZ) en pasaporte internacional..." },
+    { t: 1600, msg: "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Zona MRZ detectada:</span> P&lt;ITA&lt;&lt;ROSSI&lt;&lt;MARIO&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;" },
+    { t: 2400, msg: "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Pasaporte nº YA889922</span>, Nacionalidad: ITA, Nacimiento: 15/09/1990" },
+    { t: 3200, msg: "&gt; Extrayendo llaves de acceso básico (BAC) para canal NFC..." },
+    { t: 4000, msg: "&gt; Iniciando comunicación de chip NFC inalámbrica..." },
+    { t: 4500, msg: "NFC_STAGE" }
+  ];
+  
+  messages.forEach(item => {
+    setTimeout(() => {
+      if (item.msg === "NFC_STAGE") {
+        if (laser) laser.style.display = 'none';
+        if (cam) cam.style.display = 'none';
+        if (nfc) nfc.style.display = 'flex';
+        
+        log.innerHTML += `<br>&gt; <span style='color: var(--success-color);'>Por favor, sostén el pasaporte contra la parte trasera del teléfono...</span>`;
+        log.scrollTop = log.scrollHeight;
+        
+        runNfcReadingSimulation();
+      } else {
+        log.innerHTML += `<br>${item.msg}`;
+        log.scrollTop = log.scrollHeight;
+      }
+    }, item.t);
+  });
+}
+
+// --- SIMULACIÓN DE LECTURA NFC ---
+function runNfcReadingSimulation() {
+  const log = document.getElementById('passport-scan-log');
+  const nfc = document.getElementById('passport-scan-nfc');
+  const success = document.getElementById('passport-scan-success');
+  const btn = document.getElementById('btn-start-passport-scan');
+  
+  const messages = [
+    { t: 1000, msg: "&gt; Conexión NFC establecida con éxito." },
+    { t: 1800, msg: "&gt; Leyendo Datos de Grupo 1 (Detalles Biográficos)... [OK]" },
+    { t: 2600, msg: "&gt; Leyendo Datos de Grupo 2 (Imagen Facial del Titular)... [OK]" },
+    { t: 3400, msg: "&gt; Descifrando firma criptográfica OACI/ICAO 9303..." },
+    { t: 4200, msg: "&gt; Validando firma del chip contra el certificado raíz del País Emisor... [OK]" },
+    { t: 5000, msg: "&gt; Ejecutando comprobación de Autenticación Pasiva (PA) und Aktiv (AA)... [OK]" },
+    { t: 5800, msg: "&gt; Iniciando prueba de vida biométrica (Liveness detection) mediante red eIDV..." },
+    { t: 6800, msg: "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Similitud facial confirmada (99.8%). Rostro coincide con foto de pasaporte.</span>" },
+    { t: 7600, msg: "&gt; Verificando listas de sanciones internacionales OFAC / PEP... Limpio." },
+    { t: 8400, msg: "&gt; <span style='color: var(--success-color); font-weight: 700;'>¡VERIFICACIÓN COMPLETA! Cuenta promovida a Nivel Completo (Tier 2).</span>" }
+  ];
+  
+  messages.forEach(item => {
+    setTimeout(async () => {
+      log.innerHTML += `<br>${item.msg}`;
+      log.scrollTop = log.scrollHeight;
+      
+      if (item.t === 8400) {
+        if (nfc) nfc.style.display = 'none';
+        if (success) success.style.display = 'flex';
+        
+        state.kycTier = 2;
+        await saveKycTierOnBackend(2);
+        
+        if (btn) {
+          btn.disabled = false;
+          btn.setAttribute('data-finished', 'true');
+          const dict = translations[state.lang] || translations['es'];
+          btn.innerText = dict.btn_success_close || "Finalizar y Entrar";
+        }
+      }
+    }, item.t);
+  });
+}
 let selectedPreloadAmount = 200;
 let selectedPaymentType = 'googlepay'; // 'googlepay' o 'card'
 let selectedPreloadCardId = 'card_initial';
@@ -390,15 +600,59 @@ function initPreload() {
       
       selectedPaymentType = opt.getAttribute('data-type');
       const cardSection = document.getElementById('card-manager-section');
+      const bankSection = document.getElementById('bank-transfer-section');
       
       if (selectedPaymentType === 'card') {
-        cardSection.style.display = 'block';
+        if (cardSection) cardSection.style.display = 'block';
+        if (bankSection) bankSection.style.display = 'none';
         renderSavedCards();
+      } else if (selectedPaymentType === 'bank') {
+        if (cardSection) cardSection.style.display = 'none';
+        if (bankSection) bankSection.style.display = 'block';
+        initBankTabs();
       } else {
-        cardSection.style.display = 'none';
+        if (cardSection) cardSection.style.display = 'none';
+        if (bankSection) bankSection.style.display = 'none';
       }
     });
   });
+
+  function initBankTabs() {
+    const tabBtns = document.querySelectorAll('.bank-tab-btn');
+    const usDetails = document.getElementById('bank-details-us');
+    const euDetails = document.getElementById('bank-details-eu');
+    
+    if (tabBtns.length === 0) return;
+    if (window.bankTabsInitialized) return;
+    window.bankTabsInitialized = true;
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        tabBtns.forEach(b => {
+          b.classList.remove('active');
+          b.style.background = 'transparent';
+          b.style.color = 'var(--text-muted)';
+          b.style.borderColor = 'transparent';
+        });
+        
+        btn.classList.add('active');
+        btn.style.background = 'rgba(255,255,255,0.05)';
+        btn.style.color = '#fff';
+        btn.style.borderColor = 'var(--divider-color)';
+        
+        const type = btn.getAttribute('data-bank');
+        if (type === 'us') {
+          if (usDetails) usDetails.style.display = 'block';
+          if (euDetails) euDetails.style.display = 'none';
+        } else {
+          if (usDetails) usDetails.style.display = 'none';
+          if (euDetails) euDetails.style.display = 'block';
+        }
+      });
+    });
+  }
+
 
   // --- GESTIÓN DE TARJETAS ---
   function renderSavedCards() {
@@ -732,6 +986,80 @@ function initPreload() {
     if (selectedPreloadAmount <= 0) return;
     
     const dict = translations[state.lang] || translations['es'];
+    
+    if (selectedPaymentType === 'bank') {
+      const loadingTitle = dict.js_simulating_bank_transfer || "Simulando depósito...";
+      const loadingDesc = dict.js_processing_bank_deposit || "Bridge.xyz procesa tu depósito ACH/SEPA y acredita en Polygon (costo adquirente de tarjeta: 0%).";
+      
+      triggerProcessingScreen(loadingTitle, loadingDesc, async () => {
+        try {
+          const res = await fetchWithAuth(`${API_BASE}/api/wallet/preload`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              amount: selectedPreloadAmount, 
+              payment_method: 'bank',
+              token: 'bank_simulated'
+            })
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            state.balance = data.balance;
+            await syncStateWithBackend();
+            
+            showSuccessScreen(
+              dict.js_preload_success_title || "¡Carga Exitosa!", 
+              dict.js_preload_success_desc.replace('${amount}', data.received_USDc.toFixed(2)),
+              `
+              <strong>${dict.details_host_tx || 'Transacción Host'}:</strong> ${data.tx_id}<br>
+              <strong>${dict.details_crypto_network || 'Red Cripto'}:</strong> Polygon (USDc)<br>
+              <strong>${dict.details_amount_charged || 'Monto Depositado'}:</strong> $${selectedPreloadAmount.toFixed(2)} USD/EUR<br>
+              <strong>${dict.details_preload_fee || 'Comisión de Carga (0.3% Bridge)'}:</strong> $${(selectedPreloadAmount * 0.003).toFixed(2)} USDc<br>
+              <strong>${dict.details_amount_credited || 'Monto Acreditado'}:</strong> $${data.received_USDc.toFixed(2)} USDc<br>
+              <strong>${dict.details_available_balance || 'Saldo Disponible'}:</strong> $${state.balance.toFixed(2)} USDc
+              `
+            );
+          } else {
+            const errData = await res.json();
+            alert("Error: " + (errData.message || "Preload failed."));
+            switchScreen('screen-dashboard');
+          }
+        } catch (err) {
+          console.warn("Backend Go desconectado. Realizando carga bancaria simulada local.");
+          const fee = selectedPreloadAmount * 0.003;
+          const netReceived = selectedPreloadAmount - fee;
+          state.balance += netReceived;
+          state.transactions.unshift({
+            id: "tr_bridge_" + Math.floor(Math.random() * 1000000),
+            merchant: "Depósito Bancario (Bridge)",
+            fiat: selectedPreloadAmount.toFixed(2),
+            fiat_symbol: "$",
+            USDc: netReceived.toFixed(2),
+            type: "load",
+            date: "Hoy",
+            status: "Completado"
+          });
+          
+          showSuccessScreen(
+            dict.js_preload_success_title_local, 
+            dict.js_preload_success_desc_local.replace('${amount}', netReceived.toFixed(2)),
+            `
+            <strong>${dict.details_host_tx || 'Transacción Host'}:</strong> tr_bridge_${Math.floor(Math.random() * 1000000)}<br>
+            <strong>${dict.details_crypto_network || 'Red Cripto'}:</strong> Polygon (USDc)<br>
+            <strong>${dict.details_amount_charged || 'Monto Depositado'}:</strong> $${selectedPreloadAmount.toFixed(2)} USD/EUR<br>
+            <strong>${dict.details_preload_fee || 'Comisión de Carga (0.3% Bridge)'}:</strong> $${fee.toFixed(2)} USDc<br>
+            <strong>${dict.details_amount_credited || 'Monto Acreditado'}:</strong> $${netReceived.toFixed(2)} USDc<br>
+            <strong>${dict.details_available_balance || 'Saldo Disponible'}:</strong> $${state.balance.toFixed(2)} USDc
+            `
+          );
+          updateBalanceUI();
+          renderTransactions();
+        }
+      });
+      return;
+    }
+    
     if (selectedPaymentType === 'card' && !selectedPreloadCardId) {
       alert(dict.js_select_card_error);
       return;
@@ -989,6 +1317,23 @@ function openCheckout(country, amount, merchant) {
   document.getElementById('checkout-fiat-amount').innerText = country === 'ars' ? `$${amount.toLocaleString('es-AR')} ARS` : `R$${amount.toLocaleString('pt-BR')} BRL`;
   document.getElementById('checkout-fx-rate').innerText = `${fiatSymbol}${effectiveRate.toFixed(2)} ${currencyLabel} = 1 USDc`;
   document.getElementById('checkout-total-usd').innerText = `$${totalUSDc.toFixed(2)} USDc`;
+  
+  // Calcular e inyectar ahorro cambiario real
+  const savingsPercent = country === 'ars' ? 0.065 : 0.05;
+  const savingsUSD = totalUSDc * savingsPercent;
+  const savingsBox = document.getElementById('checkout-savings-indicator-box');
+  const savingsDesc = document.getElementById('checkout-savings-desc-text');
+  if (savingsBox && savingsDesc) {
+    savingsBox.style.display = 'flex';
+    if (state.lang === 'es') {
+      savingsDesc.innerHTML = `Obtienes un tipo de cambio paralelo, <strong>ahorrando $${savingsUSD.toFixed(2)} USDc</strong> frente a comisiones y recargos de tarjetas tradicionales.`;
+    } else if (state.lang === 'en') {
+      savingsDesc.innerHTML = `You get a parallel exchange rate, <strong>saving $${savingsUSD.toFixed(2)} USDc</strong> compared to traditional card fees and markups.`;
+    } else {
+      const dict = translations[state.lang] || translations['es'];
+      savingsDesc.innerHTML = `${dict.checkout_savings_desc.replace('{amount}', savingsUSD.toFixed(2))}`;
+    }
+  }
   
   // Ocultar las filas de comisión y costo de red en la UI
   const feeRow = document.getElementById('checkout-fee').closest('.detail-row');

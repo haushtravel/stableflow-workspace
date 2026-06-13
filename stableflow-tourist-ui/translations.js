@@ -24,6 +24,14 @@ const translations = {
     preload_pay_gp: "Apple Pay / Google Pay",
     preload_pay_gp_desc: "Biometría activa",
     preload_pay_card: "Tarjeta de Crédito / Débito",
+    preload_pay_bank: "Transferencia ACH / SEPA",
+    preload_pay_bank_desc: "Costo de red nulo (Bridge)",
+    bank_transfer_title: "Cuenta Virtual de Fondeo (Bridge)",
+    bank_routing: "Ruta (Routing)",
+    bank_account: "Nº Cuenta",
+    bank_name: "Banco",
+    bank_beneficiary: "Beneficiario",
+    bank_transfer_helper: "Deposita en esta cuenta y se acreditará automáticamente sin costo de adquirencia.",
     cards_saved_title: "Tus Tarjetas Guardadas",
     btn_add_card: "Añadir Nueva Tarjeta",
     
@@ -219,7 +227,26 @@ const translations = {
     js_civitatis_bot_step4: "Agente Spree: ¡Voucher emitido exitosamente!",
     
     btn_request_free: "Obtener (Gratis)",
-    esim_claimed_badge: "Reclamada"
+    esim_claimed_badge: "Reclamada",
+    
+    // KYC Onboarding & Savings
+    kyc_welcome_title: "¡Registro Exitoso!",
+    kyc_welcome_desc: "Hemos verificado tu número. Selecciona el nivel de acceso para tu billetera Spree.",
+    kyc_express_title: "Acceso Express (Tier 1)",
+    kyc_active_badge: "Activo",
+    kyc_express_desc: "Límite de recarga de $150 USDc. Pagos básicos por código QR local. Ideal para gastos cotidianos pequeños.",
+    kyc_full_title: "Nivel Completo (Tier 2)",
+    kyc_recommend_badge: "Recomendado",
+    kyc_full_desc: "Sin límites de balance. Habilita el Marketplace (eSIM, Seguro Chubb y reservas de tours Civitatis).",
+    btn_continue_express: "Continuar con Nivel Express",
+    passport_scan_title: "Verificación de Pasaporte",
+    passport_scan_subtitle: "Escanea la zona de datos de tu pasaporte e inicia la lectura NFC.",
+    passport_scan_placeholder: "Apunta la cámara al pasaporte...",
+    passport_nfc_reading: "Leyendo chip NFC... Mantén tu teléfono cerca",
+    passport_scan_success_label: "¡Pasaporte validado por eIDV!",
+    btn_start_scan: "Escanear Zona MRZ",
+    checkout_savings_title: "¡Ahorro Cambiario!",
+    checkout_savings_desc: "Obtienes un cambio de dólar paralelo, ahorrando {amount} USD frente a tarjetas tradicionales."
   },
   en: {
     logo_tagline: "LATAM Payments made Simple",
@@ -246,6 +273,14 @@ const translations = {
     preload_pay_gp: "Apple Pay / Google Pay",
     preload_pay_gp_desc: "Active biometrics",
     preload_pay_card: "Credit / Debit Card",
+    preload_pay_bank: "ACH / SEPA Bank Transfer",
+    preload_pay_bank_desc: "Zero card processing fee (Bridge)",
+    bank_transfer_title: "Virtual Funding Account (Bridge)",
+    bank_routing: "Routing Number",
+    bank_account: "Account Number",
+    bank_name: "Bank",
+    bank_beneficiary: "Beneficiary",
+    bank_transfer_helper: "Transfer to this account to credit instantly without card transaction fees.",
     cards_saved_title: "Your Saved Cards",
     btn_add_card: "Add New Card",
     
@@ -441,7 +476,26 @@ const translations = {
     js_civitatis_bot_step4: "Spree Agent: Voucher issued successfully!",
     
     btn_request_free: "Claim (Free)",
-    esim_claimed_badge: "Claimed"
+    esim_claimed_badge: "Claimed",
+    
+    // KYC Onboarding & Savings
+    kyc_welcome_title: "Successful Registration!",
+    kyc_welcome_desc: "We have verified your phone number. Select the access tier for your Spree wallet.",
+    kyc_express_title: "Express Access (Tier 1)",
+    kyc_active_badge: "Active",
+    kyc_express_desc: "Top-up limit of $150 USDc. Basic payments via local QR code. Ideal for small daily expenses.",
+    kyc_full_title: "Full Access (Tier 2)",
+    kyc_recommend_badge: "Recommended",
+    kyc_full_desc: "No balance limits. Enables the Marketplace (eSIM, Chubb Insurance, and Civitatis tour bookings).",
+    btn_continue_express: "Continue with Express Access",
+    passport_scan_title: "Passport Verification",
+    passport_scan_subtitle: "Scan the data zone of your passport and start the NFC chip reading.",
+    passport_scan_placeholder: "Point camera at passport...",
+    passport_nfc_reading: "Reading NFC chip... Keep your phone close",
+    passport_scan_success_label: "Passport validated via eIDV!",
+    btn_start_scan: "Scan MRZ Zone",
+    checkout_savings_title: "Exchange Savings!",
+    checkout_savings_desc: "You get a parallel dollar exchange rate, saving {amount} USD compared to traditional cards."
   },
   it: {
     logo_tagline: "Pagamenti in LATAM resi semplici",
@@ -663,7 +717,26 @@ const translations = {
     js_civitatis_bot_step4: "Agente Spree: Voucher emesso con successo!",
     
     btn_request_free: "Ottieni (Gratis)",
-    esim_claimed_badge: "Richiesta"
+    esim_claimed_badge: "Richiesta",
+    
+    // KYC Onboarding & Savings
+    kyc_welcome_title: "Registrazione riuscita!",
+    kyc_welcome_desc: "Abbiamo verificato il tuo numero. Seleziona il livello di accesso per il tuo portafoglio Spree.",
+    kyc_express_title: "Accesso Express (Tier 1)",
+    kyc_active_badge: "Attivo",
+    kyc_express_desc: "Limite di ricarica di $150 USDc. Pagamenti di base tramite codice QR locale. Ideale per piccole spese quotidiane.",
+    kyc_full_title: "Livello Completo (Tier 2)",
+    kyc_recommend_badge: "Consigliato",
+    kyc_full_desc: "Nessun limite di saldo. Abilita il Marketplace (eSIM, Assicurazione Chubb e prenotazioni di tour Civitatis).",
+    btn_continue_express: "Continua con Accesso Express",
+    passport_scan_title: "Verifica del Passaporto",
+    passport_scan_subtitle: "Scansiona la zona dati del tuo passaporto e avvia la lettura del chip NFC.",
+    passport_scan_placeholder: "Punta la fotocamera sul passaporto...",
+    passport_nfc_reading: "Lettura chip NFC... Tieni il telefono vicino",
+    passport_scan_success_label: "Passaporto convalidato tramite eIDV!",
+    btn_start_scan: "Scansiona Zona MRZ",
+    checkout_savings_title: "Risparmio di Cambio!",
+    checkout_savings_desc: "Ottieni un tasso di cambio parallelo, risparmiando {amount} USD rispetto alle carte tradizionali."
   },
   fr: {
     logo_tagline: "Les paiements en LATAM simplifiés",
@@ -885,7 +958,26 @@ const translations = {
     js_civitatis_bot_step4: "Agent Spree: Voucher émis avec succès!",
     
     btn_request_free: "Obtenir (Gratuit)",
-    esim_claimed_badge: "Réclamée"
+    esim_claimed_badge: "Réclamée",
+    
+    // KYC Onboarding & Savings
+    kyc_welcome_title: "Inscription réussie!",
+    kyc_welcome_desc: "Nous avons vérifié votre numéro. Sélectionnez le niveau d'accès pour votre portefeuille Spree.",
+    kyc_express_title: "Accès Express (Tier 1)",
+    kyc_active_badge: "Actif",
+    kyc_express_desc: "Limite de recharge de $150 USDc. Paiements de base par code QR local. Idéal pour les petites dépenses quotidiennes.",
+    kyc_full_title: "Niveau Complet (Tier 2)",
+    kyc_recommend_badge: "Recommandé",
+    kyc_full_desc: "Sans limites de solde. Active le Marketplace (eSIM, assurance Chubb et réservations d'excursions Civitatis).",
+    btn_continue_express: "Continuer avec l'accès Express",
+    passport_scan_title: "Vérification du Passeport",
+    passport_scan_subtitle: "Scannez la zone de données de votre passeport et lancez la lecture de la puce NFC.",
+    passport_scan_placeholder: "Pointez la caméra vers le passeport...",
+    passport_nfc_reading: "Lecture de la puce NFC... Gardez le téléphone proche",
+    passport_scan_success_label: "Passeport validé via eIDV!",
+    btn_start_scan: "Scanner la zone MRZ",
+    checkout_savings_title: "Économie de Change!",
+    checkout_savings_desc: "Bénéficiez d'un taux de change parallèle, économisant {amount} USD par rapport aux cartes traditionnelles."
   },
   de: {
     logo_tagline: "LATAM-Zahlungen einfach gemacht",
@@ -1107,6 +1199,25 @@ const translations = {
     js_civitatis_bot_step4: "Spree-Agent: Gutschein erfolgreich ausgestellt!",
     
     btn_request_free: "Anfordern (Gratis)",
-    esim_claimed_badge: "Beansprucht"
+    esim_claimed_badge: "Beansprucht",
+    
+    // KYC Onboarding & Savings
+    kyc_welcome_title: "Registrierung erfolgreich!",
+    kyc_welcome_desc: "Wir haben Ihre Nummer verifiziert. Wählen Sie die Zugriffsebene für Ihre Spree-Wallet.",
+    kyc_express_title: "Express-Zugang (Tier 1)",
+    kyc_active_badge: "Aktiv",
+    kyc_express_desc: "Aufladelimit von $150 USDc. Basiszahlungen über lokalen QR-Code. Ideal für kleine tägliche Ausgaben.",
+    kyc_full_title: "Vollständiger Zugang (Tier 2)",
+    kyc_recommend_badge: "Empfohlen",
+    kyc_full_desc: "Keine Balance-Limits. Aktiviert den Marketplace (eSIM, Chubb-Versicherung und Civitatis-Touren).",
+    btn_continue_express: "Weiter mit Express-Zugang",
+    passport_scan_title: "Reisepass-Verifizierung",
+    passport_scan_subtitle: "Scannen Sie den Datenbereich Ihres Reisepasses und starten Sie das Lesen des NFC-Chips.",
+    passport_scan_placeholder: "Kamera auf den Reisepass richten...",
+    passport_nfc_reading: "NFC-Chip lesen... Halten Sie das Telefon nah",
+    passport_scan_success_label: "Reisepass über eIDV validiert!",
+    btn_start_scan: "MRZ-Bereich scannen",
+    checkout_savings_title: "Wechselkurs-Ersparnis!",
+    checkout_savings_desc: "Sie erhalten einen parallelen Dollarkurs und sparen {amount} USD im Vergleich zu herkömmlichen Karten."
   }
 };
