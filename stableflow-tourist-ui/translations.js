@@ -1,4 +1,4 @@
-﻿const translations = {
+const translations = {
   es: {
     logo_tagline: "Pagos en LATAM de forma simple",
     welcome_title: "Bienvenido",
@@ -88,7 +88,7 @@
     market_item_esim_desc: "Internet en Argentina/Brasil",
     market_item_insurance_title: "Seguro de Viaje Premium",
     market_item_insurance_desc: "Cobertura médica total y retrasos",
-    market_item_civitatis_bot_title: "Asistente de Reservas Civitatis",
+    market_item_civitatis_bot_title: "Asistente de Reservas",
     market_item_civitatis_bot_desc: "Busca y reserva tours, traslados y excursiones chateando con nuestro bot automatizado.",
     btn_start_assistant: "Iniciar Chat",
     btn_buy: "Comprar",
@@ -277,7 +277,16 @@
     market_car_driver_label: "CONDUCTOR PRINCIPAL",
     market_car_days_label: "DÍAS DE ALQUILER",
     market_car_insurance_opt_label: "Cobertura total contra daños (+ $10.00 USDc/día)",
-    market_car_btn_buy: "Reservar Auto"
+    market_car_btn_buy: "Reservar Auto",
+    profile_dob_label: "Fecha de Nacimiento",
+    profile_email_label: "Correo Electrónico",
+    profile_vouchers_title: "Mis Vouchers / Servicios",
+    profile_vouchers_desc: "Accede a las credenciales, códigos de activación y boletos de tus servicios adquiridos.",
+    kyc_doc_passport: "Pasaporte",
+    kyc_doc_dni: "DNI",
+    kyc_scan_title: "Verificación de Identidad",
+    kyc_scan_subtitle: "Escanea tu documento para verificar tu cuenta.",
+    notification_just_now: "ahora"
   },
   en: {
     logo_tagline: "LATAM Payments made Simple",
@@ -368,7 +377,7 @@
     market_item_esim_desc: "Internet in Argentina/Brazil",
     market_item_insurance_title: "Premium Travel Insurance",
     market_item_insurance_desc: "Total medical coverage & delays",
-    market_item_civitatis_bot_title: "Civitatis Booking Assistant",
+    market_item_civitatis_bot_title: "Booking Assistant",
     market_item_civitatis_bot_desc: "Search and book tours, transfers, and excursions by chatting with our automated bot.",
     btn_start_assistant: "Start Chat",
     btn_buy: "Buy",
@@ -557,7 +566,16 @@
     market_car_driver_label: "PRIMARY DRIVER",
     market_car_days_label: "RENTAL DAYS",
     market_car_insurance_opt_label: "Full damage coverage (+ $10.00 USDc/day)",
-    market_car_btn_buy: "Book Car"
+    market_car_btn_buy: "Book Car",
+    profile_dob_label: "Date of Birth",
+    profile_email_label: "Email Address",
+    profile_vouchers_title: "My Vouchers / Services",
+    profile_vouchers_desc: "Access credentials, activation codes, and tickets for your purchased services.",
+    kyc_doc_passport: "Passport",
+    kyc_doc_dni: "ID Card",
+    kyc_scan_title: "Identity Verification",
+    kyc_scan_subtitle: "Scan your document to verify your account.",
+    notification_just_now: "just now"
   },
   it: {
     logo_tagline: "Pagamenti in LATAM resi semplici",

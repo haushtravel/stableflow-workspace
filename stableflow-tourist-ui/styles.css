@@ -169,16 +169,14 @@ body {
   -webkit-overflow-scrolling: touch; /* Suaviza el scroll en iOS y dispositivos móviles */
 }
 
-/* Scrollbar estilo iOS premium muy sutil */
 .screen::-webkit-scrollbar {
-  width: 4px;
+  display: none;
+  width: 0;
+  height: 0;
 }
-.screen::-webkit-scrollbar-track {
-  background: transparent;
-}
-.screen::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
+.screen {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .screen.active {
@@ -464,12 +462,14 @@ h2 {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--bg-system-gray);
+  background: #FFF;
+  color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   font-size: 0.75rem;
+  border: 1px solid rgba(0,0,0,0.15);
 }
 
 .location-badge {
@@ -1709,6 +1709,57 @@ textarea.input-field {
 @keyframes pulseAnimation {
   0%, 100% { opacity: 0.6; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.08); }
+}
+
+/* iOS Push Mail Notification Toast */
+.mail-toast {
+  position: absolute;
+  top: 55px;
+  left: 15px;
+  right: 15px;
+  background: rgba(28, 28, 30, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 0.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 13px;
+  padding: 10px 14px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  pointer-events: none;
+  animation: slideDownToast 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.mail-toast.toast-exit {
+  animation: slideUpToast 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.mail-toast-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+@keyframes slideDownToast {
+  from {
+    transform: translateY(-90px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUpToast {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-95px);
+    opacity: 0;
+  }
 }
 
 

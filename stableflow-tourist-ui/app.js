@@ -1,4 +1,4 @@
-﻿// Crux Tourist UI Prototype Engine (iOS B&W Version)
+// Crux Tourist UI Prototype Engine (iOS B&W Version)
 
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:8081'
@@ -59,6 +59,24 @@ async function fetchWithAuth(url, options = {}) {
 // Estado de la aplicación
 const savedProfile = localStorage.getItem('crux_profile');
 const savedCompanions = localStorage.getItem('crux_companions');
+const savedVouchers = localStorage.getItem('crux_vouchers');
+
+let profileData = {
+  name: 'Ian Taylor',
+  passport: 'AA1234567',
+  phone: '+1 555-0199',
+  dob: '1996-06-15',
+  email: 'ian.taylor@example.com',
+  age: 30
+};
+if (savedProfile) {
+  try {
+    const parsed = JSON.parse(savedProfile);
+    profileData = { ...profileData, ...parsed };
+  } catch (e) {
+    console.error("Error parsing profile", e);
+  }
+}
 
 const state = {
   balance: 0.00, // Comienza en $0 hasta la pre-carga
@@ -66,13 +84,11 @@ const state = {
   kycTier: 1, // 1: Express, 2: Documental
   transactions: [],
   lang: 'es',
-  profile: savedProfile ? JSON.parse(savedProfile) : {
-    name: 'Ian Taylor',
-    passport: 'AA1234567',
-    phone: '+1 555-0199',
-    age: 30
-  },
-  companions: savedCompanions ? JSON.parse(savedCompanions) : []
+  profile: profileData,
+  companions: savedCompanions ? JSON.parse(savedCompanions) : [],
+  vouchers: savedVouchers ? JSON.parse(savedVouchers) : [],
+  lowBalanceAlertSent: false,
+  selectedDocType: 'passport'
 };
 
 // Cotizaciones mockeadas
@@ -448,6 +464,57 @@ function initKycOnboarding() {
       }
     });
   }
+
+  // Document Type selection tabs
+  const btnDocPassport = document.getElementById('btn-doc-passport');
+  const btnDocDni = document.getElementById('btn-doc-dni');
+  if (btnDocPassport && btnDocDni) {
+    btnDocPassport.addEventListener('click', () => {
+      btnDocPassport.classList.add('active');
+      btnDocPassport.style.background = 'rgba(255,255,255,0.15)';
+      btnDocPassport.style.color = '#FFF';
+      btnDocPassport.style.fontWeight = '600';
+      
+      btnDocDni.classList.remove('active');
+      btnDocDni.style.background = 'transparent';
+      btnDocDni.style.color = 'var(--ios-gray-text)';
+      btnDocDni.style.fontWeight = '500';
+      
+      state.selectedDocType = 'passport';
+      
+      const icon = document.getElementById('kyc-scan-icon');
+      const text = document.getElementById('kyc-scan-text');
+      const dict = translations[state.lang] || translations['es'];
+      if (icon) icon.className = 'fa-solid fa-passport';
+      if (text) text.innerText = dict.passport_scan_placeholder || (state.lang === 'en' ? 'Point the camera at the passport...' : 'Apunta la cámara al pasaporte...');
+      
+      const btnScan = document.getElementById('btn-start-passport-scan');
+      if (btnScan) btnScan.innerText = dict.btn_start_scan || "Escanear Zona MRZ";
+    });
+
+    btnDocDni.addEventListener('click', () => {
+      btnDocDni.classList.add('active');
+      btnDocDni.style.background = 'rgba(255,255,255,0.15)';
+      btnDocDni.style.color = '#FFF';
+      btnDocDni.style.fontWeight = '600';
+      
+      btnDocPassport.classList.remove('active');
+      btnDocPassport.style.background = 'transparent';
+      btnDocPassport.style.color = 'var(--ios-gray-text)';
+      btnDocPassport.style.fontWeight = '500';
+      
+      state.selectedDocType = 'dni';
+      
+      const icon = document.getElementById('kyc-scan-icon');
+      const text = document.getElementById('kyc-scan-text');
+      if (icon) icon.className = 'fa-solid fa-id-card';
+      if (text) text.innerText = state.lang === 'en' ? 'Point the camera at the back of your ID Card...' : 'Apunta la cámara al dorso del DNI...';
+      
+      const btnScan = document.getElementById('btn-start-passport-scan');
+      const isEn = state.lang === 'en';
+      if (btnScan) btnScan.innerText = isEn ? "Scan Barcode" : "Escanear Código de Barras";
+    });
+  }
 }
 
 async function saveKycTierOnBackend(tier) {
@@ -500,6 +567,58 @@ function resetPassportScanUI() {
   if (success) success.style.display = 'none';
   if (laser) laser.style.display = 'none';
   if (log) log.innerHTML = `&gt; Esperando inicio...`;
+
+  // Pre-fill DOB and email from profile state if they exist
+  const dobInput = document.getElementById('kyc-dob');
+  const emailInput = document.getElementById('kyc-email');
+  if (dobInput && state.profile.dob) dobInput.value = state.profile.dob;
+  if (emailInput && state.profile.email) emailInput.value = state.profile.email;
+
+  // Reset document type tabs to Passport by default
+  const btnDocPassport = document.getElementById('btn-doc-passport');
+  const btnDocDni = document.getElementById('btn-doc-dni');
+  if (btnDocPassport && btnDocDni) {
+    btnDocPassport.classList.add('active');
+    btnDocPassport.style.background = 'rgba(255,255,255,0.15)';
+    btnDocPassport.style.color = '#FFF';
+    btnDocPassport.style.fontWeight = '600';
+    
+    btnDocDni.classList.remove('active');
+    btnDocDni.style.background = 'transparent';
+    btnDocDni.style.color = 'var(--ios-gray-text)';
+    btnDocDni.style.fontWeight = '500';
+    
+    state.selectedDocType = 'passport';
+  }
+
+  // Restore scan icon and text
+  const icon = document.getElementById('kyc-scan-icon');
+  const text = document.getElementById('kyc-scan-text');
+  const dict = translations[state.lang] || translations['es'];
+  if (icon) icon.className = 'fa-solid fa-passport';
+  if (text) text.innerText = dict.passport_scan_placeholder || (state.lang === 'en' ? 'Point the camera at the passport...' : 'Apunta la cámara al pasaporte...');
+}
+
+function calculateAge(dobString) {
+  if (!dobString) return 30;
+  const birthDate = new Date(dobString);
+  if (isNaN(birthDate.getTime())) return 30;
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+function formatDateString(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return dateStr;
 }
 
 function runPassportScanSimulation() {
@@ -511,22 +630,47 @@ function runPassportScanSimulation() {
   
   if (btn) btn.disabled = true;
   
+  const dobVal = document.getElementById('kyc-dob').value;
+  const emailVal = document.getElementById('kyc-email').value;
   const isEs = state.lang === 'es';
+  
+  if (!dobVal || !emailVal) {
+    alert(isEs ? "Por favor, complete la Fecha de Nacimiento y el Correo Electrónico antes de iniciar el escaneo." : "Please complete both Date of Birth and Email fields before scanning.");
+    if (btn) btn.disabled = false;
+    return;
+  }
+  
+  const formattedDob = formatDateString(dobVal);
 
   if (targetKycUpgrade === 2) {
-    // Escaneo de Pasaporte OCR + Liveness (Tier 2)
+    // Escaneo de Documento OCR + Liveness (Tier 2)
     if (laser) laser.style.display = 'block';
     log.innerHTML = isEs ? "&gt; Iniciando cámara..." : "&gt; Starting camera...";
     
-    const messages = [
-      { t: 800, msg: isEs ? "&gt; Buscando zona MRZ en la página de datos..." : "&gt; Searching for MRZ zone on the data page..." },
-      { t: 1600, msg: isEs ? "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Zona MRZ detectada:</span> P&lt;USA&lt;&lt;SMITH&lt;&lt;JOHN&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;" : "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] MRZ Zone detected:</span> P&lt;USA&lt;&lt;SMITH&lt;&lt;JOHN&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;" },
-      { t: 2400, msg: isEs ? "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Pasaporte nº YA1234567</span>, Nacionalidad: USA, Nacimiento: 23/04/1988" : "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Passport No. YA1234567</span>, Nationality: USA, DOB: 23/04/1988" },
-      { t: 3200, msg: isEs ? "&gt; Analizando holograma tridimensional y marca de agua física..." : "&gt; Analyzing three-dimensional hologram and physical watermark..." },
-      { t: 4000, msg: isEs ? "&gt; Iniciando prueba de vida facial (Selfie Video Liveness Check)..." : "&gt; Starting facial liveness check (Selfie Video Liveness Check)..." },
-      { t: 4800, msg: isEs ? "&gt; Análisis biometria activa contra IA generativa (ZOLOZ Deeper)..." : "&gt; Active biometric analysis against generative AI (ZOLOZ Deeper)..." },
-      { t: 5600, msg: "OCR_FINISH" }
-    ];
+    let messages = [];
+    if (state.selectedDocType === 'dni') {
+      const dniNum = Math.floor(10000000 + Math.random() * 89999999).toString();
+      messages = [
+        { t: 800, msg: isEs ? "&gt; Buscando código de barras PDF417 en el dorso del DNI..." : "&gt; Searching for PDF417 barcode on the back of the ID card..." },
+        { t: 1600, msg: isEs ? "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Código PDF417 detectado y decodificado.</span>" : "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] PDF417 code detected and decoded.</span>" },
+        { t: 2400, msg: isEs ? `&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] DNI nº ${dniNum}</span>, Nacimiento: ${formattedDob}` : `&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] ID Card No. ${dniNum}</span>, DOB: ${formattedDob}` },
+        { t: 3200, msg: isEs ? "&gt; Analizando hologramas de seguridad y microimpresión del DNI..." : "&gt; Analyzing security holograms and DNI microprinting..." },
+        { t: 4000, msg: isEs ? "&gt; Iniciando prueba de vida facial (Selfie Video Liveness Check)..." : "&gt; Starting facial liveness check (Selfie Video Liveness Check)..." },
+        { t: 4800, msg: isEs ? "&gt; Análisis biometria activa contra IA generativa (ZOLOZ Deeper)..." : "&gt; Active biometric analysis against generative AI (ZOLOZ Deeper)..." },
+        { t: 5600, msg: "OCR_FINISH" }
+      ];
+    } else {
+      const passportNum = 'YA' + Math.floor(100000 + Math.random() * 900000);
+      messages = [
+        { t: 800, msg: isEs ? "&gt; Buscando zona MRZ en la página de datos..." : "&gt; Searching for MRZ zone on the data page..." },
+        { t: 1600, msg: isEs ? "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Zona MRZ detectada:</span> P&lt;USA&lt;&lt;SMITH&lt;&lt;JOHN&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;" : "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] MRZ Zone detected:</span> P&lt;USA&lt;&lt;SMITH&lt;&lt;JOHN&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;" },
+        { t: 2400, msg: isEs ? `&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Pasaporte nº ${passportNum}</span>, Nacionalidad: USA, Nacimiento: ${formattedDob}` : `&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Passport No. ${passportNum}</span>, Nationality: USA, DOB: ${formattedDob}` },
+        { t: 3200, msg: isEs ? "&gt; Analizando holograma tridimensional y marca de agua física..." : "&gt; Analyzing three-dimensional hologram and physical watermark..." },
+        { t: 4000, msg: isEs ? "&gt; Iniciando prueba de vida facial (Selfie Video Liveness Check)..." : "&gt; Starting facial liveness check (Selfie Video Liveness Check)..." },
+        { t: 4800, msg: isEs ? "&gt; Análisis biometria activa contra IA generativa (ZOLOZ Deeper)..." : "&gt; Active biometric analysis against generative AI (ZOLOZ Deeper)..." },
+        { t: 5600, msg: "OCR_FINISH" }
+      ];
+    }
 
     messages.forEach(item => {
       setTimeout(() => {
@@ -554,13 +698,24 @@ function runPassportScanSimulation() {
     if (laser) laser.style.display = 'block';
     log.innerHTML = isEs ? "&gt; Iniciando lector NFC eIDV..." : "&gt; Starting eIDV NFC reader...";
     
-    const messages = [
-      { t: 800, msg: isEs ? "&gt; Buscando zona de lectura mecánica (MRZ) para derivar clave..." : "&gt; Searching for MRZ zone to derive access key..." },
-      { t: 1600, msg: isEs ? "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Zona MRZ detectada:</span> P&lt;ITA&lt;&lt;ROSSI&lt;&lt;MARIO&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;" : "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] MRZ Zone detected:</span> P&lt;ITA&lt;&lt;ROSSI&lt;&lt;MARIO&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;" },
-      { t: 2400, msg: isEs ? "&gt; Extrayendo llaves de Control de Acceso Básico (BAC) y PACE..." : "&gt; Extracting Basic Access Control (BAC) and PACE keys..." },
-      { t: 3200, msg: isEs ? "&gt; Inicializando canal criptográfico de chip NFC..." : "&gt; Initializing cryptographic channel on NFC chip..." },
-      { t: 4000, msg: "NFC_STAGE" }
-    ];
+    let messages = [];
+    if (state.selectedDocType === 'dni') {
+      messages = [
+        { t: 800, msg: isEs ? "&gt; Buscando código de barras PDF417 para derivar clave PACE..." : "&gt; Searching for PDF417 barcode to derive PACE key..." },
+        { t: 1600, msg: isEs ? "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Código de barras decodificado.</span>" : "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Barcode decoded.</span>" },
+        { t: 2400, msg: isEs ? "&gt; Extrayendo llaves PACE a partir de la zona inferior..." : "&gt; Extracting PACE keys from the lower zone..." },
+        { t: 3200, msg: isEs ? "&gt; Inicializando canal criptográfico de chip NFC del DNI..." : "&gt; Initializing DNI NFC chip cryptographic channel..." },
+        { t: 4000, msg: "NFC_STAGE" }
+      ];
+    } else {
+      messages = [
+        { t: 800, msg: isEs ? "&gt; Buscando zona de lectura mecánica (MRZ) para derivar clave..." : "&gt; Searching for MRZ zone to derive access key..." },
+        { t: 1600, msg: isEs ? "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Zona MRZ detectada:</span> P&lt;ITA&lt;&lt;ROSSI&lt;&lt;MARIO&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;" : "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] MRZ Zone detected:</span> P&lt;ITA&lt;&lt;ROSSI&lt;&lt;MARIO&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;" },
+        { t: 2400, msg: isEs ? "&gt; Extrayendo llaves de Control de Acceso Básico (BAC) y PACE..." : "&gt; Extracting Basic Access Control (BAC) and PACE keys..." },
+        { t: 3200, msg: isEs ? "&gt; Inicializando canal criptográfico de chip NFC..." : "&gt; Initializing cryptographic channel on NFC chip..." },
+        { t: 4000, msg: "NFC_STAGE" }
+      ];
+    }
 
     messages.forEach(item => {
       setTimeout(() => {
@@ -569,9 +724,10 @@ function runPassportScanSimulation() {
           if (cam) cam.style.display = 'none';
           if (nfc) nfc.style.display = 'flex';
           
+          const docTypeLabel = state.selectedDocType === 'dni' ? (isEs ? 'el DNI' : 'the ID card') : (isEs ? 'el pasaporte' : 'the passport');
           log.innerHTML += isEs 
-            ? `<br>&gt; <span style='color: var(--success-color);'>Por favor, sostén el pasaporte contra la parte trasera del teléfono...</span>`
-            : `<br>&gt; <span style='color: var(--success-color);'>Please hold the passport against the back of your phone...</span>`;
+            ? `<br>&gt; <span style='color: var(--success-color);'>Por favor, sostén ${docTypeLabel} contra la parte trasera del teléfono...</span>`
+            : `<br>&gt; <span style='color: var(--success-color);'>Please hold ${docTypeLabel} against the back of your phone...</span>`;
           log.scrollTop = log.scrollHeight;
           
           runNfcReadingSimulation();
@@ -584,21 +740,23 @@ function runPassportScanSimulation() {
   }
 }
 
-// --- SIMULACIÓN DE LECTURA NFC ---
 function runNfcReadingSimulation() {
   const log = document.getElementById('passport-scan-log');
   const nfc = document.getElementById('passport-scan-nfc');
   const success = document.getElementById('passport-scan-success');
   
   const isEs = state.lang === 'es';
+  const dobVal = document.getElementById('kyc-dob').value;
+  const formattedDob = formatDateString(dobVal);
+  const docTypeLabel = state.selectedDocType === 'dni' ? (isEs ? 'DNI' : 'ID Card') : (isEs ? 'Pasaporte' : 'Passport');
 
   const messages = [
-    { t: 1000, msg: isEs ? "&gt; Conexión NFC establecida con éxito." : "&gt; NFC connection established successfully." },
+    { t: 1000, msg: isEs ? `&gt; Conexión NFC establecida con éxito con el ${docTypeLabel}.` : `&gt; NFC connection established successfully with the ${docTypeLabel}.` },
     { t: 1800, msg: isEs ? "&gt; Descifrando Datos de Grupo 1 (Detalles Biográficos)... [OK]" : "&gt; Decrypting Data Group 1 (Biographical Details)... [OK]" },
-    { t: 2600, msg: isEs ? "&gt; Leyendo Datos de Grupo 2 (Imagen Facial del Titular en Alta Res.)... [OK]" : "&gt; Reading Data Group 2 (High Res. Holder Facial Image)... [OK]" },
+    { t: 2600, msg: isEs ? "&gt; Leyendo Datos de Grupo 2 (Imagen Facial del Titular)... [OK]" : "&gt; Reading Data Group 2 (Holder Facial Image)... [OK]" },
     { t: 3400, msg: isEs ? "&gt; Validando firmas digitales del chip mediante claves soberanas..." : "&gt; Validating chip digital signatures via sovereign keys..." },
     { t: 4200, msg: isEs ? "&gt; Verificando Autenticación Pasiva (PA) y Autenticación Activa (AA)... [OK]" : "&gt; Verifying Passive Authentication (PA) and Active Authentication (AA)... [OK]" },
-    { t: 5000, msg: isEs ? "&gt; Cruce de datos con listas de control PEP / OFAC internacionales... Limpio." : "&gt; Data cross-reference with international PEP / OFAC watchlist... Clean." },
+    { t: 5000, msg: isEs ? `&gt; Nacimiento: ${formattedDob} • Cruce PEP/OFAC... Limpio.` : `&gt; DOB: ${formattedDob} • PEP/OFAC watchlist check... Clean.` },
     { t: 5800, msg: isEs ? "&gt; <span style='color: var(--success-color); font-weight: 700;'>¡VERIFICACIÓN COMPLETA! Cuenta promovida a Nivel Nómada (Tier 3).</span>" : "&gt; <span style='color: var(--success-color); font-weight: 700;'>¡VERIFICATION COMPLETE! Account promoted to Nomad Level (Tier 3).</span>" }
   ];
   
@@ -611,6 +769,14 @@ function runNfcReadingSimulation() {
         if (nfc) nfc.style.display = 'none';
         if (success) success.style.display = 'flex';
         
+        // Update success text check mark in screen
+        const successTextEl = document.getElementById('kyc-success-text');
+        if (successTextEl) {
+          successTextEl.innerText = isEs 
+            ? `¡${docTypeLabel} validado por eIDV!` 
+            : `¡${docTypeLabel} validated by eIDV!`;
+        }
+        
         completeKycUpgrade(3);
       }
     }, item.t);
@@ -621,6 +787,21 @@ async function completeKycUpgrade(tier) {
   const btn = document.getElementById('btn-start-passport-scan');
   state.kycTier = tier;
   await saveKycTierOnBackend(tier);
+  
+  // Guardar datos del escaneo en el perfil y localstorage
+  const dobVal = document.getElementById('kyc-dob').value;
+  const emailVal = document.getElementById('kyc-email').value;
+  const docNum = state.selectedDocType === 'dni' 
+    ? Math.floor(10000000 + Math.random() * 89999999).toString() 
+    : 'YA' + Math.floor(100000 + Math.random() * 900000);
+  
+  state.profile.dob = dobVal;
+  state.profile.email = emailVal;
+  state.profile.passport = docNum;
+  state.profile.age = calculateAge(dobVal);
+  
+  localStorage.setItem('crux_profile', JSON.stringify(state.profile));
+  updateUserAvatarInitials();
   
   // Actualizar UI del perfil
   updateProfileKycUI();
@@ -1149,6 +1330,7 @@ function initPreload() {
               <strong>${dict.details_available_balance || 'Saldo Disponible'}:</strong> $${state.balance.toFixed(2)} USDc
               `
             );
+            sendPreloadEmail(selectedPreloadAmount, data.received_USDc);
           } else {
             const errData = await res.json();
             alert("Error: " + (errData.message || "Preload failed."));
@@ -1184,6 +1366,7 @@ function initPreload() {
           );
           updateBalanceUI();
           renderTransactions();
+          sendPreloadEmail(selectedPreloadAmount, netReceived);
         }
       });
       return;
@@ -1250,6 +1433,7 @@ function initPreload() {
             <strong>${dict.details_available_balance || 'Saldo Disponible'}:</strong> $${state.balance.toFixed(2)} USDc
             `
           );
+          sendPreloadEmail(selectedPreloadAmount, data.received_USDc);
         } else {
           const errData = await res.json();
           alert("Error: " + (errData.message || "Preload failed."));
@@ -1285,6 +1469,7 @@ function initPreload() {
         );
         updateBalanceUI();
         renderTransactions();
+        sendPreloadEmail(selectedPreloadAmount, netReceived);
       }
     });
   });
@@ -1340,6 +1525,8 @@ function updateBalanceUI() {
   } else {
     document.getElementById('balance-fiat-eq').innerText = `≈ R$${fiatEquivalent.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} BRL`;
   }
+  
+  checkLowBalanceAlert();
 }
 
 // Historial de Transacciones (Muted B&W iOS layout)
@@ -1756,6 +1943,7 @@ function initRefund() {
               <span style="font-size:0.75rem; color: var(--text-muted);">${dict.js_refund_warning}</span>
               `
             );
+            sendRefundEmail(refundAmount, data.net_received_usd, data.fee_USDc);
           } else {
             const data = await res.json();
             alert(data.message || "Error");
@@ -1789,6 +1977,7 @@ function initRefund() {
           );
           updateBalanceUI();
           renderTransactions();
+          sendRefundEmail(refundAmount, netReceived, fee);
         }
       }
     );
@@ -1797,7 +1986,6 @@ function initRefund() {
 
 let selectedMarketItem = null;
 
-// Catálogo de Servicios Turísticos (Conectividad, Seguros y Civitatis)
 const marketItems = [
   {
     id: "esim_regional",
@@ -1817,15 +2005,6 @@ const marketItems = [
     isInsurance: true
   },
   {
-    id: "civitatis_bot_assistant",
-    category: "tours",
-    titleKey: "market_item_civitatis_bot_title",
-    descKey: "market_item_civitatis_bot_desc",
-    icon: "fa-robot",
-    price: 0,
-    isCivitatisBot: true
-  },
-  {
     id: "car_rental_local",
     category: "cars",
     titleKey: "market_item_car_title",
@@ -1833,6 +2012,15 @@ const marketItems = [
     icon: "fa-car",
     price: 35.00,
     isCarRental: true
+  },
+  {
+    id: "civitatis_bot_assistant",
+    category: "tours",
+    titleKey: "market_item_civitatis_bot_title",
+    descKey: "market_item_civitatis_bot_desc",
+    icon: "fa-robot",
+    price: 0,
+    isCivitatisBot: true
   }
 ];
 
@@ -2092,7 +2280,7 @@ function renderMarketItems(filterCategory = 'all', searchQuery = '', filterCity 
         esimBadgeHtml = `<span class="esim-status-badge">${dict.esim_claimed_badge || 'Reclamada'}</span>`;
       }
     } else if (item.isCivitatisBot) {
-      priceText = 'Gratis';
+      priceText = '';
       buyBtnText = dict.btn_start_assistant || 'Iniciar Chat';
       itemPrice = 0;
     } else {
@@ -2113,7 +2301,7 @@ function renderMarketItems(filterCategory = 'all', searchQuery = '', filterCity 
         </div>
       </div>
       <div class="market-item-buy">
-        <div class="market-item-price">${priceText}</div>
+        <div class="market-item-price" style="${priceText ? '' : 'display: none;'}">${priceText}</div>
         <button class="btn-buy-small" data-id="${item.id}" data-name="${title}" data-price="${itemPrice}">${buyBtnText}</button>
       </div>
     `;
@@ -2525,6 +2713,7 @@ function executeMarketPurchase(name, price, isCivitatis = false) {
         updateBalanceUI();
         renderTransactions();
         renderMarketItems(); // Re-render para actualizar el precio del eSIM a $15
+        addVoucherAndSendEmail(name, 0);
       }
     );
   } else {
@@ -2573,6 +2762,7 @@ async function performActualPurchase(name, price) {
         `
       );
       renderMarketItems();
+      addVoucherAndSendEmail(name, price);
     } else {
       const data = await res.json();
       alert(data.message || "Error");
@@ -2609,6 +2799,7 @@ async function performActualPurchase(name, price) {
     updateBalanceUI();
     renderTransactions();
     renderMarketItems();
+    addVoucherAndSendEmail(name, price);
   } finally {
     selectedMarketItem = null;
   }
@@ -3076,6 +3267,7 @@ function initProfileScreen() {
   const btnCancelAddCompanion = document.getElementById('btn-cancel-add-companion');
   const addCompanionForm = document.getElementById('add-companion-form');
   const profileSaveSuccess = document.getElementById('profile-save-success');
+  const btnCloseVoucher = document.getElementById('btn-close-voucher-modal');
 
   // Update initials on load
   updateUserAvatarInitials();
@@ -3087,13 +3279,17 @@ function initProfileScreen() {
       document.getElementById('profile-name').value = state.profile.name || '';
       document.getElementById('profile-passport').value = state.profile.passport || '';
       document.getElementById('profile-phone').value = state.profile.phone || '';
-      document.getElementById('profile-age').value = state.profile.age || '';
+      document.getElementById('profile-email').value = state.profile.email || '';
+      document.getElementById('profile-dob').value = state.profile.dob || '';
       
       // Update KYC section UI
       updateProfileKycUI();
       
       // Render companions list
       renderCompanionsList();
+
+      // Render vouchers list
+      renderVouchersList();
       
       // Hide add companion form by default
       if (addCompanionForm) addCompanionForm.style.display = 'none';
@@ -3134,9 +3330,11 @@ function initProfileScreen() {
       const name = document.getElementById('profile-name').value;
       const passport = document.getElementById('profile-passport').value;
       const phone = document.getElementById('profile-phone').value;
-      const age = parseInt(document.getElementById('profile-age').value) || 30;
+      const email = document.getElementById('profile-email').value;
+      const dob = document.getElementById('profile-dob').value;
+      const age = calculateAge(dob);
 
-      state.profile = { name, passport, phone, age };
+      state.profile = { name, passport, phone, email, dob, age };
       localStorage.setItem('crux_profile', JSON.stringify(state.profile));
 
       // Update UI initials
@@ -3167,21 +3365,26 @@ function initProfileScreen() {
       const name = document.getElementById('companion-name').value;
       const relationship = document.getElementById('companion-relationship').value;
       const passport = document.getElementById('companion-passport').value;
-      const age = parseInt(document.getElementById('companion-age').value) || 30;
+      const dob = document.getElementById('companion-dob').value;
+      const age = calculateAge(dob);
 
       if (!name.trim()) {
-        alert("Por favor ingrese el nombre del compañero.");
+        alert(state.lang === 'en' ? "Please enter companion name." : "Por favor ingrese el nombre del compañero.");
+        return;
+      }
+      if (!dob) {
+        alert(state.lang === 'en' ? "Please enter companion date of birth." : "Por favor ingrese la fecha de nacimiento del compañero.");
         return;
       }
 
-      const newCompanion = { name, relationship, passport, age };
+      const newCompanion = { name, relationship, passport, dob, age };
       state.companions.push(newCompanion);
       localStorage.setItem('crux_companions', JSON.stringify(state.companions));
 
       // Clear inputs
       document.getElementById('companion-name').value = '';
       document.getElementById('companion-passport').value = '';
-      document.getElementById('companion-age').value = '';
+      document.getElementById('companion-dob').value = '';
 
       // Hide form
       if (addCompanionForm) addCompanionForm.style.display = 'none';
@@ -3197,9 +3400,14 @@ function initProfileScreen() {
       // Clear inputs
       document.getElementById('companion-name').value = '';
       document.getElementById('companion-passport').value = '';
-      document.getElementById('companion-age').value = '';
+      document.getElementById('companion-dob').value = '';
       if (addCompanionForm) addCompanionForm.style.display = 'none';
     });
+  }
+
+  // Close Voucher Modal
+  if (btnCloseVoucher) {
+    btnCloseVoucher.addEventListener('click', closeVoucherDetailModal);
   }
 }
 
@@ -3249,11 +3457,15 @@ function renderCompanionsList() {
       ? (state.lang === 'en' ? 'Family' : 'Familiar') 
       : (state.lang === 'en' ? 'Friend' : 'Amigo/a');
 
+    const formattedDob = c.dob ? formatDateString(c.dob) : '';
+    const ageText = `${c.age} ${state.lang === 'en' ? 'years old' : 'años'}`;
+    const dobAndAgeText = formattedDob ? `${formattedDob} (${ageText})` : ageText;
+
     card.innerHTML = `
       <div>
         <div style="font-weight: 600; font-size: 0.8rem; color: #FFF;">${c.name}</div>
         <div style="font-size: 0.7rem; color: var(--text-muted);">
-          ${relText} • ${c.passport || 'S/D'} • ${c.age} ${state.lang === 'en' ? 'years old' : 'años'}
+          ${relText} • ${c.passport || 'S/D'} • ${dobAndAgeText}
         </div>
       </div>
       <i class="fa-solid fa-trash-can" data-index="${index}" style="cursor: pointer; color: var(--error-color); font-size: 0.85rem; padding: 6px;"></i>
@@ -3352,6 +3564,292 @@ function updateCarRentalPrice() {
       btnBuy.style.opacity = '1';
       btnBuy.style.cursor = 'pointer';
     }
+  }
+}
+
+
+// --- CORREOS ELECTRÓNICOS Y VOUCHERS (SIMULACIÓN E INTEGRACIÓN) ---
+
+function simulateEmailSend(subject, bodyHtml) {
+  console.log(`[SIMULATION EMAIL SENT] \nSubject: ${subject}\nBody:\n${bodyHtml}`);
+  
+  const toast = document.getElementById('mail-notification-toast');
+  const subEl = document.getElementById('mail-toast-subject');
+  const bodyEl = document.getElementById('mail-toast-body');
+  
+  if (toast && subEl && bodyEl) {
+    subEl.innerText = subject;
+    // Strip HTML tags for the notification body excerpt
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = bodyHtml;
+    const textExcerpt = tempDiv.textContent || tempDiv.innerText || "";
+    bodyEl.innerText = textExcerpt;
+    
+    toast.classList.remove('toast-exit');
+    toast.style.display = 'block';
+    
+    // Clear any existing timeout on the toast
+    if (window.mailToastTimeout) clearTimeout(window.mailToastTimeout);
+    
+    window.mailToastTimeout = setTimeout(() => {
+      toast.classList.add('toast-exit');
+      setTimeout(() => {
+        toast.style.display = 'none';
+        toast.classList.remove('toast-exit');
+      }, 400); // matches slideUpToast animation duration
+    }, 4000);
+  }
+}
+
+function addVoucherAndSendEmail(serviceName, price) {
+  // Generate random voucher ID: SPREE-VO-XXXXX
+  const voucherId = 'SPREE-VO-' + Math.floor(10000 + Math.random() * 90000).toString();
+  
+  // Date format
+  const today = new Date();
+  const options = { day: 'numeric', month: 'short', year: 'numeric' };
+  const dateStr = today.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', options);
+  
+  // Create voucher object
+  const newVoucher = {
+    id: voucherId,
+    service: serviceName,
+    price: price,
+    date: dateStr,
+    passenger: state.profile.name || 'Ian Taylor',
+    status: state.lang === 'en' ? 'Active / Pending Activation' : 'Activo / Pendiente de Activación',
+    extra: serviceName
+  };
+  
+  // Save to state
+  if (!state.vouchers) state.vouchers = [];
+  state.vouchers.push(newVoucher);
+  localStorage.setItem('crux_vouchers', JSON.stringify(state.vouchers));
+  
+  // Render vouchers list in profile screen
+  renderVouchersList();
+  
+  // Send email simulation
+  const isEs = state.lang === 'es';
+  const subject = isEs 
+    ? `Tu voucher para ${serviceName} está listo` 
+    : `Your voucher for ${serviceName} is ready`;
+  
+  const bodyHtml = `
+    <div style="font-family: -apple-system, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E5E5EA; border-radius: 12px;">
+      <h2 style="color: #0A84FF; margin-bottom: 20px;">${isEs ? '¡Confirmación de Compra!' : 'Purchase Confirmation!'}</h2>
+      <p>${isEs ? `Hola <strong>${state.profile.name}</strong>,` : `Hello <strong>${state.profile.name}</strong>,`}</p>
+      <p>${isEs ? `Tu compra ha sido procesada con éxito. Aquí están los detalles de tu servicio:` : `Your purchase was successfully processed. Here are the details of your service:`}</p>
+      
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <tr style="border-bottom: 1px solid #E5E5EA;">
+          <td style="padding: 8px 0; font-weight: bold; color: #8E8E93;">${isEs ? 'Servicio' : 'Service'}:</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: bold;">${serviceName}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #E5E5EA;">
+          <td style="padding: 8px 0; font-weight: bold; color: #8E8E93;">${isEs ? 'Código de Voucher' : 'Voucher Code'}:</td>
+          <td style="padding: 8px 0; text-align: right; font-family: monospace; font-weight: bold; color: #30D158;">${voucherId}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #E5E5EA;">
+          <td style="padding: 8px 0; font-weight: bold; color: #8E8E93;">${isEs ? 'Monto Debitado' : 'Debited Amount'}:</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: bold;">$${price.toFixed(2)} USDc</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #E5E5EA;">
+          <td style="padding: 8px 0; font-weight: bold; color: #8E8E93;">${isEs ? 'Pasajero' : 'Passenger'}:</td>
+          <td style="padding: 8px 0; text-align: right;">${state.profile.name}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #E5E5EA;">
+          <td style="padding: 8px 0; font-weight: bold; color: #8E8E93;">${isEs ? 'Fecha de Compra' : 'Purchase Date'}:</td>
+          <td style="padding: 8px 0; text-align: right;">${dateStr}</td>
+        </tr>
+      </table>
+      
+      <p style="margin-top: 20px; font-size: 0.85rem; color: #8E8E93;">
+        ${isEs ? 'Puedes acceder a este voucher y su código QR de activación en la sección <strong>Cuenta Personal -> Mis Vouchers</strong> dentro de la app.' : 'You can access this voucher and its QR activation code in the <strong>Personal Account -> My Vouchers</strong> section inside the app.'}
+      </p>
+      
+      <hr style="border: 0; border-top: 1px solid #E5E5EA; margin: 20px 0;">
+      <p style="text-align: center; font-size: 0.8rem; color: #AEAEB2;">Spree App - Powered by Polygon</p>
+    </div>
+  `;
+  
+  simulateEmailSend(subject, bodyHtml);
+}
+
+function renderVouchersList() {
+  const container = document.getElementById('vouchers-list');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  if (!state.vouchers || state.vouchers.length === 0) {
+    container.innerHTML = `
+      <div style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding: 10px 0;">
+        ${state.lang === 'en' ? 'No active vouchers yet.' : 'Aún no tienes vouchers de servicios.'}
+      </div>
+    `;
+    return;
+  }
+  
+  state.vouchers.forEach(v => {
+    const card = document.createElement('div');
+    card.style.display = 'flex';
+    card.style.justifyContent = 'space-between';
+    card.style.alignItems = 'center';
+    card.style.background = 'rgba(255, 255, 255, 0.03)';
+    card.style.border = '0.5px solid var(--divider-color)';
+    card.style.borderRadius = '8px';
+    card.style.padding = '8px 12px';
+    card.style.marginBottom = '6px';
+    
+    // Icon based on service name
+    let iconClass = 'fa-ticket';
+    if (v.service.toLowerCase().includes('esim')) iconClass = 'fa-wifi';
+    else if (v.service.toLowerCase().includes('seguro') || v.service.toLowerCase().includes('insurance')) iconClass = 'fa-shield-heart';
+    else if (v.service.toLowerCase().includes('auto') || v.service.toLowerCase().includes('vehículo') || v.service.toLowerCase().includes('car')) iconClass = 'fa-car';
+    
+    card.innerHTML = `
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-weight: 600; font-size: 0.8rem; color: #FFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid ${iconClass}" style="color: var(--success-color); font-size: 0.8rem;"></i>
+          ${v.service}
+        </div>
+        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">
+          ${v.id} • ${v.date}
+        </div>
+      </div>
+      <button class="btn-view-voucher" data-id="${v.id}" style="border: none; background: rgba(255, 255, 255, 0.1); color: #FFF; font-size: 0.7rem; font-weight: 600; padding: 6px 10px; border-radius: 6px; cursor: pointer; transition: background 0.2s;">
+        ${state.lang === 'en' ? 'View' : 'Ver'}
+      </button>
+    `;
+    
+    card.querySelector('.btn-view-voucher').addEventListener('click', () => {
+      openVoucherDetailModal(v);
+    });
+    
+    container.appendChild(card);
+  });
+}
+
+function openVoucherDetailModal(v) {
+  const modal = document.getElementById('voucher-detail-modal-overlay');
+  if (!modal) return;
+  
+  document.getElementById('voucher-detail-title').innerText = v.service;
+  document.getElementById('voucher-detail-id').innerText = v.id;
+  document.getElementById('voucher-detail-passenger').innerText = v.passenger;
+  document.getElementById('voucher-detail-date').innerText = v.date;
+  document.getElementById('voucher-detail-status').innerText = v.status;
+  
+  const extraEl = document.getElementById('voucher-detail-extra');
+  if (extraEl) {
+    if (v.service.toLowerCase().includes('esim')) {
+      extraEl.innerText = 'eSIM Connectivity';
+    } else if (v.service.toLowerCase().includes('seguro') || v.service.toLowerCase().includes('insurance')) {
+      extraEl.innerText = 'Chubb Insurance';
+    } else if (v.service.toLowerCase().includes('auto') || v.service.toLowerCase().includes('vehículo') || v.service.toLowerCase().includes('car')) {
+      extraEl.innerText = 'Car Rental';
+    } else {
+      extraEl.innerText = 'Spree Service';
+    }
+  }
+  
+  modal.classList.add('active');
+}
+
+function closeVoucherDetailModal() {
+  const modal = document.getElementById('voucher-detail-modal-overlay');
+  if (modal) modal.classList.remove('active');
+}
+
+function sendPreloadEmail(amount, receivedUSDc) {
+  const isEs = state.lang === 'es';
+  const subject = isEs ? "Carga confirmada en tu presupuesto Spree" : "Deposit confirmed in your Spree budget";
+  const bodyHtml = `
+    <div style="font-family: -apple-system, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E5E5EA; border-radius: 12px;">
+      <h2 style="color: #30D158; margin-bottom: 20px;">${isEs ? '¡Depósito Recibido!' : 'Deposit Received!'}</h2>
+      <p>${isEs ? `Hola <strong>${state.profile.name}</strong>,` : `Hello <strong>${state.profile.name}</strong>,`}</p>
+      <p>${isEs ? `Tu recarga de presupuesto ha sido acreditada correctamente:` : `Your budget deposit has been successfully credited:`}</p>
+      
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <tr style="border-bottom: 1px solid #E5E5EA;">
+          <td style="padding: 8px 0; font-weight: bold; color: #8E8E93;">${isEs ? 'Monto Enviado' : 'Sent Amount'}:</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: bold;">$${amount.toFixed(2)} USD</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #E5E5EA;">
+          <td style="padding: 8px 0; font-weight: bold; color: #8E8E93;">${isEs ? 'Acreditado en Billetera' : 'Credited in Wallet'}:</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #30D158;">$${receivedUSDc.toFixed(2)} USDc</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #E5E5EA;">
+          <td style="padding: 8px 0; font-weight: bold; color: #8E8E93;">${isEs ? 'Saldo Disponible' : 'Available Balance'}:</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: bold;">$${state.balance.toFixed(2)} USDc</td>
+        </tr>
+      </table>
+      
+      <hr style="border: 0; border-top: 1px solid #E5E5EA; margin: 20px 0;">
+      <p style="text-align: center; font-size: 0.8rem; color: #AEAEB2;">Spree App - Powered by Polygon</p>
+    </div>
+  `;
+  simulateEmailSend(subject, bodyHtml);
+}
+
+function sendRefundEmail(amount, netReceived, fee) {
+  const isEs = state.lang === 'es';
+  const subject = isEs ? "Retiro procesado en tu cuenta Spree" : "Withdrawal processed on your Spree account";
+  const bodyHtml = `
+    <div style="font-family: -apple-system, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E5E5EA; border-radius: 12px;">
+      <h2 style="color: #FF453A; margin-bottom: 20px;">${isEs ? '¡Retiro de Fondos!' : 'Withdrawal of Funds!'}</h2>
+      <p>${isEs ? `Hola <strong>${state.profile.name}</strong>,` : `Hello <strong>${state.profile.name}</strong>,`}</p>
+      <p>${isEs ? `Tu retiro de presupuesto ha sido procesado con éxito y se enviará a tu cuenta original:` : `Your budget withdrawal has been successfully processed and will be sent to your original account:`}</p>
+      
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <tr style="border-bottom: 1px solid #E5E5EA;">
+          <td style="padding: 8px 0; font-weight: bold; color: #8E8E93;">${isEs ? 'Monto Retirado' : 'Withdrawn Amount'}:</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: bold;">$${amount.toFixed(2)} USDc</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #E5E5EA;">
+          <td style="padding: 8px 0; font-weight: bold; color: #8E8E93;">${isEs ? 'Comisión de Salida' : 'Withdrawal Fee'}:</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: bold;">$${fee.toFixed(2)} USDc</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #E5E5EA;">
+          <td style="padding: 8px 0; font-weight: bold; color: #8E8E93;">${isEs ? 'Monto Neto Acreditado' : 'Net Credited Amount'}:</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #FF453A;">$${netReceived.toFixed(2)} USD</td>
+        </tr>
+      </table>
+      
+      <hr style="border: 0; border-top: 1px solid #E5E5EA; margin: 20px 0;">
+      <p style="text-align: center; font-size: 0.8rem; color: #AEAEB2;">Spree App - Powered by Polygon</p>
+    </div>
+  `;
+  simulateEmailSend(subject, bodyHtml);
+}
+
+function checkLowBalanceAlert() {
+  const threshold = 50.00;
+  if (state.balance <= threshold) {
+    if (!state.lowBalanceAlertSent) {
+      state.lowBalanceAlertSent = true;
+      const isEs = state.lang === 'es';
+      const subject = isEs ? "⚠️ Alerta: Saldo bajo en tu cuenta Spree" : "⚠️ Alert: Low balance on your Spree account";
+      const bodyHtml = `
+        <div style="font-family: -apple-system, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #FF453A; border-radius: 12px; background: rgba(255, 69, 58, 0.02);">
+          <h2 style="color: #FF453A; margin-bottom: 20px;">${isEs ? '⚠️ Saldo Bajo Detectado' : '⚠️ Low Balance Detected'}</h2>
+          <p>${isEs ? `Hola <strong>${state.profile.name}</strong>,` : `Hello <strong>${state.profile.name}</strong>,`}</p>
+          <p>${isEs ? `Te informamos que tu saldo actual en Spree es de <strong>$${state.balance.toFixed(2)} USDc</strong>.` : `We are writing to inform you that your current Spree balance is <strong>$${state.balance.toFixed(2)} USDc</strong>.`}</p>
+          <p>${isEs ? `Este monto se encuentra por debajo de nuestro límite sugerido de $50.00 USDc. Te recomendamos realizar una recarga para asegurar la continuidad de tus servicios activos (como eSIM o seguros de viaje).` : `This is below our suggested threshold of $50.00 USDc. We recommend preloading your wallet to ensure your active services (such as travel insurance or eSIMs) remain active without interruption.`}</p>
+          
+          <div style="text-align: center; margin: 20px 0;">
+            <span style="font-size: 1.5rem; font-weight: bold; color: #FF453A;">$${state.balance.toFixed(2)} USDc</span>
+          </div>
+          
+          <hr style="border: 0; border-top: 1px solid #E5E5EA; margin: 20px 0;">
+          <p style="text-align: center; font-size: 0.8rem; color: #AEAEB2;">Spree App - Powered by Polygon</p>
+        </div>
+      `;
+      simulateEmailSend(subject, bodyHtml);
+    }
+  } else {
+    state.lowBalanceAlertSent = false;
   }
 }
 
