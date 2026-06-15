@@ -343,7 +343,7 @@
         <!-- PANTALLA 3: DASHBOARD -->
         <div class="screen" id="screen-dashboard">
           <div class="dashboard-header">
-            <div class="user-avatar">IT</div>
+            <div class="user-avatar" id="btn-user-profile" style="cursor: pointer;">IT</div>
             <div class="location-badge" id="location-toggle" style="cursor: pointer;">
               <span id="flag-icon">🇦🇷</span> <span id="location-name">Buenos Aires, AR</span> <i class="fa-solid fa-chevron-down"></i>
             </div>
@@ -374,6 +374,96 @@
           <!-- Historial de Transacciones (Grouped Cell Style) -->
           <div class="tx-group" id="tx-list">
             <!-- Cargado dinámicamente -->
+          </div>
+        </div>
+
+        <!-- PANTALLA: CUENTA PERSONAL -->
+        <div class="screen" id="screen-profile">
+          <div class="dashboard-header">
+            <h2 data-i18n="profile_title">Cuenta Personal</h2>
+            <i class="fa-solid fa-xmark" id="btn-close-profile" style="font-size: 1.2rem; cursor: pointer; color: var(--text-muted);"></i>
+          </div>
+
+          <div style="overflow-y: auto; max-height: calc(100% - 60px); padding-bottom: 20px;">
+            <!-- SECCION VIAJERO PRINCIPAL -->
+            <div class="premium-card" style="margin-bottom: 15px;">
+              <h3 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;" data-i18n="profile_main_traveler_title">Viajero Principal</h3>
+              
+              <div class="input-group">
+                <span class="input-label" data-i18n="profile_fullname_label">Nombre Completo</span>
+                <input type="text" class="input-field" id="profile-name" placeholder="John Doe">
+              </div>
+              
+              <div class="input-group">
+                <span class="input-label" data-i18n="profile_passport_label">Pasaporte / DNI</span>
+                <input type="text" class="input-field" id="profile-passport" placeholder="AA1234567">
+              </div>
+
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="input-group">
+                  <span class="input-label" data-i18n="profile_phone_label">Teléfono</span>
+                  <input type="text" class="input-field" id="profile-phone" placeholder="+1 555-0199">
+                </div>
+                <div class="input-group">
+                  <span class="input-label" data-i18n="profile_age_label">Edad</span>
+                  <input type="number" class="input-field" id="profile-age" placeholder="30" min="1" max="120">
+                </div>
+              </div>
+              
+              <button class="btn-primary" id="btn-save-profile" style="margin-top: 10px; font-size: 0.85rem; padding: 10px;" data-i18n="btn_save_profile">Guardar Perfil</button>
+              <div id="profile-save-success" style="color: var(--ios-green); font-size: 0.75rem; margin-top: 6px; text-align: center; display: none;" data-i18n="profile_save_success">¡Perfil guardado con éxito!</div>
+            </div>
+
+            <!-- SECCION COMPAÑEROS DE VIAJE -->
+            <div class="premium-card">
+              <h3 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;" data-i18n="profile_companions_title">Compañeros de Viaje</h3>
+              <p class="subtitle" style="font-size: 0.7rem; margin-bottom: 12px;" data-i18n="profile_companions_desc">Familiares o amigos con los que viajas, para facilitar la compra de seguros, eSIMs y actividades.</p>
+
+              <!-- LISTA DE COMPAÑEROS -->
+              <div id="companions-list" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
+                <!-- Se llena dinámicamente -->
+              </div>
+
+              <!-- BOTON PARA MOSTRAR FORMULARIO DE AGREGAR -->
+              <button class="btn-secondary" id="btn-show-add-companion" style="font-size: 0.8rem; padding: 8px; margin-bottom: 12px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <i class="fa-solid fa-plus"></i> <span data-i18n="profile_btn_add_companion_text">Agregar Compañero</span>
+              </button>
+
+              <!-- FORMULARIO DE AGREGAR COMPAÑERO (oculto por defecto) -->
+              <div id="add-companion-form" style="display: none; border-top: 0.5px solid var(--divider-color); padding-top: 12px; margin-top: 10px;">
+                <h4 style="font-size: 0.8rem; font-weight: 600; margin-bottom: 10px;" data-i18n="profile_new_companion_title">Nuevo Compañero de Viaje</h4>
+                
+                <div class="input-group">
+                  <span class="input-label" data-i18n="profile_fullname_label">Nombre Completo</span>
+                  <input type="text" class="input-field" id="companion-name" placeholder="Jane Doe">
+                </div>
+
+                <div class="input-group">
+                  <span class="input-label" data-i18n="profile_comp_relation_label">RELACIÓN</span>
+                  <select class="input-field" id="companion-relationship" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--card-border); padding: 10px; border-radius:10px;">
+                    <option value="Familiar" data-i18n="profile_relation_family">Familiar</option>
+                    <option value="Amigo" data-i18n="profile_relation_friend">Amigo/a</option>
+                  </select>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                  <div class="input-group">
+                    <span class="input-label" data-i18n="profile_passport_label">Pasaporte / DNI</span>
+                    <input type="text" class="input-field" id="companion-passport" placeholder="AB9876543">
+                  </div>
+                  <div class="input-group">
+                    <span class="input-label" data-i18n="profile_age_label">Edad</span>
+                    <input type="number" class="input-field" id="companion-age" placeholder="28" min="1" max="120">
+                  </div>
+                </div>
+
+                <div style="display:flex; gap: 8px; margin-top: 8px;">
+                  <button class="btn-primary" id="btn-confirm-add-companion" style="margin-top:0; font-size: 0.8rem; padding: 8px; flex: 1;" data-i18n="btn_add">Agregar</button>
+                  <button class="btn-secondary" id="btn-cancel-add-companion" style="font-size: 0.8rem; padding: 8px; flex: 1;" data-i18n="btn_cancel">Cancelar</button>
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
 
@@ -667,6 +757,14 @@
           <div class="bank-body">
             <p data-i18n="purchase_modal_body">¿Adquirir el servicio seleccionado usando tu presupuesto pre-cargado?</p>
             <div class="bank-amount" id="purchase-modal-item-name" style="font-size: 0.9rem; margin: 6px 0 2px 0; font-weight:600;">eSIM Regional</div>
+            
+            <div style="text-align: left; margin: 12px 0 12px 0;">
+              <span class="input-label" style="font-size: 0.65rem; display: block; margin-bottom: 6px;" data-i18n="purchase_travelers_label">VIAJEROS SELECCIONADOS</span>
+              <div id="purchase-travelers-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 100px; overflow-y: auto; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 8px; border: 1px solid var(--divider-color);">
+                <!-- Se llena dinámicamente -->
+              </div>
+            </div>
+
             <div class="bank-amount" id="purchase-modal-amount" style="font-size:1.25rem; font-weight:700;">$15.00 USDc</div>
           </div>
           <button class="bank-btn-confirm" id="btn-purchase-confirm" data-i18n="btn_confirm_pay">Confirmar y Pagar</button>
@@ -693,22 +791,25 @@
               <option value="Global">Global 🌐</option>
             </select>
           </div>
+
+          <div class="input-group">
+            <span class="input-label" data-i18n="insurance_travelers_label">VIAJEROS A ASEGURAR</span>
+            <div id="insurance-travelers-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 100px; overflow-y: auto; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 8px; border: 1px solid var(--divider-color); margin-bottom: 10px;">
+              <!-- Se llena dinámicamente -->
+            </div>
+          </div>
           
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div style="display:grid; grid-template-columns: 1fr; gap:10px;">
             <div class="input-group">
               <span class="input-label" data-i18n="market_insurance_days_label">DÍAS DE VIAJE</span>
               <input type="number" class="input-field" id="insurance-days" value="10" min="1" max="90" style="padding: 10px; border-radius:10px;">
-            </div>
-            <div class="input-group">
-              <span class="input-label" data-i18n="market_insurance_age_label">EDAD</span>
-              <input type="number" class="input-field" id="insurance-age" value="30" min="1" max="99" style="padding: 10px; border-radius:10px;">
             </div>
           </div>
           
           <div class="premium-card" style="background: rgba(52, 199, 89, 0.05); border: 1px dashed rgba(52, 199, 89, 0.2); padding: 10px 14px; margin-bottom: 14px; border-radius: 12px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:0.75rem; color: var(--text-muted);" data-i18n="market_insurance_price_per_day">Costo diario</span>
-              <span style="font-size:0.85rem; font-weight:700; color: var(--ios-green);">$3.00 USDc</span>
+              <span style="font-size:0.75rem; color: var(--text-muted);" id="insurance-daily-cost-label" data-i18n="market_insurance_price_per_day">Costo diario</span>
+              <span style="font-size:0.85rem; font-weight:700; color: var(--ios-green);" id="insurance-daily-cost">$3.00 USDc</span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; border-top: 0.5px solid rgba(255,255,255,0.05); padding-top:6px;">
               <span style="font-size:0.75rem; font-weight:600; color:#fff;">Total a pagar:</span>

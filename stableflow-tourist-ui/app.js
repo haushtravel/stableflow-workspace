@@ -57,12 +57,22 @@ async function fetchWithAuth(url, options = {}) {
 }
 
 // Estado de la aplicación
+const savedProfile = localStorage.getItem('spree_profile');
+const savedCompanions = localStorage.getItem('spree_companions');
+
 const state = {
   balance: 0.00, // Comienza en $0 hasta la pre-carga
   country: 'ars', // 'ars' (Argentina) o 'brl' (Brasil)
   kycTier: 1, // 1: Express, 2: Documental
   transactions: [],
-  lang: 'es'
+  lang: 'es',
+  profile: savedProfile ? JSON.parse(savedProfile) : {
+    name: 'Ian Taylor',
+    passport: 'AA1234567',
+    phone: '+1 555-0199',
+    age: 30
+  },
+  companions: savedCompanions ? JSON.parse(savedCompanions) : []
 };
 
 // Cotizaciones mockeadas
@@ -86,14 +96,12 @@ document.addEventListener('DOMContentLoaded', () => {
   initRefund();
   initMarketplace();
   initSupport();
+  initProfileScreen();
   
-  // Auto-login si ya existe token de sesión
-  const token = localStorage.getItem('spree_session_token');
-  if (token) {
-    switchScreen('screen-dashboard');
-    document.getElementById('app-bottom-nav').style.display = 'flex';
-  } else {
-    switchScreen('screen-onboarding');
+  // Siempre iniciar en la pantalla de onboarding
+  localStorage.removeItem('spree_session_token');
+  switchScreen('screen-onboarding');
+  if (document.getElementById('app-bottom-nav')) {
     document.getElementById('app-bottom-nav').style.display = 'none';
   }
   
@@ -1703,7 +1711,13 @@ function initMarketplace() {
     document.getElementById('btn-purchase-confirm').addEventListener('click', () => {
       if (!selectedMarketItem) return;
       document.getElementById('purchase-modal-overlay').classList.remove('active');
-      executeMarketPurchase(selectedMarketItem.name, selectedMarketItem.price, selectedMarketItem.isCivitatis);
+      
+      let finalName = selectedMarketItem.name;
+      if (selectedMarketItem.selectedTravelers && selectedMarketItem.selectedTravelers.length > 0) {
+        finalName += ` (${selectedMarketItem.selectedTravelers.join(', ')})`;
+      }
+      
+      executeMarketPurchase(finalName, selectedMarketItem.price, selectedMarketItem.isCivitatis);
     });
   }
   
@@ -1729,13 +1743,50 @@ function initMarketplace() {
   const btnInsuranceQuoteBuy = document.getElementById('btn-insurance-quote-buy');
   if (btnInsuranceQuoteBuy) {
     btnInsuranceQuoteBuy.addEventListener('click', () => {
-      closeInsuranceModal();
+      // Gather selected travelers from insurance list
+      const container = document.getElementById('insurance-travelers-list');
+      if (!container) return;
+      const chks = container.querySelectorAll('.insurance-traveler-chk:checked');
+      if (chks.length === 0) return;
+      
+      const selectedNames = [];
+      let totalDailyCost = 0;
+      chks.forEach(chk => {
+        const type = chk.getAttribute('data-type');
+        let name = '';
+        let age = 30;
+        if (type === 'main') {
+          name = state.profile.name || 'Tú';
+          age = state.profile.age || 30;
+        } else {
+          const idx = parseInt(chk.getAttribute('data-index'));
+          if (state.companions[idx]) {
+            name = state.companions[idx].name;
+            age = state.companions[idx].age || 30;
+          }
+        }
+        selectedNames.push(name);
+        let rate = 3.00;
+        if (age > 60) rate = 4.50;
+        totalDailyCost += rate;
+      });
+
       const days = parseInt(document.getElementById('insurance-days').value) || 10;
       const country = document.getElementById('insurance-country').value || 'Global';
-      const totalCost = days * 3.00;
+      const totalCost = days * totalDailyCost;
+      
       const dict = translations[state.lang] || translations['es'];
-      const name = `${dict.market_item_insurance_title || "Seguro de Viaje Premium"} (${days} días - ${country})`;
-      openPurchaseModal(name, totalCost, false);
+      
+      if (state.balance < totalCost) {
+        alert(dict.slide_to_pay_insufficient || "Saldo Insuficiente");
+        return;
+      }
+      
+      closeInsuranceModal();
+      
+      const name = `${dict.market_item_insurance_title || "Seguro de Viaje Premium"} (${days} días - ${country}) (${selectedNames.join(', ')})`;
+      
+      executeMarketPurchase(name, totalCost, false);
     });
   }
   
@@ -1877,41 +1928,223 @@ function startCivitatisBotChat() {
   }
 }
 
-function openInsuranceModal() {
-  const modal = document.getElementById('insurance-modal-overlay');
-  if (modal) modal.classList.add('active');
-  updateInsurancePrice();
-}
-
 function closeInsuranceModal() {
   const modal = document.getElementById('insurance-modal-overlay');
   if (modal) modal.classList.remove('active');
 }
 
+function openInsuranceModal() {
+  const modal = document.getElementById('insurance-modal-overlay');
+  if (modal) modal.classList.add('active');
+
+  const container = document.getElementById('insurance-travelers-list');
+  if (container) {
+    container.innerHTML = '';
+    
+    // Add Main Traveler checkbox
+    const mainLabel = document.createElement('label');
+    mainLabel.style.display = 'flex';
+    mainLabel.style.alignItems = 'center';
+    mainLabel.style.gap = '8px';
+    mainLabel.style.fontSize = '0.75rem';
+    mainLabel.style.color = '#FFF';
+    mainLabel.style.cursor = 'pointer';
+    mainLabel.innerHTML = `
+      <input type="checkbox" class="insurance-traveler-chk" data-type="main" checked style="width: 14px; height: 14px; cursor: pointer;">
+      <span>${state.profile.name || 'Tú'} (${state.lang === 'en' ? 'You' : 'Tú'} - ${state.profile.age || 30} ${state.lang === 'en' ? 'yrs' : 'años'})</span>
+    `;
+    container.appendChild(mainLabel);
+
+    // Add Companions checkboxes
+    state.companions.forEach((c, index) => {
+      const compLabel = document.createElement('label');
+      compLabel.style.display = 'flex';
+      compLabel.style.alignItems = 'center';
+      compLabel.style.gap = '8px';
+      compLabel.style.fontSize = '0.75rem';
+      compLabel.style.color = '#FFF';
+      compLabel.style.cursor = 'pointer';
+      compLabel.innerHTML = `
+        <input type="checkbox" class="insurance-traveler-chk" data-type="companion" data-index="${index}" style="width: 14px; height: 14px; cursor: pointer;">
+        <span>${c.name} (${c.relationship === 'Familiar' ? (state.lang === 'en' ? 'Family' : 'Familiar') : (state.lang === 'en' ? 'Friend' : 'Amigo/a')} - ${c.age || 30} ${state.lang === 'en' ? 'yrs' : 'años'})</span>
+      `;
+      container.appendChild(compLabel);
+    });
+
+    // Handle updates when checkbox selection changes
+    const chks = container.querySelectorAll('.insurance-traveler-chk');
+    chks.forEach(chk => {
+      chk.addEventListener('change', () => {
+        updateInsurancePrice();
+      });
+    });
+  }
+
+  updateInsurancePrice();
+}
+
 function updateInsurancePrice() {
   const daysInput = document.getElementById('insurance-days');
   const totalCostSpan = document.getElementById('insurance-total-cost');
+  const dailyCostSpan = document.getElementById('insurance-daily-cost');
+  const btnBuy = document.getElementById('btn-insurance-quote-buy');
+  
   if (!daysInput || !totalCostSpan) return;
   
   let days = parseInt(daysInput.value) || 0;
   if (days < 1) days = 1;
   if (days > 90) days = 90;
   daysInput.value = days;
+
+  const container = document.getElementById('insurance-travelers-list');
+  if (!container) return;
+
+  const chks = container.querySelectorAll('.insurance-traveler-chk:checked');
+  const count = chks.length;
+
+  if (count === 0) {
+    if (dailyCostSpan) dailyCostSpan.innerText = `$0.00 USDc`;
+    totalCostSpan.innerText = `$0.00 USDc`;
+    if (btnBuy) {
+      btnBuy.disabled = true;
+      btnBuy.style.opacity = '0.5';
+      btnBuy.style.cursor = 'not-allowed';
+      btnBuy.innerText = state.lang === 'en' ? 'Select Traveler' : 'Selecciona Viajero';
+    }
+    return;
+  }
+
+  let totalDailyCost = 0;
+  chks.forEach(chk => {
+    const type = chk.getAttribute('data-type');
+    let age = 30;
+    if (type === 'main') {
+      age = state.profile.age || 30;
+    } else {
+      const idx = parseInt(chk.getAttribute('data-index'));
+      if (state.companions[idx]) {
+        age = state.companions[idx].age || 30;
+      }
+    }
+    // Age rule: > 60 has 50% surcharge
+    let rate = 3.00;
+    if (age > 60) rate = 4.50;
+    totalDailyCost += rate;
+  });
+
+  const totalCost = days * totalDailyCost;
   
-  const totalCost = days * 3.00;
+  if (dailyCostSpan) {
+    dailyCostSpan.innerText = `$${totalDailyCost.toFixed(2)} USDc`;
+  }
   totalCostSpan.innerText = `$${totalCost.toFixed(2)} USDc`;
+
+  if (btnBuy) {
+    btnBuy.disabled = false;
+    btnBuy.style.opacity = '1';
+    btnBuy.style.cursor = 'pointer';
+    btnBuy.innerText = translations[state.lang]?.market_insurance_btn_buy || translations['es'].market_insurance_btn_buy || 'Contratar con Chubb';
+  }
 }
 
-function openPurchaseModal(name, price, isCivitatis = false) {
-  selectedMarketItem = { name, price, isCivitatis };
-  
-  document.getElementById('purchase-modal-item-name').innerText = name;
-  document.getElementById('purchase-modal-amount').innerText = `$${price.toFixed(2)} USDc`;
+function openPurchaseModal(name, basePrice, isCivitatis = false) {
+  selectedMarketItem = { name, basePrice, price: basePrice, isCivitatis, selectedTravelers: [] };
+
+  const container = document.getElementById('purchase-travelers-list');
+  if (container) {
+    container.innerHTML = '';
+    
+    // Add Main Traveler checkbox
+    const mainLabel = document.createElement('label');
+    mainLabel.style.display = 'flex';
+    mainLabel.style.alignItems = 'center';
+    mainLabel.style.gap = '8px';
+    mainLabel.style.fontSize = '0.75rem';
+    mainLabel.style.color = '#FFF';
+    mainLabel.style.cursor = 'pointer';
+    mainLabel.innerHTML = `
+      <input type="checkbox" class="purchase-traveler-chk" data-type="main" checked style="width: 14px; height: 14px; cursor: pointer;">
+      <span>${state.profile.name || 'Tú'} (${state.lang === 'en' ? 'You' : 'Tú'} - ${state.profile.age || 30} ${state.lang === 'en' ? 'yrs' : 'años'})</span>
+    `;
+    container.appendChild(mainLabel);
+
+    // Add Companions checkboxes
+    state.companions.forEach((c, index) => {
+      const compLabel = document.createElement('label');
+      compLabel.style.display = 'flex';
+      compLabel.style.alignItems = 'center';
+      compLabel.style.gap = '8px';
+      compLabel.style.fontSize = '0.75rem';
+      compLabel.style.color = '#FFF';
+      compLabel.style.cursor = 'pointer';
+      compLabel.innerHTML = `
+        <input type="checkbox" class="purchase-traveler-chk" data-type="companion" data-index="${index}" style="width: 14px; height: 14px; cursor: pointer;">
+        <span>${c.name} (${c.relationship === 'Familiar' ? (state.lang === 'en' ? 'Family' : 'Familiar') : (state.lang === 'en' ? 'Friend' : 'Amigo/a')} - ${c.age || 30} ${state.lang === 'en' ? 'yrs' : 'años'})</span>
+      `;
+      container.appendChild(compLabel);
+    });
+
+    // Handle updates when checkbox selection changes
+    const chks = container.querySelectorAll('.purchase-traveler-chk');
+    chks.forEach(chk => {
+      chk.addEventListener('change', () => {
+        updatePurchaseModalPrice(basePrice);
+      });
+    });
+  }
+
+  // Initial pricing update
+  updatePurchaseModalPrice(basePrice);
+
+  document.getElementById('purchase-modal-overlay').classList.add('active');
+}
+
+function updatePurchaseModalPrice(basePrice) {
+  const container = document.getElementById('purchase-travelers-list');
+  if (!container) return;
+
+  const chks = container.querySelectorAll('.purchase-traveler-chk:checked');
+  const count = chks.length;
   
   const confirmBtn = document.getElementById('btn-purchase-confirm');
   const dict = translations[state.lang] || translations['es'];
   
-  if (state.balance < price) {
+  if (count === 0) {
+    document.getElementById('purchase-modal-amount').innerText = `$0.00 USDc`;
+    confirmBtn.innerText = state.lang === 'en' ? 'Select Traveler' : 'Selecciona Viajero';
+    confirmBtn.disabled = true;
+    confirmBtn.style.opacity = '0.5';
+    confirmBtn.style.cursor = 'not-allowed';
+    selectedMarketItem.price = 0;
+    selectedMarketItem.selectedTravelers = [];
+    return;
+  }
+
+  const totalPrice = basePrice * count;
+  selectedMarketItem.price = totalPrice;
+
+  // Recopilar nombres de los viajeros seleccionados
+  const selectedTravelers = [];
+  chks.forEach(chk => {
+    const type = chk.getAttribute('data-type');
+    if (type === 'main') {
+      selectedTravelers.push(state.profile.name || 'Tú');
+    } else {
+      const idx = parseInt(chk.getAttribute('data-index'));
+      if (state.companions[idx]) {
+        selectedTravelers.push(state.companions[idx].name);
+      }
+    }
+  });
+  selectedMarketItem.selectedTravelers = selectedTravelers;
+
+  // Mostrar precio
+  const travelersLabel = count === 1 
+    ? (state.lang === 'en' ? '1 person' : '1 persona')
+    : (state.lang === 'en' ? `${count} people` : `${count} personas`);
+  document.getElementById('purchase-modal-amount').innerText = `$${totalPrice.toFixed(2)} USDc (${travelersLabel})`;
+
+  if (state.balance < totalPrice) {
     confirmBtn.innerText = dict.slide_to_pay_insufficient;
     confirmBtn.disabled = true;
     confirmBtn.style.opacity = '0.5';
@@ -1922,8 +2155,6 @@ function openPurchaseModal(name, price, isCivitatis = false) {
     confirmBtn.style.opacity = '1';
     confirmBtn.style.cursor = 'pointer';
   }
-  
-  document.getElementById('purchase-modal-overlay').classList.add('active');
 }
 
 function executeMarketPurchase(name, price, isCivitatis = false) {
@@ -2530,6 +2761,188 @@ function initSupport() {
       }
     });
   }
+}
+
+// --- SECCIÓN: CUENTA PERSONAL Y COMPAÑEROS DE VIAJE ---
+function initProfileScreen() {
+  const btnUserProfile = document.getElementById('btn-user-profile');
+  const btnCloseProfile = document.getElementById('btn-close-profile');
+  const btnSaveProfile = document.getElementById('btn-save-profile');
+  const btnShowAddCompanion = document.getElementById('btn-show-add-companion');
+  const btnConfirmAddCompanion = document.getElementById('btn-confirm-add-companion');
+  const btnCancelAddCompanion = document.getElementById('btn-cancel-add-companion');
+  const addCompanionForm = document.getElementById('add-companion-form');
+  const profileSaveSuccess = document.getElementById('profile-save-success');
+
+  // Update initials on load
+  updateUserAvatarInitials();
+
+  // Navigation handlers
+  if (btnUserProfile) {
+    btnUserProfile.addEventListener('click', () => {
+      // Load current profile state into input fields
+      document.getElementById('profile-name').value = state.profile.name || '';
+      document.getElementById('profile-passport').value = state.profile.passport || '';
+      document.getElementById('profile-phone').value = state.profile.phone || '';
+      document.getElementById('profile-age').value = state.profile.age || '';
+      
+      // Render companions list
+      renderCompanionsList();
+      
+      // Hide add companion form by default
+      if (addCompanionForm) addCompanionForm.style.display = 'none';
+      
+      // Switch screen
+      switchScreen('screen-profile');
+    });
+  }
+
+  if (btnCloseProfile) {
+    btnCloseProfile.addEventListener('click', () => {
+      switchScreen('screen-dashboard');
+    });
+  }
+
+  // Save profile info
+  if (btnSaveProfile) {
+    btnSaveProfile.addEventListener('click', () => {
+      const name = document.getElementById('profile-name').value;
+      const passport = document.getElementById('profile-passport').value;
+      const phone = document.getElementById('profile-phone').value;
+      const age = parseInt(document.getElementById('profile-age').value) || 30;
+
+      state.profile = { name, passport, phone, age };
+      localStorage.setItem('spree_profile', JSON.stringify(state.profile));
+
+      // Update UI initials
+      updateUserAvatarInitials();
+
+      // Show success msg
+      if (profileSaveSuccess) {
+        profileSaveSuccess.style.display = 'block';
+        setTimeout(() => {
+          profileSaveSuccess.style.display = 'none';
+        }, 3000);
+      }
+    });
+  }
+
+  // Show add companion form
+  if (btnShowAddCompanion) {
+    btnShowAddCompanion.addEventListener('click', () => {
+      if (addCompanionForm) {
+        addCompanionForm.style.display = addCompanionForm.style.display === 'none' ? 'block' : 'none';
+      }
+    });
+  }
+
+  // Confirm add companion
+  if (btnConfirmAddCompanion) {
+    btnConfirmAddCompanion.addEventListener('click', () => {
+      const name = document.getElementById('companion-name').value;
+      const relationship = document.getElementById('companion-relationship').value;
+      const passport = document.getElementById('companion-passport').value;
+      const age = parseInt(document.getElementById('companion-age').value) || 30;
+
+      if (!name.trim()) {
+        alert("Por favor ingrese el nombre del compañero.");
+        return;
+      }
+
+      const newCompanion = { name, relationship, passport, age };
+      state.companions.push(newCompanion);
+      localStorage.setItem('spree_companions', JSON.stringify(state.companions));
+
+      // Clear inputs
+      document.getElementById('companion-name').value = '';
+      document.getElementById('companion-passport').value = '';
+      document.getElementById('companion-age').value = '';
+
+      // Hide form
+      if (addCompanionForm) addCompanionForm.style.display = 'none';
+
+      // Re-render
+      renderCompanionsList();
+    });
+  }
+
+  // Cancel add companion
+  if (btnCancelAddCompanion) {
+    btnCancelAddCompanion.addEventListener('click', () => {
+      // Clear inputs
+      document.getElementById('companion-name').value = '';
+      document.getElementById('companion-passport').value = '';
+      document.getElementById('companion-age').value = '';
+      if (addCompanionForm) addCompanionForm.style.display = 'none';
+    });
+  }
+}
+
+function updateUserAvatarInitials() {
+  const btnUserProfile = document.getElementById('btn-user-profile');
+  if (btnUserProfile && state.profile && state.profile.name) {
+    const parts = state.profile.name.trim().split(/\s+/);
+    let initials = '';
+    if (parts.length > 0 && parts[0]) {
+      initials += parts[0][0].toUpperCase();
+    }
+    if (parts.length > 1 && parts[1]) {
+      initials += parts[1][0].toUpperCase();
+    }
+    btnUserProfile.innerText = initials || 'US';
+  }
+}
+
+function renderCompanionsList() {
+  const container = document.getElementById('companions-list');
+  if (!container) return;
+
+  container.innerHTML = '';
+  
+  if (state.companions.length === 0) {
+    const dict = translations[state.lang] || translations['es'];
+    container.innerHTML = `
+      <div style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding: 10px 0;">
+        ${state.lang === 'en' ? 'No companions registered yet.' : 'Aún no tienes compañeros registrados.'}
+      </div>
+    `;
+    return;
+  }
+
+  state.companions.forEach((c, index) => {
+    const card = document.createElement('div');
+    card.style.display = 'flex';
+    card.style.justifyContent = 'space-between';
+    card.style.alignItems = 'center';
+    card.style.background = 'rgba(255, 255, 255, 0.03)';
+    card.style.border = '0.5px solid var(--divider-color)';
+    card.style.borderRadius = '8px';
+    card.style.padding = '8px 12px';
+    
+    // Get localized relationship
+    const relText = c.relationship === 'Familiar' 
+      ? (state.lang === 'en' ? 'Family' : 'Familiar') 
+      : (state.lang === 'en' ? 'Friend' : 'Amigo/a');
+
+    card.innerHTML = `
+      <div>
+        <div style="font-weight: 600; font-size: 0.8rem; color: #FFF;">${c.name}</div>
+        <div style="font-size: 0.7rem; color: var(--text-muted);">
+          ${relText} • ${c.passport || 'S/D'} • ${c.age} ${state.lang === 'en' ? 'years old' : 'años'}
+        </div>
+      </div>
+      <i class="fa-solid fa-trash-can" data-index="${index}" style="cursor: pointer; color: var(--error-color); font-size: 0.85rem; padding: 6px;"></i>
+    `;
+
+    card.querySelector('.fa-trash-can').addEventListener('click', (e) => {
+      const idx = parseInt(e.target.getAttribute('data-index'));
+      state.companions.splice(idx, 1);
+      localStorage.setItem('spree_companions', JSON.stringify(state.companions));
+      renderCompanionsList();
+    });
+
+    container.appendChild(card);
+  });
 }
 
 
