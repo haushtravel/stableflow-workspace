@@ -2285,6 +2285,71 @@ function updateInsurancePrice() {
   }
 }
 
+function openCarRentalModal() {
+  const modal = document.getElementById('car-rental-modal-overlay');
+  if (modal) modal.classList.add('active');
+
+  const driverSelect = document.getElementById('car-driver');
+  if (driverSelect) {
+    driverSelect.innerHTML = '';
+    
+    // Add Main Traveler
+    const mainOpt = document.createElement('option');
+    mainOpt.value = state.profile.name || 'Tú';
+    mainOpt.text = `${state.profile.name || 'Tú'} (${state.lang === 'en' ? 'You' : 'Tú'})`;
+    driverSelect.appendChild(mainOpt);
+
+    // Add Companions
+    state.companions.forEach(c => {
+      const compOpt = document.createElement('option');
+      compOpt.value = c.name;
+      compOpt.text = c.name;
+      driverSelect.appendChild(compOpt);
+    });
+  }
+
+  updateCarRentalPrice();
+}
+
+function closeCarRentalModal() {
+  const modal = document.getElementById('car-rental-modal-overlay');
+  if (modal) modal.classList.remove('active');
+}
+
+function updateCarRentalPrice() {
+  const typeSelect = document.getElementById('car-type');
+  const daysInput = document.getElementById('car-days');
+  const insuranceOpt = document.getElementById('car-insurance-opt');
+  const dailyCostEl = document.getElementById('car-daily-cost');
+  const totalCostEl = document.getElementById('car-total-cost');
+  const btnBuy = document.getElementById('btn-car-rental-buy');
+
+  if (!typeSelect || !daysInput || !dailyCostEl || !totalCostEl) return;
+
+  const selectedOpt = typeSelect.options[typeSelect.selectedIndex];
+  const basePrice = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-price')) : 35;
+  
+  let days = parseInt(daysInput.value) || 0;
+  if (days < 1) days = 1;
+  if (days > 30) days = 30;
+  daysInput.value = days;
+
+  const hasInsurance = insuranceOpt ? insuranceOpt.checked : false;
+  const dailyPrice = basePrice + (hasInsurance ? 10.00 : 0.00);
+  const totalCost = dailyPrice * days;
+
+  dailyCostEl.innerText = `$${dailyPrice.toFixed(2)} USDc`;
+  totalCostEl.innerText = `$${totalCost.toFixed(2)} USDc`;
+
+  if (btnBuy) {
+    if (state.balance < totalCost) {
+      btnBuy.style.opacity = '0.6';
+    } else {
+      btnBuy.style.opacity = '1';
+    }
+  }
+}
+
 function openPurchaseModal(name, basePrice, isCivitatis = false) {
   selectedMarketItem = { name, basePrice, price: basePrice, isCivitatis, selectedTravelers: [] };
 
