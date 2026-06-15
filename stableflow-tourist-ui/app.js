@@ -1,4 +1,4 @@
-// Spree Tourist UI Prototype Engine (iOS B&W Version)
+﻿// Crux Tourist UI Prototype Engine (iOS B&W Version)
 
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:8081'
@@ -12,7 +12,7 @@ function generateUUID() {
 }
 
 async function fetchWithAuth(url, options = {}) {
-  const token = localStorage.getItem('spree_session_token');
+  const token = localStorage.getItem('crux_session_token');
   options.headers = options.headers || {};
   
   if (token) {
@@ -33,7 +33,7 @@ async function fetchWithAuth(url, options = {}) {
   
   if (response.status === 401) {
     console.warn("Sesión inválida o expirada. Forzando cierre de sesión.");
-    localStorage.removeItem('spree_session_token');
+    localStorage.removeItem('crux_session_token');
     
     // Cambiar a pantalla de onboarding
     switchScreen('screen-onboarding');
@@ -57,8 +57,8 @@ async function fetchWithAuth(url, options = {}) {
 }
 
 // Estado de la aplicación
-const savedProfile = localStorage.getItem('spree_profile');
-const savedCompanions = localStorage.getItem('spree_companions');
+const savedProfile = localStorage.getItem('crux_profile');
+const savedCompanions = localStorage.getItem('crux_companions');
 
 const state = {
   balance: 0.00, // Comienza en $0 hasta la pre-carga
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initProfileScreen();
   
   // Siempre iniciar en la pantalla de onboarding
-  localStorage.removeItem('spree_session_token');
+  localStorage.removeItem('crux_session_token');
   switchScreen('screen-onboarding');
   if (document.getElementById('app-bottom-nav')) {
     document.getElementById('app-bottom-nav').style.display = 'none';
@@ -310,7 +310,7 @@ function initOnboarding() {
       const data = await res.json();
       if (res.ok) {
         if (data.token) {
-          localStorage.setItem('spree_session_token', data.token);
+          localStorage.setItem('crux_session_token', data.token);
         }
         showKycSelection();
         await syncStateWithBackend();
@@ -320,7 +320,7 @@ function initOnboarding() {
     } catch (err) {
       console.warn("Backend Go desconectado. Validando localmente para simulación.");
       if (code === "4930") {
-        localStorage.setItem('spree_session_token', 'mock_token_4930');
+        localStorage.setItem('crux_session_token', 'mock_token_4930');
         showKycSelection();
         updateBalanceUI();
         renderTransactions();
@@ -452,7 +452,7 @@ function initKycOnboarding() {
 
 async function saveKycTierOnBackend(tier) {
   try {
-    const token = localStorage.getItem('spree_session_token');
+    const token = localStorage.getItem('crux_session_token');
     await fetch(`${API_BASE}/api/wallet/kyc`, {
       method: 'POST',
       headers: { 
@@ -1526,8 +1526,8 @@ function openCheckout(country, amount, merchant) {
       
       if (isMicropayment) {
         savingsDesc.innerHTML = state.lang === 'es'
-          ? `<strong>¡Micropago Subvencionado!</strong> Spree exime la comisión del 3% en consumos menores a $15 USD, ahorrando además un 5-6% de tipo de cambio.`
-          : `<strong>Subsidized Micropayment!</strong> Spree waives the 3% service fee on transactions under $15 USD, saving an extra 5-6% on exchange rates.`;
+          ? `<strong>¡Micropago Subvencionado!</strong> Crux exime la comisión del 3% en consumos menores a $15 USD, ahorrando además un 5-6% de tipo de cambio.`
+          : `<strong>Subsidized Micropayment!</strong> Crux waives the 3% service fee on transactions under $15 USD, saving an extra 5-6% on exchange rates.`;
       } else {
         if (state.lang === 'es') {
           savingsDesc.innerHTML = `Obtienes un tipo de cambio paralelo, <strong>ahorrando $${savingsUSD.toFixed(2)} USDc</strong> frente a comisiones y recargos de tarjetas tradicionales.`;
@@ -2046,7 +2046,7 @@ function renderMarketItems(filterCategory = 'all', searchQuery = '', filterCity 
   container.innerHTML = '';
   
   const dict = translations[state.lang] || translations['es'];
-  const esimClaimed = localStorage.getItem('spree_esim_claimed') === 'true';
+  const esimClaimed = localStorage.getItem('crux_esim_claimed') === 'true';
   
   const filtered = marketItems.filter(item => {
     // 1. Filtrar por categoría
@@ -2465,9 +2465,9 @@ function executeMarketPurchase(name, price, isCivitatis = false) {
   const isFirstEsim = (name.includes("eSIM") || name.includes("eSim")) && price === 0;
   
   if (isCivitatis) {
-    // Flujo del Bot de Reserva Automatizada de Spree
+    // Flujo del Bot de Reserva Automatizada de Crux
     triggerProcessingScreen(
-      "Agente de Spree",
+      "Agente de Crux",
       dict.js_civitatis_bot_step1 || "Conectando con Civitatis B2B...",
       async () => {
         try {
@@ -2498,7 +2498,7 @@ function executeMarketPurchase(name, price, isCivitatis = false) {
       "Aprovisionando eSIM de regalo y asociándolo a tu dispositivo...",
       async () => {
         await new Promise(r => setTimeout(r, 1500));
-        localStorage.setItem("spree_esim_claimed", "true");
+        localStorage.setItem("crux_esim_claimed", "true");
         
         // Agregar transacción de cortesía local
         state.transactions.unshift({
@@ -2559,7 +2559,7 @@ async function performActualPurchase(name, price) {
       await syncStateWithBackend();
       
       if (isEsim) {
-        localStorage.setItem("spree_esim_claimed", "true");
+        localStorage.setItem("crux_esim_claimed", "true");
       }
       
       showSuccessScreen(
@@ -2593,7 +2593,7 @@ async function performActualPurchase(name, price) {
     });
     
     if (isEsim) {
-      localStorage.setItem("spree_esim_claimed", "true");
+      localStorage.setItem("crux_esim_claimed", "true");
     }
     
     showSuccessScreen(
@@ -3137,7 +3137,7 @@ function initProfileScreen() {
       const age = parseInt(document.getElementById('profile-age').value) || 30;
 
       state.profile = { name, passport, phone, age };
-      localStorage.setItem('spree_profile', JSON.stringify(state.profile));
+      localStorage.setItem('crux_profile', JSON.stringify(state.profile));
 
       // Update UI initials
       updateUserAvatarInitials();
@@ -3176,7 +3176,7 @@ function initProfileScreen() {
 
       const newCompanion = { name, relationship, passport, age };
       state.companions.push(newCompanion);
-      localStorage.setItem('spree_companions', JSON.stringify(state.companions));
+      localStorage.setItem('crux_companions', JSON.stringify(state.companions));
 
       // Clear inputs
       document.getElementById('companion-name').value = '';
@@ -3262,7 +3262,7 @@ function renderCompanionsList() {
     card.querySelector('.fa-trash-can').addEventListener('click', (e) => {
       const idx = parseInt(e.target.getAttribute('data-index'));
       state.companions.splice(idx, 1);
-      localStorage.setItem('spree_companions', JSON.stringify(state.companions));
+      localStorage.setItem('crux_companions', JSON.stringify(state.companions));
       renderCompanionsList();
     });
 
