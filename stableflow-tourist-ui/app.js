@@ -116,6 +116,9 @@ async function syncStateWithBackend() {
     if (resBal.ok) {
       const dataBal = await resBal.json();
       state.balance = dataBal.balance;
+      if (dataBal.kyc_tier) {
+        state.kycTier = dataBal.kyc_tier;
+      }
       if (dataBal.rates) {
         fxRates.ars = dataBal.rates.ars;
         fxRates.brl = dataBal.rates.brl;
@@ -342,7 +345,8 @@ function initOnboarding() {
 }
 
 // --- FLUJO 1-B: KYC TIERING & PASSPORT SCAN SIMULATION ---
-let selectedKycTier = 1; // 1: Express, 2: Documental
+let selectedKycTier = 1; // 1: Express, 2: Documental, 3: Nomad
+let targetKycUpgrade = 2; // Nivel al que se quiere subir (2 o 3)
 
 function showKycSelection() {
   const step2 = document.getElementById('onboarding-step-2');
@@ -350,18 +354,31 @@ function showKycSelection() {
   if (step2 && step3) {
     step2.style.display = 'none';
     step3.style.display = 'block';
+    
+    // Select Tier 1 by default
+    const optTier1 = document.getElementById('kyc-opt-tier1');
+    const optTier2 = document.getElementById('kyc-opt-tier2');
+    const optTier3 = document.getElementById('kyc-opt-tier3');
+    if (optTier1 && optTier2 && optTier3) {
+      optTier1.classList.add('selected');
+      optTier2.classList.remove('selected');
+      optTier3.classList.remove('selected');
+      selectedKycTier = 1;
+    }
   }
 }
 
 function initKycOnboarding() {
   const optTier1 = document.getElementById('kyc-opt-tier1');
   const optTier2 = document.getElementById('kyc-opt-tier2');
+  const optTier3 = document.getElementById('kyc-opt-tier3');
   const btnKycAction = document.getElementById('btn-kyc-action');
   
-  if (optTier1 && optTier2) {
+  if (optTier1 && optTier2 && optTier3) {
     optTier1.addEventListener('click', () => {
       optTier1.classList.add('selected');
       optTier2.classList.remove('selected');
+      optTier3.classList.remove('selected');
       selectedKycTier = 1;
       
       const dict = translations[state.lang] || translations['es'];
@@ -371,10 +388,23 @@ function initKycOnboarding() {
     optTier2.addEventListener('click', () => {
       optTier2.classList.add('selected');
       optTier1.classList.remove('selected');
+      optTier3.classList.remove('selected');
       selectedKycTier = 2;
+      targetKycUpgrade = 2;
       
       const dict = translations[state.lang] || translations['es'];
       btnKycAction.innerHTML = `<span>${dict.btn_verify_passport || "Verificar Pasaporte (Nivel Completo)"}</span> <i class="fa-solid fa-arrow-right"></i>`;
+    });
+
+    optTier3.addEventListener('click', () => {
+      optTier3.classList.add('selected');
+      optTier1.classList.remove('selected');
+      optTier2.classList.remove('selected');
+      selectedKycTier = 3;
+      targetKycUpgrade = 3;
+      
+      const dict = translations[state.lang] || translations['es'];
+      btnKycAction.innerHTML = `<span>${dict.kyc_verify_nfc_btn || "Verificar Pasaporte NFC (Nivel Nómada)"}</span> <i class="fa-solid fa-arrow-right"></i>`;
     });
   }
   
@@ -480,35 +510,78 @@ function runPassportScanSimulation() {
   const nfc = document.getElementById('passport-scan-nfc');
   
   if (btn) btn.disabled = true;
-  if (laser) laser.style.display = 'block';
   
-  const messages = [
-    { t: 0, msg: "&gt; Iniciando cámara eIDV en modo de escaneo de alta resolución..." },
-    { t: 800, msg: "&gt; Buscando zona de lectura mecánica (MRZ) en pasaporte internacional..." },
-    { t: 1600, msg: "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Zona MRZ detectada:</span> P&lt;ITA&lt;&lt;ROSSI&lt;&lt;MARIO&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;" },
-    { t: 2400, msg: "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Pasaporte nº YA889922</span>, Nacionalidad: ITA, Nacimiento: 15/09/1990" },
-    { t: 3200, msg: "&gt; Extrayendo llaves de acceso básico (BAC) para canal NFC..." },
-    { t: 4000, msg: "&gt; Iniciando comunicación de chip NFC inalámbrica..." },
-    { t: 4500, msg: "NFC_STAGE" }
-  ];
-  
-  messages.forEach(item => {
-    setTimeout(() => {
-      if (item.msg === "NFC_STAGE") {
-        if (laser) laser.style.display = 'none';
-        if (cam) cam.style.display = 'none';
-        if (nfc) nfc.style.display = 'flex';
-        
-        log.innerHTML += `<br>&gt; <span style='color: var(--success-color);'>Por favor, sostén el pasaporte contra la parte trasera del teléfono...</span>`;
-        log.scrollTop = log.scrollHeight;
-        
-        runNfcReadingSimulation();
-      } else {
-        log.innerHTML += `<br>${item.msg}`;
-        log.scrollTop = log.scrollHeight;
-      }
-    }, item.t);
-  });
+  const isEs = state.lang === 'es';
+
+  if (targetKycUpgrade === 2) {
+    // Escaneo de Pasaporte OCR + Liveness (Tier 2)
+    if (laser) laser.style.display = 'block';
+    log.innerHTML = isEs ? "&gt; Iniciando cámara..." : "&gt; Starting camera...";
+    
+    const messages = [
+      { t: 800, msg: isEs ? "&gt; Buscando zona MRZ en la página de datos..." : "&gt; Searching for MRZ zone on the data page..." },
+      { t: 1600, msg: isEs ? "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Zona MRZ detectada:</span> P&lt;USA&lt;&lt;SMITH&lt;&lt;JOHN&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;" : "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] MRZ Zone detected:</span> P&lt;USA&lt;&lt;SMITH&lt;&lt;JOHN&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;" },
+      { t: 2400, msg: isEs ? "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Pasaporte nº YA1234567</span>, Nacionalidad: USA, Nacimiento: 23/04/1988" : "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Passport No. YA1234567</span>, Nationality: USA, DOB: 23/04/1988" },
+      { t: 3200, msg: isEs ? "&gt; Analizando holograma tridimensional y marca de agua física..." : "&gt; Analyzing three-dimensional hologram and physical watermark..." },
+      { t: 4000, msg: isEs ? "&gt; Iniciando prueba de vida facial (Selfie Video Liveness Check)..." : "&gt; Starting facial liveness check (Selfie Video Liveness Check)..." },
+      { t: 4800, msg: isEs ? "&gt; Análisis biometria activa contra IA generativa (ZOLOZ Deeper)..." : "&gt; Active biometric analysis against generative AI (ZOLOZ Deeper)..." },
+      { t: 5600, msg: "OCR_FINISH" }
+    ];
+
+    messages.forEach(item => {
+      setTimeout(() => {
+        if (item.msg === "OCR_FINISH") {
+          if (laser) laser.style.display = 'none';
+          
+          log.innerHTML += isEs 
+            ? `<br>&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Prueba de vida completada. Rostro coincide en 99.7%.</span>`
+            : `<br>&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Liveness check completed. Face match 99.7%.</span>`;
+          
+          log.innerHTML += isEs
+            ? `<br>&gt; <span style='color: var(--success-color); font-weight: 700;'>¡VERIFICACIÓN COMPLETA! Cuenta promovida a Nivel Completo (Tier 2).</span>`
+            : `<br>&gt; <span style='color: var(--success-color); font-weight: 700;'>¡VERIFICATION COMPLETE! Account promoted to Full Access (Tier 2).</span>`;
+          log.scrollTop = log.scrollHeight;
+          
+          completeKycUpgrade(2);
+        } else {
+          log.innerHTML += `<br>${item.msg}`;
+          log.scrollTop = log.scrollHeight;
+        }
+      }, item.t);
+    });
+  } else {
+    // Lectura Criptográfica de Chip NFC (Tier 3)
+    if (laser) laser.style.display = 'block';
+    log.innerHTML = isEs ? "&gt; Iniciando lector NFC eIDV..." : "&gt; Starting eIDV NFC reader...";
+    
+    const messages = [
+      { t: 800, msg: isEs ? "&gt; Buscando zona de lectura mecánica (MRZ) para derivar clave..." : "&gt; Searching for MRZ zone to derive access key..." },
+      { t: 1600, msg: isEs ? "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Zona MRZ detectada:</span> P&lt;ITA&lt;&lt;ROSSI&lt;&lt;MARIO&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;" : "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] MRZ Zone detected:</span> P&lt;ITA&lt;&lt;ROSSI&lt;&lt;MARIO&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;" },
+      { t: 2400, msg: isEs ? "&gt; Extrayendo llaves de Control de Acceso Básico (BAC) y PACE..." : "&gt; Extracting Basic Access Control (BAC) and PACE keys..." },
+      { t: 3200, msg: isEs ? "&gt; Inicializando canal criptográfico de chip NFC..." : "&gt; Initializing cryptographic channel on NFC chip..." },
+      { t: 4000, msg: "NFC_STAGE" }
+    ];
+
+    messages.forEach(item => {
+      setTimeout(() => {
+        if (item.msg === "NFC_STAGE") {
+          if (laser) laser.style.display = 'none';
+          if (cam) cam.style.display = 'none';
+          if (nfc) nfc.style.display = 'flex';
+          
+          log.innerHTML += isEs 
+            ? `<br>&gt; <span style='color: var(--success-color);'>Por favor, sostén el pasaporte contra la parte trasera del teléfono...</span>`
+            : `<br>&gt; <span style='color: var(--success-color);'>Please hold the passport against the back of your phone...</span>`;
+          log.scrollTop = log.scrollHeight;
+          
+          runNfcReadingSimulation();
+        } else {
+          log.innerHTML += `<br>${item.msg}`;
+          log.scrollTop = log.scrollHeight;
+        }
+      }, item.t);
+    });
+  }
 }
 
 // --- SIMULACIÓN DE LECTURA NFC ---
@@ -516,19 +589,17 @@ function runNfcReadingSimulation() {
   const log = document.getElementById('passport-scan-log');
   const nfc = document.getElementById('passport-scan-nfc');
   const success = document.getElementById('passport-scan-success');
-  const btn = document.getElementById('btn-start-passport-scan');
   
+  const isEs = state.lang === 'es';
+
   const messages = [
-    { t: 1000, msg: "&gt; Conexión NFC establecida con éxito." },
-    { t: 1800, msg: "&gt; Leyendo Datos de Grupo 1 (Detalles Biográficos)... [OK]" },
-    { t: 2600, msg: "&gt; Leyendo Datos de Grupo 2 (Imagen Facial del Titular)... [OK]" },
-    { t: 3400, msg: "&gt; Descifrando firma criptográfica OACI/ICAO 9303..." },
-    { t: 4200, msg: "&gt; Validando firma del chip contra el certificado raíz del País Emisor... [OK]" },
-    { t: 5000, msg: "&gt; Ejecutando comprobación de Autenticación Pasiva (PA) und Aktiv (AA)... [OK]" },
-    { t: 5800, msg: "&gt; Iniciando prueba de vida biométrica (Liveness detection) mediante red eIDV..." },
-    { t: 6800, msg: "&gt; <span style='color: var(--success-color); font-weight: 500;'>[OK] Similitud facial confirmada (99.8%). Rostro coincide con foto de pasaporte.</span>" },
-    { t: 7600, msg: "&gt; Verificando listas de sanciones internacionales OFAC / PEP... Limpio." },
-    { t: 8400, msg: "&gt; <span style='color: var(--success-color); font-weight: 700;'>¡VERIFICACIÓN COMPLETA! Cuenta promovida a Nivel Completo (Tier 2).</span>" }
+    { t: 1000, msg: isEs ? "&gt; Conexión NFC establecida con éxito." : "&gt; NFC connection established successfully." },
+    { t: 1800, msg: isEs ? "&gt; Descifrando Datos de Grupo 1 (Detalles Biográficos)... [OK]" : "&gt; Decrypting Data Group 1 (Biographical Details)... [OK]" },
+    { t: 2600, msg: isEs ? "&gt; Leyendo Datos de Grupo 2 (Imagen Facial del Titular en Alta Res.)... [OK]" : "&gt; Reading Data Group 2 (High Res. Holder Facial Image)... [OK]" },
+    { t: 3400, msg: isEs ? "&gt; Validando firmas digitales del chip mediante claves soberanas..." : "&gt; Validating chip digital signatures via sovereign keys..." },
+    { t: 4200, msg: isEs ? "&gt; Verificando Autenticación Pasiva (PA) y Autenticación Activa (AA)... [OK]" : "&gt; Verifying Passive Authentication (PA) and Active Authentication (AA)... [OK]" },
+    { t: 5000, msg: isEs ? "&gt; Cruce de datos con listas de control PEP / OFAC internacionales... Limpio." : "&gt; Data cross-reference with international PEP / OFAC watchlist... Clean." },
+    { t: 5800, msg: isEs ? "&gt; <span style='color: var(--success-color); font-weight: 700;'>¡VERIFICACIÓN COMPLETA! Cuenta promovida a Nivel Nómada (Tier 3).</span>" : "&gt; <span style='color: var(--success-color); font-weight: 700;'>¡VERIFICATION COMPLETE! Account promoted to Nomad Level (Tier 3).</span>" }
   ];
   
   messages.forEach(item => {
@@ -536,23 +607,73 @@ function runNfcReadingSimulation() {
       log.innerHTML += `<br>${item.msg}`;
       log.scrollTop = log.scrollHeight;
       
-      if (item.t === 8400) {
+      if (item.t === 5800) {
         if (nfc) nfc.style.display = 'none';
         if (success) success.style.display = 'flex';
         
-        state.kycTier = 2;
-        await saveKycTierOnBackend(2);
-        
-        if (btn) {
-          btn.disabled = false;
-          btn.setAttribute('data-finished', 'true');
-          const dict = translations[state.lang] || translations['es'];
-          btn.innerText = dict.btn_success_close || "Finalizar y Entrar";
-        }
+        completeKycUpgrade(3);
       }
     }, item.t);
   });
 }
+
+async function completeKycUpgrade(tier) {
+  const btn = document.getElementById('btn-start-passport-scan');
+  state.kycTier = tier;
+  await saveKycTierOnBackend(tier);
+  
+  // Actualizar UI del perfil
+  updateProfileKycUI();
+
+  if (btn) {
+    btn.disabled = false;
+    btn.setAttribute('data-finished', 'true');
+    const dict = translations[state.lang] || translations['es'];
+    btn.innerText = dict.btn_success_close || "Finalizar y Entrar";
+  }
+}
+
+function updateProfileKycUI() {
+  const tierNameEl = document.getElementById('profile-kyc-tier-name');
+  const limitsEl = document.getElementById('profile-kyc-tier-limits');
+  const badgeEl = document.getElementById('profile-kyc-badge');
+  const btnUpgrade = document.getElementById('btn-profile-upgrade-kyc');
+  const upgradeTextEl = document.getElementById('btn-profile-upgrade-text');
+
+  if (!tierNameEl || !limitsEl || !badgeEl || !btnUpgrade || !upgradeTextEl) return;
+
+  const isEs = state.lang === 'es';
+
+  if (state.kycTier === 1) {
+    tierNameEl.innerText = isEs ? "Acceso Express (Tier 1)" : "Express Access (Tier 1)";
+    limitsEl.innerText = isEs ? "Límite por pago: $20 USDc / Total: $250 USDc" : "Limit per payment: $20 USDc / Total: $250 USDc";
+    badgeEl.innerText = "Tier 1";
+    badgeEl.className = "kyc-option-badge active";
+    btnUpgrade.style.display = 'flex';
+    btnUpgrade.disabled = false;
+    btnUpgrade.style.opacity = '1';
+    upgradeTextEl.innerText = isEs ? "Subir a Nivel Completo (Tier 2)" : "Upgrade to Full Access (Tier 2)";
+  } else if (state.kycTier === 2) {
+    tierNameEl.innerText = isEs ? "Nivel Completo (Tier 2)" : "Full Access (Tier 2)";
+    limitsEl.innerText = isEs ? "Límite: $2,000 USDc/mes" : "Limit: $2,000 USDc/month";
+    badgeEl.innerText = "Tier 2";
+    badgeEl.className = "kyc-option-badge recommend";
+    btnUpgrade.style.display = 'flex';
+    btnUpgrade.disabled = false;
+    btnUpgrade.style.opacity = '1';
+    upgradeTextEl.innerText = isEs ? "Subir a Nivel Nómada (Tier 3)" : "Upgrade to Nomad Access (Tier 3)";
+  } else if (state.kycTier === 3) {
+    tierNameEl.innerText = isEs ? "Nivel Nómada (Tier 3)" : "Nomad Access (Tier 3)";
+    limitsEl.innerText = isEs ? "Límite: $10,000 USDc/mes" : "Limit: $10,000 USDc/month";
+    badgeEl.innerText = "Tier 3";
+    badgeEl.className = "kyc-option-badge recommend";
+    btnUpgrade.style.display = 'flex';
+    btnUpgrade.disabled = true;
+    btnUpgrade.style.opacity = '0.6';
+    upgradeTextEl.innerText = isEs ? "Verificado al Máximo Nivel" : "Verified to Maximum Level";
+  }
+};
+
 let selectedPreloadAmount = 200;
 let selectedPaymentType = 'googlepay'; // 'googlepay' o 'card'
 let selectedPreloadCardId = 'card_initial';
@@ -1304,7 +1425,10 @@ function openCheckout(country, amount, merchant) {
   
   const rate = fxRates[country];
   const rawUSDc = amount / rate;
-  const serviceFee = rawUSDc * 0.03;
+  
+  // Estrategia híbrida china: 0% en micropagos <= $15 USDc, 3% en consumos mayores
+  const isMicropayment = rawUSDc <= 15.0;
+  const serviceFee = isMicropayment ? 0.0 : rawUSDc * 0.03;
   const gasFee = 0.10;
   const totalUSDc = rawUSDc + serviceFee + gasFee;
   
@@ -1331,23 +1455,20 @@ function openCheckout(country, amount, merchant) {
   const savingsUSD = totalUSDc * savingsPercent;
   const savingsBox = document.getElementById('checkout-savings-indicator-box');
   const savingsDesc = document.getElementById('checkout-savings-desc-text');
-  if (savingsBox && savingsDesc) {
-    savingsBox.style.display = 'flex';
-    if (state.lang === 'es') {
-      savingsDesc.innerHTML = `Obtienes un tipo de cambio paralelo, <strong>ahorrando $${savingsUSD.toFixed(2)} USDc</strong> frente a comisiones y recargos de tarjetas tradicionales.`;
-    } else if (state.lang === 'en') {
-      savingsDesc.innerHTML = `You get a parallel exchange rate, <strong>saving $${savingsUSD.toFixed(2)} USDc</strong> compared to traditional card fees and markups.`;
-    } else {
-      const dict = translations[state.lang] || translations['es'];
-      savingsDesc.innerHTML = `${dict.checkout_savings_desc.replace('{amount}', savingsUSD.toFixed(2))}`;
-    }
-  }
   
-  // Ocultar las filas de comisión y costo de red en la UI
+  // Mostrar u ocultar filas de comisión y red en la UI
   const feeRow = document.getElementById('checkout-fee').closest('.detail-row');
-  if (feeRow) feeRow.style.display = 'none';
+  if (feeRow) {
+    feeRow.style.display = 'flex';
+    document.getElementById('checkout-fee').innerText = isMicropayment 
+      ? (state.lang === 'es' ? '$0.00 USDc (Subvencionado)' : '$0.00 USDc (Subsidized)') 
+      : `$${serviceFee.toFixed(2)} USDc`;
+  }
   const gasRow = document.getElementById('checkout-gas').closest('.detail-row');
-  if (gasRow) gasRow.style.display = 'none';
+  if (gasRow) {
+    gasRow.style.display = 'flex';
+    document.getElementById('checkout-gas').innerText = `$${gasFee.toFixed(2)} USDc`;
+  }
   
   document.getElementById('checkout-title').innerText = country === 'ars' ? 'Pago QR (Mercado Pago / MODO)' : 'Pago QR (Pix)';
   
@@ -1358,12 +1479,66 @@ function openCheckout(country, amount, merchant) {
   const slideText = document.getElementById('slide-text');
   const sliderContainer = document.getElementById('slide-to-pay-container');
   
+  // Validación de límites KYC
+  const isKycLimitExceeded = (state.kycTier === 1 && totalUSDc > 20.0);
+  
   if (state.balance < totalUSDc) {
     slideText.innerText = dict.slide_to_pay_insufficient;
     slideText.style.color = 'var(--error-color)';
     sliderContainer.style.borderColor = 'var(--error-color)';
     document.getElementById('slide-handle').style.pointerEvents = 'none';
+  } else if (isKycLimitExceeded) {
+    slideText.innerText = state.lang === 'es' ? 'Excede Límite Express ($20)' : 'Exceeds Express Limit ($20)';
+    slideText.style.color = 'var(--error-color)';
+    sliderContainer.style.borderColor = 'var(--error-color)';
+    document.getElementById('slide-handle').style.pointerEvents = 'none';
+    
+    // Mostrar aviso en rojo de que debe subir de nivel en lugar del banner verde de ahorro
+    if (savingsBox && savingsDesc) {
+      savingsBox.style.background = 'rgba(255, 69, 58, 0.1)';
+      savingsBox.style.borderColor = 'rgba(255, 69, 58, 0.25)';
+      const icon = savingsBox.querySelector('.savings-icon');
+      if (icon) {
+        icon.style.color = 'var(--error-color)';
+        icon.style.background = 'rgba(255, 69, 58, 0.2)';
+        icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+      }
+      const title = savingsBox.querySelector('.savings-text-wrapper div');
+      if (title) title.innerText = state.lang === 'es' ? '¡Límite de Cuenta Excedido!' : 'Account Limit Exceeded!';
+      
+      savingsDesc.innerHTML = state.lang === 'es' 
+        ? 'Tu cuenta de <strong>Acceso Express (Tier 1)</strong> tiene un límite de $20 USDc por pago. Sube de nivel en el menú Perfil para desbloquear compras ilimitadas.'
+        : 'Your <strong>Express Access (Tier 1)</strong> account has a limit of $20 USDc per payment. Upgrade in the Profile menu to unlock unlimited purchases.';
+    }
   } else {
+    // Restaurar estilo verde de ahorro cambiario si estaba en rojo
+    if (savingsBox && savingsDesc) {
+      savingsBox.style.background = 'rgba(48, 209, 88, 0.1)';
+      savingsBox.style.borderColor = 'rgba(48, 209, 88, 0.25)';
+      const icon = savingsBox.querySelector('.savings-icon');
+      if (icon) {
+        icon.style.color = 'var(--success-color)';
+        icon.style.background = 'rgba(48, 209, 88, 0.2)';
+        icon.innerHTML = '<i class="fa-solid fa-piggy-bank"></i>';
+      }
+      const title = savingsBox.querySelector('.savings-text-wrapper div');
+      if (title) title.innerText = state.lang === 'es' ? '¡Ahorro Cambiario!' : 'Exchange Savings!';
+      
+      if (isMicropayment) {
+        savingsDesc.innerHTML = state.lang === 'es'
+          ? `<strong>¡Micropago Subvencionado!</strong> Spree exime la comisión del 3% en consumos menores a $15 USD, ahorrando además un 5-6% de tipo de cambio.`
+          : `<strong>Subsidized Micropayment!</strong> Spree waives the 3% service fee on transactions under $15 USD, saving an extra 5-6% on exchange rates.`;
+      } else {
+        if (state.lang === 'es') {
+          savingsDesc.innerHTML = `Obtienes un tipo de cambio paralelo, <strong>ahorrando $${savingsUSD.toFixed(2)} USDc</strong> frente a comisiones y recargos de tarjetas tradicionales.`;
+        } else if (state.lang === 'en') {
+          savingsDesc.innerHTML = `You get a parallel exchange rate, <strong>saving $${savingsUSD.toFixed(2)} USDc</strong> compared to traditional card fees and markups.`;
+        } else {
+          savingsDesc.innerHTML = `${dict.checkout_savings_desc.replace('{amount}', savingsUSD.toFixed(2))}`;
+        }
+      }
+    }
+    
     slideText.innerText = dict.slide_to_pay;
     slideText.style.color = 'var(--text-muted)';
     sliderContainer.style.borderColor = 'var(--card-border)';
@@ -1649,6 +1824,15 @@ const marketItems = [
     icon: "fa-robot",
     price: 0,
     isCivitatisBot: true
+  },
+  {
+    id: "car_rental_local",
+    category: "cars",
+    titleKey: "market_item_car_title",
+    descKey: "market_item_car_desc",
+    icon: "fa-car",
+    price: 35.00,
+    isCarRental: true
   }
 ];
 
@@ -1790,6 +1974,58 @@ function initMarketplace() {
     });
   }
   
+  // Modal de alquiler de autos
+  const btnCloseCarRental = document.getElementById('btn-close-car-rental');
+  if (btnCloseCarRental) {
+    btnCloseCarRental.addEventListener('click', closeCarRentalModal);
+  }
+
+  const carTypeSelect = document.getElementById('car-type');
+  if (carTypeSelect) {
+    carTypeSelect.addEventListener('change', updateCarRentalPrice);
+  }
+
+  const carDaysInput = document.getElementById('car-days');
+  if (carDaysInput) {
+    carDaysInput.addEventListener('input', updateCarRentalPrice);
+  }
+
+  const carInsuranceOpt = document.getElementById('car-insurance-opt');
+  if (carInsuranceOpt) {
+    carInsuranceOpt.addEventListener('change', updateCarRentalPrice);
+  }
+
+  const btnCarRentalBuy = document.getElementById('btn-car-rental-buy');
+  if (btnCarRentalBuy) {
+    btnCarRentalBuy.addEventListener('click', () => {
+      const driverSelect = document.getElementById('car-driver');
+      const driverName = driverSelect ? driverSelect.value : (state.profile.name || 'Tú');
+      
+      const typeSelect = document.getElementById('car-type');
+      const selectedOpt = typeSelect ? typeSelect.options[typeSelect.selectedIndex] : null;
+      const baseRate = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-price')) : 35;
+      const carTypeName = selectedOpt ? selectedOpt.text.split('(')[0].trim() : 'Compacto';
+      
+      const days = parseInt(document.getElementById('car-days').value) || 5;
+      const hasInsurance = document.getElementById('car-insurance-opt')?.checked || false;
+      const dailyRate = baseRate + (hasInsurance ? 10.00 : 0.00);
+      const totalCost = dailyRate * days;
+      
+      const dict = translations[state.lang] || translations['es'];
+      
+      if (state.balance < totalCost) {
+        alert(dict.slide_to_pay_insufficient || "Saldo Insuficiente");
+        return;
+      }
+      
+      closeCarRentalModal();
+      
+      const name = `${dict.market_item_car_title || "Alquiler de Vehículos"} (${carTypeName} - ${days} días) (Chofer: ${driverName})`;
+      
+      executeMarketPurchase(name, totalCost, false);
+    });
+  }
+  
   // Render inicial
   renderMarketItems('all', '', 'all');
 }
@@ -1889,6 +2125,8 @@ function renderMarketItems(filterCategory = 'all', searchQuery = '', filterCity 
     btn.addEventListener('click', () => {
       if (item.isInsurance) {
         openInsuranceModal();
+      } else if (item.isCarRental) {
+        openCarRentalModal();
       } else if (item.isCivitatisBot) {
         startCivitatisBotChat();
       } else {
@@ -2786,6 +3024,9 @@ function initProfileScreen() {
       document.getElementById('profile-phone').value = state.profile.phone || '';
       document.getElementById('profile-age').value = state.profile.age || '';
       
+      // Update KYC section UI
+      updateProfileKycUI();
+      
       // Render companions list
       renderCompanionsList();
       
@@ -2794,6 +3035,25 @@ function initProfileScreen() {
       
       // Switch screen
       switchScreen('screen-profile');
+    });
+  }
+
+  const btnUpgradeKyc = document.getElementById('btn-profile-upgrade-kyc');
+  if (btnUpgradeKyc) {
+    btnUpgradeKyc.addEventListener('click', () => {
+      targetKycUpgrade = state.kycTier === 1 ? 2 : 3;
+      switchScreen('screen-onboarding');
+      const step1 = document.getElementById('onboarding-step-1');
+      const step2 = document.getElementById('onboarding-step-2');
+      const step3 = document.getElementById('onboarding-step-3');
+      const step4 = document.getElementById('onboarding-step-4');
+      if (step1) step1.style.display = 'none';
+      if (step2) step2.style.display = 'none';
+      if (step3) step3.style.display = 'none';
+      if (step4) {
+        step4.style.display = 'block';
+        resetPassportScanUI();
+      }
     });
   }
 
@@ -2943,6 +3203,91 @@ function renderCompanionsList() {
 
     container.appendChild(card);
   });
+}
+
+// --- SECCIÓN: ALQUILER DE AUTOS ---
+function openCarRentalModal() {
+  const modal = document.getElementById('car-rental-modal-overlay');
+  if (modal) modal.classList.add('active');
+
+  const driverSelect = document.getElementById('car-driver');
+  if (driverSelect) {
+    driverSelect.innerHTML = '';
+    
+    // Primary driver (Main Traveler)
+    const mainOpt = document.createElement('option');
+    mainOpt.value = state.profile.name || 'Tú';
+    mainOpt.innerText = `${state.profile.name || 'Tú'} (${state.lang === 'en' ? 'You - Main Traveler' : 'Tú - Viajero Principal'})`;
+    driverSelect.appendChild(mainOpt);
+
+    // Companions
+    state.companions.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.name;
+      opt.innerText = `${c.name} (${c.relationship === 'Familiar' ? (state.lang === 'en' ? 'Family' : 'Familiar') : (state.lang === 'en' ? 'Friend' : 'Amigo/a')})`;
+      driverSelect.appendChild(opt);
+    });
+  }
+
+  // Reset optional insurance checkbox and days
+  const insuranceChk = document.getElementById('car-insurance-opt');
+  if (insuranceChk) insuranceChk.checked = false;
+  
+  const daysInput = document.getElementById('car-days');
+  if (daysInput) daysInput.value = 5;
+
+  const carTypeSelect = document.getElementById('car-type');
+  if (carTypeSelect) carTypeSelect.value = 'compact';
+
+  updateCarRentalPrice();
+}
+
+function closeCarRentalModal() {
+  const modal = document.getElementById('car-rental-modal-overlay');
+  if (modal) modal.classList.remove('active');
+}
+
+function updateCarRentalPrice() {
+  const typeSelect = document.getElementById('car-type');
+  const daysInput = document.getElementById('car-days');
+  const insuranceChk = document.getElementById('car-insurance-opt');
+  const dailyCostSpan = document.getElementById('car-daily-cost');
+  const totalCostSpan = document.getElementById('car-total-cost');
+  const btnBuy = document.getElementById('btn-car-rental-buy');
+
+  if (!typeSelect || !daysInput || !totalCostSpan) return;
+
+  const selectedOpt = typeSelect.options[typeSelect.selectedIndex];
+  const baseRate = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-price')) : 35;
+
+  let days = parseInt(daysInput.value) || 0;
+  if (days < 1) days = 1;
+  if (days > 30) days = 30;
+  daysInput.value = days;
+
+  const hasInsurance = insuranceChk ? insuranceChk.checked : false;
+  const dailyRate = baseRate + (hasInsurance ? 10.00 : 0.00);
+  const totalCost = dailyRate * days;
+
+  if (dailyCostSpan) {
+    dailyCostSpan.innerText = `$${dailyRate.toFixed(2)} USDc`;
+  }
+  totalCostSpan.innerText = `$${totalCost.toFixed(2)} USDc`;
+
+  if (btnBuy) {
+    const dict = translations[state.lang] || translations['es'];
+    if (state.balance < totalCost) {
+      btnBuy.innerText = dict.slide_to_pay_insufficient || "Saldo Insuficiente";
+      btnBuy.disabled = true;
+      btnBuy.style.opacity = '0.5';
+      btnBuy.style.cursor = 'not-allowed';
+    } else {
+      btnBuy.innerText = dict.market_car_btn_buy || "Reservar Auto";
+      btnBuy.disabled = false;
+      btnBuy.style.opacity = '1';
+      btnBuy.style.cursor = 'pointer';
+    }
+  }
 }
 
 

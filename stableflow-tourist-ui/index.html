@@ -113,7 +113,7 @@
                   <span class="kyc-option-title" data-i18n="kyc_express_title">Acceso Express (Tier 1)</span>
                   <span class="kyc-option-badge active" data-i18n="kyc_active_badge">Activo</span>
                 </div>
-                <p class="kyc-option-desc" data-i18n="kyc_express_desc">Límite de recarga de $150 USDc. Pagos básicos por código QR local. Ideal para gastos cotidianos pequeños.</p>
+                <p class="kyc-option-desc" data-i18n="kyc_express_desc">Registro rápido por SMS. Límite de $20 USDc por pago y $250 USDc de volumen total de recarga.</p>
               </div>
 
               <!-- Tier 2 option -->
@@ -122,7 +122,16 @@
                   <span class="kyc-option-title" data-i18n="kyc_full_title">Nivel Completo (Tier 2)</span>
                   <span class="kyc-option-badge recommend" data-i18n="kyc_recommend_badge">Recomendado</span>
                 </div>
-                <p class="kyc-option-desc" data-i18n="kyc_full_desc">Sin límites de balance. Habilita el Marketplace (eSIM, Seguro Chubb y reservas de tours Civitatis).</p>
+                <p class="kyc-option-desc" data-i18n="kyc_full_desc">Límite de $2,000 USDc/mes. Escáner de pasaporte OCR + selfie. Habilita eSIM, Seguro Chubb y Civitatis.</p>
+              </div>
+
+              <!-- Tier 3 option -->
+              <div class="kyc-option-card" id="kyc-opt-tier3">
+                <div class="kyc-option-header">
+                  <span class="kyc-option-title" data-i18n="kyc_nomad_title">Nivel Nómada (Tier 3)</span>
+                  <span class="kyc-option-badge recommend" data-i18n="kyc_nomad_badge">Pasaporte NFC</span>
+                </div>
+                <p class="kyc-option-desc" data-i18n="kyc_nomad_desc">Límite de $10,000 USDc/mes. Lectura criptográfica del chip de tu pasaporte eIDV para estancias largas.</p>
               </div>
             </div>
 
@@ -385,6 +394,21 @@
           </div>
 
           <div style="overflow-y: auto; max-height: calc(100% - 60px); padding-bottom: 20px;">
+            <!-- SECCIÓN VERIFICACIÓN KYC -->
+            <div class="premium-card" style="margin-bottom: 15px;">
+              <h3 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;" data-i18n="profile_kyc_title">Nivel de Verificación</h3>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                  <div style="font-size: 0.9rem; font-weight: 600; color: var(--ios-white);" id="profile-kyc-tier-name">Acceso Express (Tier 1)</div>
+                  <div style="font-size: 0.7rem; color: var(--ios-gray-text);" id="profile-kyc-tier-limits">Límite por pago: $20 USDc / Total: $250 USDc</div>
+                </div>
+                <span class="kyc-option-badge active" id="profile-kyc-badge">Tier 1</span>
+              </div>
+              <button class="btn-secondary" id="btn-profile-upgrade-kyc" style="font-size: 0.8rem; padding: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <i class="fa-solid fa-passport"></i> <span id="btn-profile-upgrade-text">Subir a Nivel Completo (Tier 2)</span>
+              </button>
+            </div>
+
             <!-- SECCION VIAJERO PRINCIPAL -->
             <div class="premium-card" style="margin-bottom: 15px;">
               <h3 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;" data-i18n="profile_main_traveler_title">Viajero Principal</h3>
@@ -659,6 +683,7 @@
             <button class="category-tab" data-category="connectivity" data-i18n="market_cat_connectivity">Conectividad</button>
             <button class="category-tab" data-category="insurance" data-i18n="market_cat_insurance">Seguros</button>
             <button class="category-tab" data-category="tours" data-i18n="market_cat_tours">Tours</button>
+            <button class="category-tab" data-category="cars" data-i18n="market_cat_cars">Autos</button>
           </div>
 
           <!-- Filtros de Civitatis para tours (inicialmente ocultos) -->
@@ -818,6 +843,63 @@
           </div>
           
           <button class="bank-btn-confirm" id="btn-insurance-quote-buy" style="background: var(--ios-green); margin-top:0; font-size:0.85rem; padding: 12px; border-radius:12px; width: 100%; border:none; color:#fff; font-weight:600; cursor:pointer;" data-i18n="market_insurance_btn_buy">Contratar con Chubb</button>
+        </div>
+      </div>
+
+      <!-- MODAL DE ALQUILER DE AUTOS -->
+      <div class="modal-overlay" id="car-rental-modal-overlay">
+        <div class="bank-modal" style="text-align: left; max-width: 90%; padding: 18px; border-radius: 20px;">
+          <div class="bank-header" style="justify-content: space-between; border-bottom: 0.5px solid var(--divider-color); padding-bottom: 10px; margin-bottom: 14px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <i class="fa-solid fa-car" style="color: var(--ios-green); font-size: 1.25rem;"></i>
+              <span data-i18n="market_car_modal_title" style="font-weight:700; font-size:0.95rem;">Alquilar un Auto</span>
+            </div>
+            <i class="fa-solid fa-xmark" id="btn-close-car-rental" style="cursor:pointer; color:var(--text-muted); font-size:1.1rem; padding: 4px;"></i>
+          </div>
+
+          <div class="input-group">
+            <span class="input-label" data-i18n="market_car_type_label">CATEGORÍA DE VEHÍCULO</span>
+            <select class="input-field" id="car-type" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--card-border); padding: 10px; border-radius:10px;">
+              <option value="compact" data-price="35" selected>Compacto (Toyota Yaris o similar) - $35 USDc/día</option>
+              <option value="suv" data-price="60">SUV (Jeep Renegade o similar) - $60 USDc/día</option>
+              <option value="luxury" data-price="90">Premium (BMW Serie 3 o similar) - $90 USDc/día</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <span class="input-label" data-i18n="market_car_driver_label">CONDUCTOR PRINCIPAL</span>
+            <select class="input-field" id="car-driver" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--card-border); padding: 10px; border-radius:10px;">
+              <!-- Se llena dinámicamente -->
+            </select>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr; gap:10px;">
+            <div class="input-group">
+              <span class="input-label" data-i18n="market_car_days_label">DÍAS DE ALQUILER</span>
+              <input type="number" class="input-field" id="car-days" value="5" min="1" max="30" style="padding: 10px; border-radius:10px;">
+            </div>
+          </div>
+
+          <!-- Cobertura de daños opcional -->
+          <div style="margin-bottom: 14px; margin-top: 4px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.75rem; color:#FFF;">
+              <input type="checkbox" id="car-insurance-opt" style="width:14px; height:14px; cursor:pointer;">
+              <span data-i18n="market_car_insurance_opt_label">Cobertura total contra daños (+ $10.00 USDc/día)</span>
+            </label>
+          </div>
+
+          <div class="premium-card" style="background: rgba(52, 199, 89, 0.05); border: 1px dashed rgba(52, 199, 89, 0.2); padding: 10px 14px; margin-bottom: 14px; border-radius: 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.75rem; color: var(--text-muted);" data-i18n="market_insurance_price_per_day">Costo diario</span>
+              <span style="font-size:0.85rem; font-weight:700; color: var(--ios-green);" id="car-daily-cost">$35.00 USDc</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; border-top: 0.5px solid rgba(255,255,255,0.05); padding-top:6px;">
+              <span style="font-size:0.75rem; font-weight:600; color:#fff;">Total a pagar:</span>
+              <span style="font-size:1.1rem; font-weight:800; color:#fff;" id="car-total-cost">$175.00 USDc</span>
+            </div>
+          </div>
+
+          <button class="bank-btn-confirm" id="btn-car-rental-buy" style="background: var(--ios-green); margin-top:0; font-size:0.85rem; padding: 12px; border-radius:12px; width: 100%; border:none; color:#fff; font-weight:600; cursor:pointer;" data-i18n="market_car_btn_buy">Reservar Auto</button>
         </div>
       </div>
 

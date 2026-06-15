@@ -268,7 +268,16 @@ const translations = {
     purchase_travelers_label: "VIAJEROS SELECCIONADOS",
     insurance_travelers_label: "VIAJEROS A ASEGURAR",
     market_insurance_price_per_day: "Costo diario",
-    profile_btn_add_companion_text: "Agregar Compañero"
+    profile_btn_add_companion_text: "Agregar Compañero",
+    market_cat_cars: "Autos",
+    market_item_car_title: "Alquiler de Vehículos",
+    market_item_car_desc: "Reserva compactos, SUVs y autos de lujo directamente con tu saldo de Spree.",
+    market_car_modal_title: "Alquilar un Auto",
+    market_car_type_label: "CATEGORÍA DE VEHÍCULO",
+    market_car_driver_label: "CONDUCTOR PRINCIPAL",
+    market_car_days_label: "DÍAS DE ALQUILER",
+    market_car_insurance_opt_label: "Cobertura total contra daños (+ $10.00 USDc/día)",
+    market_car_btn_buy: "Reservar Auto"
   },
   en: {
     logo_tagline: "LATAM Payments made Simple",
@@ -539,7 +548,16 @@ const translations = {
     purchase_travelers_label: "SELECTED TRAVELERS",
     insurance_travelers_label: "TRAVELERS TO INSURE",
     market_insurance_price_per_day: "Daily cost",
-    profile_btn_add_companion_text: "Add Companion"
+    profile_btn_add_companion_text: "Add Companion",
+    market_cat_cars: "Cars",
+    market_item_car_title: "Car Rental",
+    market_item_car_desc: "Book compacts, SUVs, and luxury cars directly with your Spree balance.",
+    market_car_modal_title: "Rent a Car",
+    market_car_type_label: "VEHICLE CATEGORY",
+    market_car_driver_label: "PRIMARY DRIVER",
+    market_car_days_label: "RENTAL DAYS",
+    market_car_insurance_opt_label: "Full damage coverage (+ $10.00 USDc/day)",
+    market_car_btn_buy: "Book Car"
   },
   it: {
     logo_tagline: "Pagamenti in LATAM resi semplici",
