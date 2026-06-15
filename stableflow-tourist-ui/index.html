@@ -539,6 +539,17 @@
                 <!-- Se llena dinámicamente -->
               </div>
             </div>
+
+            <!-- SECCION HISTORIAL DE MOVIMIENTOS -->
+            <div class="premium-card" style="margin-top: 15px;">
+              <h3 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;" data-i18n="profile_transactions_title">Historial de Movimientos</h3>
+              <p class="subtitle" style="font-size: 0.7rem; margin-bottom: 12px;" data-i18n="profile_transactions_desc">Consulta y accede al detalle de tus cargas, compras y retiros.</p>
+              
+              <!-- LISTA DE MOVIMIENTOS -->
+              <div id="profile-tx-list" class="tx-group" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Se llena dinámicamente -->
+              </div>
+            </div>
           </div>
         </div>
 
@@ -672,7 +683,12 @@
 
         <!-- PANTALLA 5B: SOPORTE Y REPORTES -->
         <div class="screen" id="screen-support">
-          <h2 data-i18n="support_title">Centro de Soporte</h2>
+          <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; width: 100%;">
+            <h2 data-i18n="support_title" style="margin: 0;">Centro de Soporte</h2>
+            <button class="btn-secondary" id="btn-support-profile" style="font-size: 0.75rem; padding: 5px 10px; display: flex; align-items: center; gap: 5px; width: auto; margin: 0; background: var(--bg-card); border-radius: 20px; border: 1px solid var(--card-border); cursor: pointer;">
+              <i class="fa-solid fa-user-gear"></i> <span data-i18n="btn_support_profile">Cuenta</span>
+            </button>
+          </div>
           <p class="subtitle" data-i18n="support_desc" style="margin-bottom: 12px;">¿Tienes algún problema con un pago o recarga? Envíanos un reporte e investigaremos de inmediato.</p>
 
           <!-- iOS Style Segmented Control -->
@@ -1003,6 +1019,35 @@
             </div>
             
             <button class="bank-btn-cancel" id="btn-close-voucher-modal" style="width: 100%; padding: 12px; font-weight: 600; border-radius: 10px; border: none; background: rgba(255,255,255,0.08); color: #FFF; cursor: pointer;" data-i18n="btn_close">Cerrar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL DE DETALLE DE TRANSACCIÓN (Estilo Recibo) -->
+      <div class="modal-overlay" id="tx-detail-modal-overlay">
+        <div class="bank-modal" style="padding: 0; background: var(--bg-system-gray); overflow: hidden; border-radius: 16px; width: 88%; max-width: 320px;">
+          <!-- Encabezado del Recibo -->
+          <div style="background: linear-gradient(135deg, #2C2C2E 0%, #1C1C1E 100%); padding: 16px; border-bottom: 1px dashed rgba(255,255,255,0.15); text-align: center; position: relative;">
+            <div style="font-size: 0.65rem; color: var(--ios-gray-text); text-transform: uppercase; letter-spacing: 1px;" data-i18n="tx_detail_receipt_title">Comprobante de Transacción</div>
+            <div id="tx-detail-merchant" style="font-size: 1.1rem; font-weight: 700; color: #FFF; margin-top: 4px;">Pre-carga Tarjeta</div>
+            <div id="tx-detail-id" style="font-family: monospace; font-size: 0.72rem; color: var(--ios-gray-text); margin-top: 2px;">TX-123456789</div>
+            <!-- Círculos para simular corte de ticket en los laterales -->
+            <div style="position: absolute; left: -8px; bottom: -8px; width: 16px; height: 16px; background: #000; border-radius: 50%;"></div>
+            <div style="position: absolute; right: -8px; bottom: -8px; width: 16px; height: 16px; background: #000; border-radius: 50%;"></div>
+          </div>
+          
+          <!-- Cuerpo del Recibo -->
+          <div style="padding: 20px 16px;">
+            <div style="font-size: 1.8rem; font-weight: 700; color: #FFF; text-align: center; margin-bottom: 18px;" id="tx-detail-amount-display">
+              +$200.00 <span style="font-size: 0.95rem; color: var(--ios-gray-text);">USDc</span>
+            </div>
+            
+            <!-- Detalles de la Transacción -->
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.72rem; border-top: 0.5px solid rgba(255,255,255,0.08); padding-top: 12px; margin-bottom: 18px;" id="tx-detail-rows">
+              <!-- Se llena dinámicamente -->
+            </div>
+            
+            <button class="bank-btn-cancel" id="btn-close-tx-modal" style="width: 100%; padding: 12px; font-weight: 600; border-radius: 10px; border: none; background: rgba(255,255,255,0.08); color: #FFF; cursor: pointer;" data-i18n="btn_close">Cerrar</button>
           </div>
         </div>
       </div>

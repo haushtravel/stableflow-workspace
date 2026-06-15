@@ -286,7 +286,14 @@ const translations = {
     kyc_doc_dni: "DNI",
     kyc_scan_title: "Verificación de Identidad",
     kyc_scan_subtitle: "Escanea tu documento para verificar tu cuenta.",
-    notification_just_now: "ahora"
+    notification_just_now: "ahora",
+    profile_transactions_title: "Historial de Movimientos",
+    profile_transactions_desc: "Consulta y accede al detalle de tus cargas, compras y retiros.",
+    details_preload_fee_bank: "Comisión de Carga (0%)",
+    btn_support_profile: "Cuenta",
+    tx_detail_receipt_title: "Comprobante de Transacción",
+    js_chat_error: "Error de comunicación con el asistente.",
+    js_preload_success_title_local: "¡Carga Exitosa!"
   },
   en: {
     logo_tagline: "LATAM Payments made Simple",
@@ -575,7 +582,14 @@ const translations = {
     kyc_doc_dni: "ID Card",
     kyc_scan_title: "Identity Verification",
     kyc_scan_subtitle: "Scan your document to verify your account.",
-    notification_just_now: "just now"
+    notification_just_now: "just now",
+    profile_transactions_title: "Transaction History",
+    profile_transactions_desc: "View and access the details of your deposits, purchases, and withdrawals.",
+    details_preload_fee_bank: "Preload Fee (0%)",
+    btn_support_profile: "Profile",
+    tx_detail_receipt_title: "Transaction Receipt",
+    js_chat_error: "Communication error with assistant.",
+    js_preload_success_title_local: "Load Successful!"
   },
   it: {
     logo_tagline: "Pagamenti in LATAM resi semplici",

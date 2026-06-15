@@ -169,14 +169,14 @@ body {
   -webkit-overflow-scrolling: touch; /* Suaviza el scroll en iOS y dispositivos móviles */
 }
 
-.screen::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
-.screen {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
 .screen.active {
