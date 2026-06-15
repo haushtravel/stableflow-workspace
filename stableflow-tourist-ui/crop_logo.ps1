@@ -1,7 +1,7 @@
 Add-Type -AssemblyName System.Drawing
 
-$srcPath = "C:\Users\HaushTravel\.gemini\antigravity\scratch\stableflow-workspace\stableflow-tourist-ui\spree_logo.png"
-$destPath = "C:\Users\HaushTravel\.gemini\antigravity\scratch\stableflow-workspace\stableflow-tourist-ui\spree_logo_transparent.png"
+$srcPath = "C:\Users\HaushTravel\.gemini\antigravity\scratch\stableflow-workspace\stableflow-tourist-ui\crux_logo.png"
+$destPath = "C:\Users\HaushTravel\.gemini\antigravity\scratch\stableflow-workspace\stableflow-tourist-ui\crux_logo_transparent.png"
 
 if (-not (Test-Path $srcPath)) {
     Write-Error "Original logo not found."
@@ -47,4 +47,4 @@ $g.Dispose()
 $bmp.Save($destPath, [System.Drawing.Imaging.ImageFormat]::Png)
 $bmp.Dispose()
 
-Write-Output "Successfully generated spree_logo_transparent.png!"
+Write-Output "Successfully generated crux_logo_transparent.png!"
