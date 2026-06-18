@@ -2063,13 +2063,14 @@ var botReplies = map[string]map[string]string{
 		"qr":        "<b>📲 Pagos con códigos QR en LATAM</b><br><br>Crux te permite pagar de forma sencilla escaneando códigos QR locales en los comercios:<br><br>• <b>En Argentina 🇦🇷:</b> Escanea cualquier código de <b>Mercado Pago</b> o <b>MODO</b>.<br>• <b>En Brasil 🇧🇷:</b> Escanea códigos del sistema <b>Pix</b>.<br><br><i>Comisiones:</i> No hay comisiones visibles de servicio ni de red. Para micropagos (≤ $15 USDc) el tipo de cambio es subsidiado (0% spread), y para macropagos (> $15 USDc) se incluye un spread del 1.5% + $0.10 USDc en el tipo de cambio.",
 		"fees":      "<b>📊 Estructura de comisiones de Crux</b><br><br>Mantenemos una política de tarifas simple y transparente:<br><br>• <b>Cargas de saldo (Fondeo):</b> 1% (ACH/USDC), 2% (Apple/Google Pay), 3% (Tarjetas).<br>• <b>Pagos con códigos QR:</b> Sin comisiones fijas visibles. Tipo de cambio subsidiado en compras ≤ $15 USDc y spread del 1.5% + $0.10 USDc en compras > $15 USDc.<br>• <b>Reembolsos (Retirar saldo):</b> 0.5% del monto a retirar.<br><br><b>¡Importante!</b> No cobramos comisiones ocultas, cargos de apertura, ni costos de mantenimiento mensual o por inactividad.",
 		"esim":      "<b>📶 eSIM Regional de Crux</b><br><br>Mantente conectado durante todo tu viaje sin pagar tarifas costosas de roaming:<br><br>• <b>¡Tu primera eSIM es de regalo!</b> Reclámala gratis en la pestaña <b>'Mejora tu viaje'</b>.<br>• <b>Cobertura:</b> Datos de alta velocidad en Argentina y Brasil.<br>• <b>Siguientes eSIMs:</b> Cada paquete de datos adicional de 10GB tiene un costo de <b>$15.00 USDc</b>.",
+		"esim_compat": "<b>📶 Compatibilidad de eSIM de Crux</b><br><br>Tu teléfono debe ser compatible con la tecnología eSIM y estar liberado para cualquier operador. En general, los siguientes dispositivos son compatibles:<br><br>• <b>Apple:</b> iPhone XR, XS o modelos posteriores (incluyendo SE 2/3).<br>• <b>Samsung:</b> Galaxy S20, S21, S22, S23, S24 o posterior, y modelos Z Flip/Fold.<br>• <b>Google:</b> Pixel 3, 4, 5, 6, 7, 8 o posterior.<br>• <b>Otros:</b> Huawei P40/Mate 40, Xiaomi 12T/13/14 o superior.<br><br><b>¿Cómo comprobarlo en tu celular?</b><br>Marca <b>*#06#</b> en tu celular. Si en la pantalla figura un código llamado <b>EID</b>, ¡tu dispositivo es compatible con eSIM!",
 		"insurance": "<b>🛡️ Seguro de Viaje Premium</b><br><br>Viaja con total tranquilidad gracias a nuestra cobertura médica y de equipaje completa respaldada por <b>Chubb</b>:<br><br>• <b>Contratación express:</b> Cotiza y contrata tu póliza en segundos desde la pestaña <b>'Mejora tu viaje'</b>.<br>• <b>Costo flexible:</b> Solo <b>$3.00 USDc por día</b>, adaptado a la duración de tu estancia y países de destino.<br>• <b>Pago directo:</b> Se debita de forma automática de tu saldo en dólares digitales (USDc).",
 		"tours":     "<b>🗺️ Reservas y Actividades Civitatis</b><br><br>¡Explora LATAM como un local! A través de nuestra alianza con <b>Civitatis</b>, puedes reservar tours, excursiones y traslados privados directamente con tu saldo de Crux:<br><br>• <b>Flujo asistido:</b> Un bot automatizado de Crux completará los formularios por ti.<br>• <b>Cómo iniciar:</b> Solo escribe <b>'tour'</b> o <b>'civitatis'</b> aquí en el chat, o pulsa el botón del bot en la sección <b>'Mejora tu viaje'</b> y dime en qué ciudad quieres realizar tu actividad (Buenos Aires o Río de Janeiro).",
 		"network":   "<b>🌐 ¿Cómo funciona la tecnología de Crux?</b><br><br>Crux combina la estabilidad de los dólares digitales (USDc) con la red financiera local de LATAM:<br><br>• <b>Estabilidad:</b> Tus fondos están resguardados en USDc (equivalentes 1:1 al dólar estadounidense).<br>• <b>Conversión en tiempo real:</b> Al escanear un QR local, el backend convierte y liquida instantáneamente los fondos al comercio en moneda local mediante nuestros rieles de liquidez partners (como Bitso).",
 		"limits":    "<b>⚙️ Límites de tu cuenta Crux</b><br><br>Para garantizar la seguridad de tu dinero, aplicamos los siguientes límites por defecto:<br><br>• <b>Límite diario de carga:</b> Hasta <b>$5,000 USDc</b>.<br>• <b>Límite diario de gasto:</b> Hasta <b>$5,000 USDc</b>.<br><br>Si necesitas límites mayores para tu viaje, solicita una ampliación escribiendo <b>'agente'</b> para hablar con soporte técnico.",
 		"times":     "<b>⏱️ Tiempos de acreditación en Crux</b><br><br>Conoce cuánto tardan tus operaciones:<br><br>• <b>Cargas de saldo (Fondeo):</b> Inmediata. Los fondos están disponibles al instante tras autorizar el pago.<br>• <b>Pagos con códigos QR (Mercado Pago, MODO, Pix):</b> Inmediata. El comercio recibe su dinero local al instante.<br>• <b>Reembolsos (Retiros a tu tarjeta original):</b> Toma entre <b>2 a 5 días hábiles</b> en verse reflejado debido a los tiempos de liquidación de las redes bancarias internacionales.",
 		"agent":     "<b>👤 Soporte Humano</b><br><br>He registrado una incidencia formal en nuestro sistema de soporte técnico. Nuestro equipo administrativo revisará tu consulta inmediatamente y se comunicará contigo a tu teléfono: <b>{phone}</b>.",
-		"default":   "<b>👋 ¡Hola! Soy el asistente virtual de Crux.</b><br><br>No logré comprender del todo tu consulta. Estoy aquí para guiarte en tus operaciones. Puedes preguntarme sobre:<br><br>• <b>'cargar saldo'</b> o <b>'tarjeta'</b><br>• <b>'pagos con QR'</b> o <b>'Pix'</b><br>• <b>'comisiones'</b> o <b>'costos'</b><br>• <b>'reembolsos'</b> o <b>'retirar'</b><br>• <b>'eSIM'</b>, <b>'seguros'</b> o <b>'tours'</b><br>• Escribe <b>'agente'</b> si necesitas hablar con un soporte humano.",
+		"default":   "<b>👋 ¡Hola! Soy el asistente virtual de Crux.</b><br><br>No logré comprender del todo tu consulta. Estoy aquí para guiarte en tus operaciones. Puedes usar los botones rápidos debajo para agilizar tu consulta, o escribir tu duda sobre Excursiones/Traslados o compatibilidad de la eSIM:<br><br><div class='chat-quick-reply-container'><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"tour\")'>🗺️ Reservar Excursión / Traslado</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"compatibilidad esim\")'>📶 ¿Mi celular es compatible?</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"soporte\")'>👤 Hablar con Soporte</button></div>",
 	},
 	"en": {
 		"preload":   "<b>💳 How to load funds into your Crux wallet?</b><br><br>To add funds to your account, go to the <b>'Preload'</b> tab in the bottom menu. You can use the following methods:<br><br>• <b>Bank/ACH/USDC:</b> 1% fee.<br>• <b>Apple Pay / Google Pay:</b> 2% fee.<br>• <b>Credit / Debit Cards:</b> 3% fee.<br><br>Your funds are credited instantly as <b>USDc</b> (digital dollars) in your account.",
@@ -2077,27 +2078,29 @@ var botReplies = map[string]map[string]string{
 		"qr":        "<b>📲 Paying with QR codes in LATAM</b><br><br>Crux allows you to easily pay by scanning local QR codes at merchants:<br><br>• <b>In Argentina 🇦🇷:</b> Scan any <b>Mercado Pago</b> or <b>MODO</b> QR code.<br>• <b>In Brazil 🇧🇷:</b> Scan Pix QR codes.<br><br><i>Fees:</i> No visible service or network fees. For micropayments (≤ $15 USDc) we use a subsidized rate (0% spread), and for macropayments (> $15 USDc) we include a 1.5% + $0.10 USDc spread in the exchange rate.",
 		"fees":      "<b>📊 Crux Fee Structure</b><br><br>We keep our fees simple and transparent:<br><br>• <b>Preloads:</b> 1% (ACH/USDC), 2% (Apple/Google Pay), 3% (Cards).<br>• <b>QR Payments:</b> No visible service/gas fees. Subsidized rate for purchases ≤ $15 USDc, and 1.5% + $0.10 USDc spread for purchases > $15 USDc.<br>• <b>Refunds (Withdrawals):</b> 0.5% of the total refund.<br><br><b>Important!</b> We do not charge hidden fees, opening costs, or monthly maintenance/inactivity fees.",
 		"esim":      "<b>📶 Crux Regional eSIM</b><br><br>Stay connected throughout your trip without paying expensive roaming fees:<br><br>• <b>Your first eSIM is free!</b> Claim it in the <b>'Improve Your Trip'</b> tab.<br>• <b>Coverage:</b> High-speed data in Argentina and Brazil.<br>• <b>Next eSIMs:</b> Each additional 10GB data pack costs <b>$15.00 USDc</b>.",
+		"esim_compat": "<b>📶 eSIM Compatibility</b><br><br>Your phone must support eSIM technology and be carrier-unlocked. Generally, the following models are compatible:<br><br>• <b>Apple:</b> iPhone XR, XS or newer (including SE 2/3).<br>• <b>Samsung:</b> Galaxy S20, S21, S22, S23, S24 or newer, and Z Flip/Fold models.<br>• <b>Google:</b> Pixel 3, 4, 5, 6, 7, 8 or newer.<br>• <b>Others:</b> Huawei P40/Mate 40, Xiaomi 12T/13/14 or higher.<br><br><b>How to check on your device:</b><br>Dial <b>*#06#</b> on your phone. If you see an <b>EID</b> code on the screen, your device is compatible with eSIM!",
 		"insurance": "<b>🛡️ Premium Travel Insurance</b><br><br>Travel with peace of mind with our complete medical and baggage coverage backed by <b>Chubb</b>:<br><br>• <b>Express Purchase:</b> Get a quote and buy your policy in seconds from the <b>'Improve Your Trip'</b> tab.<br>• <b>Flexible Cost:</b> Only <b>$3.00 USDc per day</b>, tailored to your trip duration and destination.<br>• <b>Direct Payment:</b> Automatically debited from your digital dollar (USDc) balance.",
 		"tours":     "<b>🗺️ Civitatis Booking Assistant</b><br><br>Explore LATAM like a local! Through our partnership with <b>Civitatis</b>, you can book tours, excursions, and private transfers directly with your Crux balance:<br><br>• <b>Automated Booking:</b> A Crux bot will automatically fill out the booking details for you.<br>• <b>How to start:</b> Type <b>'tour'</b> or <b>'civitatis'</b> here in the chat, or click the bot button in <b>'Improve Your Trip'</b> to start.",
 		"network":   "<b>🌐 How does Crux work?</b><br><br>Crux combines digital dollars (USDc) with local financial rails in LATAM:<br><br>• <b>Stability:</b> Your funds are kept in USDc (pegged 1:1 to the US dollar).<br>• <b>Real-time Conversion:</b> When scanning a local QR code, our backend automatically converts and settles the payment in local currency instantly.",
 		"limits":    "<b>⚙️ Account Limits</b><br><br>To protect your funds, we apply the following default limits:<br><br>• <b>Daily Preload Limit:</b> Up to <b>$5,000 USDc</b>.<br>• <b>Daily Spending Limit:</b> Up to <b>$5,000 USDc</b>.<br><br>If you need higher limits, write <b>'agent'</b> to request a limit increase.",
 		"times":     "<b>⏱️ Accreditation Times on Crux</b><br><br>Check the duration of your operations:<br><br>• <b>Preloads:</b> Instant. Funds are available immediately after authorizing the payment.<br>• <b>QR Payments (Mercado Pago, MODO, Pix):</b> Instant. The merchant receives their local currency immediately.<br>• <b>Refunds (Withdrawals to original card):</b> Takes <b>2 to 5 business days</b> to clear due to international banking networks.",
 		"agent":     "<b>👤 Human Support</b><br><br>I have registered a formal incident in our support system. Our administrative team will review your case immediately and contact you at your phone: <b>{phone}</b>.",
-		"default":   "<b>👋 Hello! I am the Crux virtual assistant.</b><br><br>I couldn't quite understand your query. I am here to help you. You can ask me about:<br><br>• <b>'preloads'</b> or <b>'card'</b><br>• <b>'QR payments'</b> or <b>'Pix'</b><br>• <b>'fees'</b> or <b>'costs'</b><br>• <b>'refunds'</b> or <b>'withdraw'</b><br>• <b>'eSIM'</b>, <b>'insurance'</b> or <b>'tours'</b><br>• Write <b>'agent'</b> if you need human support.",
+		"default":   "<b>👋 Hello! I am the Crux virtual assistant.</b><br><br>I couldn't quite understand your query. I am here to help you. You can use the quick buttons below, or ask about Excursions/Transfers or eSIM compatibility:<br><br><div class='chat-quick-reply-container'><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"tour\")'>🗺️ Book Excursion / Transfer</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"esim compatibility\")'>📶 Is my phone compatible?</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"support\")'>👤 Speak to Support</button></div>",
 	},
 	"it": {
 		"preload":   "<b>💳 Come ricaricare la tua Crux wallet?</b><br><br>Per aggiungere fondi, vai alla scheda <b>'Carica'</b> nel menu in basso. Puoi utilizzare:<br><br>• <b>Apple Pay / Google Pay:</b> Accredito istantaneo.<br>• <b>Carte di Credito / Debito:</b> Visa, Mastercard e altre carte internazionali.<br><br><i>Nota:</i> Applichiamo una commissione dell'<b>1%</b>. I fondi vengono accreditati istantaneamente in <b>USDc</b> (dollari digitali).",
 		"refund":    "<b>💰 Come rimborsare i tuoi fondi?</b><br><br>Se desideri ritirare il saldo rimanente sulla tua carta, vai alla scheda <b>'Ritira'</b> nel menu in basso.<br><br>• <b>Commissione di ritiro:</b> 1.5%.<br>• <b>Tempo di elaborazione:</b> Il denaro arriverà sul tuo conto in <b>2-5 giorni lavorativi</b>.<br><br>I tuoi USDc verranno bruciati su Polygon e rimborsati in modo sicuro tramite Stripe.",
 		"qr":        "<b>📲 Pagamenti QR in LATAM</b><br><br>Crux ti consente di pagare scansionando i codici QR locali:<br><br>• <b>In Argentina 🇦🇷:</b> Supportiamo <b>Mercado Pago</b> e <b>MODO</b>. Paghi in USDc e il negozio riceve ARS istantaneamente.<br>• <b>In Brasile 🇧🇷:</b> Supportiamo Pix. Paghi in USDc e il negozio riceve BRL istantaneamente.<br><br><i>Commissioni:</i> Applichiamo il <b>3%</b> di servizio e <b>$0.10 USDc</b> di costo transazione.",
 		"fees":      "<b>📊 Tariffe Crux</b><br><br>Le nostre commissioni sono semplici e trasparenti:<br><br>• <b>Ricarica:</b> 1% del totale.<br>• <b>Pagamento QR:</b> 3% di servizio + $0.10 USDc costo transazione.<br>• <b>Rimborso (ritiro):</b> 1.5% del totale.<br><br>Non addebitiamo costi di gestione conto o inattività.",
-		"esim":      "<b>📶 eSIM Crux</b><br><br>Rimani conneso per tutto il viaggio senza costi di roaming:<br><br>• <b>La tua prima eSIM è in regalo!</b> Richiedila nella scheda <b>'Migliora il tuo Viaggio'</b>.<br>• <b>Copertura:</b> Dati ad alta velocità in Argentina e Brasile.<br>• <b>Successive:</b> Ogni pacchetto da 10GB costa <b>$15.00 USDc</b>.",
+		"esim":      "<b>📶 eSIM Crux</b><br><br>Rimani conneso per tutto il viaggio senza costi di roaming:<br><br>• <b>La tua prima eSIM es in regalo!</b> Richiedila nella scheda <b>'Migliora il tuo Viaggio'</b>.<br>• <b>Copertura:</b> Dati ad alta velocità in Argentina e Brasile.<br>• <b>Successive:</b> Ogni pacchetto da 10GB costa <b>$15.00 USDc</b>.",
+		"esim_compat": "<b>📶 Compatibilità eSIM</b><br><br>Il tuo telefono deve supportare la tecnologia eSIM ed essere sbloccato. In generale, i seguenti modelli sono compatibili:<br><br>• <b>Apple:</b> iPhone XR, XS o successivi (inclusi SE 2/3).<br>• <b>Samsung:</b> Galaxy S20, S21, S22, S23, S24 o successivi, e modelli Z Flip/Fold.<br>• <b>Google:</b> Pixel 3, 4, 5, 6, 7, 8 o successivi.<br>• <b>Altri:</b> Huawei P40/Mate 40, Xiaomi 12T/13/14 o superiori.<br><br><b>Come verificare sul tuo dispositivo:</b><br>Digita <b>*#06#</b> sul tastierino. Se sullo schermo appare un codice <b>EID</b>, il tuo telefono è compatibile con eSIM!",
 		"insurance": "<b>🛡️ Assicurazione Premium</b><br><br>Viaggia protetto con la copertura medica di <b>Chubb</b>:<br><br>• <b>Preventivo express:</b> Calcola e acquista in pochi secondi da <b>'Migliora il tuo Viaggio'</b>.<br>• <b>Costo:</b> Solo <b>$3.00 USDc al giorno</b>.<br>• <b>Addebito directo:</b> Scalato automaticamente dal tuo saldo USDc.",
 		"tours":     "<b>🗺️ Assistente Civitatis</b><br><br>Prenota tour e trasferimenti direttamente con il tuo saldo Crux:<br><br>• <b>Prenotazione automatica:</b> Un bot si occuperà di compilare i dati per te.<br>• <b>Come iniziare:</b> Scrivi <b>'tour'</b> o <b>'civitatis'</b> in chat, oppure clicca sul pulsante del bot nella scheda <b>'Migliora il tuo Viaggio'</b>.",
 		"network":   "<b>🌐 Come funziona Crux?</b><br><br>Crux unisce USDc con i circuiti bancari locali in LATAM per conversioni e pagamenti QR istantanei al miglior tasso di cambio.",
 		"limits":    "<b>⚙️ Limiti del conto</b><br><br>Applichiamo i seguenti limiti di sicurezza per impostazione predefinita:<br><br>• <b>Ricarica giornaliera:</b> Fino a <b>$5,000 USDc</b>.<br>• <b>Spesa giornaliera:</b> Fino a <b>$5,000 USDc</b>.<br><br>Scrivi <b>'agent'</b> se desideri aumentare i tuoi limiti.",
 		"times":     "<b>⏱️ Tempi di accredito su Crux</b><br><br>Conosci i tempi delle tue operazioni:<br><br>• <b>Ricariche:</b> Istantanee. I fondi sono subito disponibili.<br>• <b>Pagamenti QR:</b> Istantanei. Il negozio riceve il pagamento all'istante.<br>• <b>Rimborsi su carta:</b> Richiedono da <b>2 a 5 giorni lavorativi</b> per l'elaborazione bancaria.",
 		"agent":     "<b>👤 Supporto Umano</b><br><br>Ho registrato un ticket di supporto formale. Il nostro team esaminerà il caso e ti contatterà al tuo telefono: <b>{phone}</b>.",
-		"default":   "<b>👋 Ciao! Sono l'assistente virtuale di Crux.</b><br><br>Non ho capito bene la tua domanda. Puoi chiedermi di:<br><br>• <b>'ricarica'</b> o <b>'carta'</b><br>• <b>'pagamenti QR'</b> o <b>'Pix'</b><br>• <b>'commissioni'</b> o <b>'tariffe'</b><br>• <b>'rimborsi'</b> o <b>'ritiro'</b><br>• <b>'eSIM'</b>, <b>'assicurazioni'</b> o <b>'tour'</b><br>• Scrivi <b>'agent'</b> per parlare con un operatore.",
+		"default":   "<b>👋 Ciao! Sono l'assistente virtuale di Crux.</b><br><br>Non ho capito bene la tua domanda. Sono qui per aiutarti. Puoi utilizzare i pulsanti rapidi qui sotto o chiedere informazioni su Escursioni/Trasferimenti o compatibilità eSIM:<br><br><div class='chat-quick-reply-container'><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"tour\")'>🗺️ Prenota Escursione / Trasferimento</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"compatibilita esim\")'>📶 Il mio telefono è compatibile?</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"supporto\")'>👤 Parla con il Supporto</button></div>",
 	},
 	"fr": {
 		"preload":   "<b>💳 Comment charger votre solde Crux ?</b><br><br>Pour ajouter des fonds, allez dans l'onglet <b>'Charger'</b> dans le menu inférieur. Vous pouvez utiliser :<br><br>• <b>Apple Pay / Google Pay :</b> Crédit instantané.<br>• <b>Cartes de Crédit / Débit :</b> Visa, Mastercard et cartes internationales.<br><br><i>Note :</i> Commission de <b>1%</b>. Les fonds sont crédités instantanément en <b>USDc</b> (dollars digitaux).",
@@ -2105,27 +2108,29 @@ var botReplies = map[string]map[string]string{
 		"qr":        "<b>📲 Paiements par code QR en LATAM</b><br><br>Crux vous permet de payer en scannant des codes QR locaux chez les commerçants :<br><br>• <b>En Argentine 🇦🇷 :</b> Scannez les codes <b>Mercado Pago</b> ou <b>MODO</b>. Payez en USDc, le marchand reçoit des ARS immédiatement.<br>• <b>Au Brésil 🇧🇷 :</b> Scannez les codes Pix. Payez en USDc, le marchand reçoit des BRL immédiatement.<br><br><i>Frais :</i> Commission de service de <b>3%</b> + <b>$0.10 USDc</b> de frais de transaction.",
 		"fees":      "<b>📊 Tarification Crux</b><br><br>Nos frais sont simples et transparents :<br><br>• <b>Chargement :</b> 1% du montant.<br>• <b>Paiments QR :</b> 3% de service + $0.10 USDc par transaction.<br>• <b>Remboursements :</b> 1.5% du montant.<br><br>Aucun frais de tenue de compte ou d'inactivité.",
 		"esim":      "<b>📶 eSIM Régionale Crux</b><br><br>Restez connecté tout au long de votre voyage sans frais de roaming :<br><br>• <b>Votre première eSIM est offerte !</b> Demandez-la dans l'onglet <b>'Améliorez votre Voyage'</b>.<br>• <b>Couverture :</b> Données haut débit en Argentine et au Brésil.<br>• <b>Suivantes :</b> Chaque recharge de 10Go coûte <b>$15.00 USDc</b>.",
+		"esim_compat": "<b>📶 Compatibilité eSIM</b><br><br>Votre téléphone doit être compatible avec la technologie eSIM et désimlocké. En général, les modèles suivants sont compatibles :<br><br>• <b>Apple :</b> iPhone XR, XS ou plus récent (y compris SE 2/3).<br>• <b>Samsung :</b> Galaxy S20, S21, S22, S23, S24 ou plus récent, et modèles Z Flip/Fold.<br>• <b>Google :</b> Pixel 3, 4, 5, 6, 7, 8 ou plus récent.<br>• <b>Autres :</b> Huawei P40/Mate 40, Xiaomi 12T/13/14 ou supérieur.<br><br><b>Comment vérifier sur votre appareil :</b><br>Composez le <b>*#06#</b> sur votre clavier. Si un code <b>EID</b> s'affiche à l'écran, votre téléphone est compatible eSIM !",
 		"insurance": "<b>🛡️ Assurance Voyage Premium</b><br><br>Voyagez l'esprit tranquille avec notre couverture médicale complète Chubb :<br><br>• <b>Devis express :</b> Obtenez un devis et achetez en quelques secondes depuis <b>'Améliorez votre Voyage'</b>.<br>• <b>Coût :</b> Seulement <b>$3.00 USDc par jour</b>.<br>• <b>Débit direct :</b> Prélevé automatiquement sur votre solde USDc.",
 		"tours":     "<b>🗺️ Assistant de Réservation Civitatis</b><br><br>Réservez des excursions et des transferts directement avec votre solde Crux :<br><br>• <b>Réservation automatisée :</b> Un bot Crux s'occupe de remplir les formulaires pour vous.<br>• <b>Comment démarrer :</b> Écrivez <b>'tour'</b> ou <b>'civitatis'</b> dans le chat, ou cliquez sur le bouton de l'assistant dans l'onglet <b>'Améliorez votre Voyage'</b>.",
 		"network":   "<b>🌐 Comment fonctionne Crux ?</b><br><br>Crux convertit vos dollars digitaux (USDc) en monnaie locale en temps réel lors du paiement par QR pour régler le commerçant instantanément.",
 		"limits":    "<b>⚙️ Limites du compte</b><br><br>Nous appliquons des limites de sécurité quotidiennes :<br><br>• <b>Limite de chargement :</b> Jusqu'à <b>$5,000 USDc</b> par jour.<br>• <b>Limite de dépense :</b> Jusqu'à <b>$5,000 USDc</b> par jour.<br><br>Écrivez <b>'agent'</b> pour demander une augmentation de vos limites.",
 		"times":     "<b>⏱️ Délais d'accréditation Crux</b><br><br>Voici les délais de vos opérations :<br><br>• <b>Chargements :</b> Instantanés. Les fonds sont disponibles immédiatement.<br>• <b>Paiements QR :</b> Instantanés. Le commerçant reçoit son argent immédiatement.<br>• <b>Remboursements :</b> Prennent <b>2 à 5 jours ouvrés</b> pour apparaître sur votre carte d'origine.",
 		"agent":     "<b>👤 Support Humain</b><br><br>J'ai enregistré un ticket de support formel. Notre équipe administrative étudiera votre dossier et vous contactera au: <b>{phone}</b>.",
-		"default":   "<b>👋 Bonjour ! Je suis l'assistant virtuel de Crux.</b><br><br>Je n'ai pas bien compris. Vous pouvez me poser des questions sur :<br><br>• <b>'chargements'</b> ou <b>'carte'</b><br>• <b>'paiements QR'</b> ou <b>'Pix'</b><br>• <b>'frais'</b> ou <b>'tarifs'</b><br>• <b>'remboursements'</b> ou <b>'retirer'</b><br>• <b>'eSIM'</b>, <b>'assurances'</b> ou <b>'tours'</b><br>• Écrivez <b>'agent'</b> pour parler à un conseiller.",
+		"default":   "<b>👋 Bonjour ! Je suis l'assistant virtuel de Crux.</b><br><br>Je n'ai pas bien compris votre demande. Je suis là pour vous aider. Vous pouvez utiliser les boutons rapides ci-dessous ou poser des questions sur les Excursions/Transferts ou la compatibilité eSIM :<br><br><div class='chat-quick-reply-container'><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"tour\")'>🗺️ Réserver Excursion / Transfert</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"compatibilite esim\")'>📶 Mon téléphone est-il compatible ?</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"support\")'>👤 Parler au Support</button></div>",
 	},
 	"de": {
 		"preload":   "<b>💳 Guthaben aufladen bei Crux</b><br><br>Um Guthaben hinzuzufügen, gehen Sie auf <b>'Aufladen'</b> im Menü unten. Folgende Methoden sind verfügbar:<br><br>• <b>Apple Pay / Google Pay:</b> Sofortige Gutschrift (erfordert aktive Biometrie auf Ihrem Gerät).<br>• <b>Kredit- / Debitkarten:</b> Visa, Mastercard und andere internationale Karten.<br><br><i>Hinweis:</i> Wir berechnen <b>1%</b> Gebühr. Die Gutschrift erfolgt sofort als <b>USDc</b> (digitale Dollar).",
 		"refund":    "<b>💰 Guthaben auszahlen / erstatten</b><br><br>Wenn Ihre Reise beendet ist, können Sie Ihr Restguthaben in der Registerkarte <b>'Auszahlen'</b> erstatten:<br><br>• <b>Erstattungsgebühr:</b> 1.5% des Auszahlungsbetrags.<br>• <b>Bearbeitungszeit:</b> Das Geld ist in <b>2 bis 5 Werktagen</b> auf Ihrem Bankkonto.<br><br>Ihre USDc werden auf Polygon verbrannt und die Erstattung sicher über Stripe abgewickelt.",
-		"qr":        "<b>📲 QR-Zahlungen in LATAM</b><br><br>Mit Crux können Sie QR-Codes in lokalen Geschäften scannen:<br><br>• <b>In Argentinien 🇦🇷:</b> Scannen Sie <b>Mercado Pago</b> oder <b>MODO</b> QR-Codes. Sie zahlen in USDc, der Händler erhält ARS sofort.<br>• <b>In Brasilien 🇧🇷:</b> Scannen Sie Pix QR-Codes. Sie zahlen in USDc, der Händler erhält BRL sofort.<br><br><i>Gebühren:</i> <b>3%</b> Servicegebühr + <b>$0.10 USDc</b> Netzwerkgebühr pro Zahlung.",
+		"qr":        "<b>📲 QR-Zahlungen in LATAM</b><br><br>Mit Crux können Sie QR-Codes in lokalen Geschäften scannen:<br><br>• <b>In Argentinien 🇦🇷:</b> Scannen Sie <b>Mercado Pago</b> oder <b>MODO</b> QR-Codes. Sie zahlen in USDc, der Händler erhält ARS sofort.<br>• <b>In Brasilien 🇧🇷:</b> Scannen Pix QR-Codes. Sie zahlen in USDc, der Händler erhält BRL sofort.<br><br><i>Gebühren:</i> <b>3%</b> Servicegebühr + <b>$0.10 USDc</b> Netzwerkgebühr pro Zahlung.",
 		"fees":      "<b>📊 Crux Gebührenübersicht</b><br><br>Unsere Gebühren sind einfach und transparent:<br><br>• <b>Aufladungen:</b> 1% des Betrags.<br>• <b>QR-Zahlungen:</b> 3% Servicegebühr + $0.10 USDc Transaktionsgebühr.<br>• <b>Rückerstattungen (Auszahlung):</b> 1.5% des Betrags.<br><br>Keine Kontoführungs- oder Inaktivitätsgebühren.",
 		"esim":      "<b>📶 Crux Regionale eSIM</b><br><br>Bleiben Sie während Ihrer Reise verbunden, ohne teures Roaming zu zahlen:<br><br>• <b>Ihre erste eSIM ist ein Geschenk!</b> Kostenlos anfordern unter <b>'Reise Aufwerten'</b>.<br>• <b>Abdeckung:</b> Schnelle mobile Daten in Argentinien und Brasilien.<br>• <b>Weitere eSIMs:</b> Jedes zusätzliche 10GB-Paket kostet <b>$15.00 USDc</b>.",
+		"esim_compat": "<b>📶 eSIM-Kompatibilität</b><br><br>Ihr Telefon muss die eSIM-Technologie unterstützen und für alle Anbieter freigeschaltet sein. Folgende Modelle sind kompatibel:<br><br>• <b>Apple:</b> iPhone XR, XS oder neuer (einschließlich SE 2/3).<br>• <b>Samsung:</b> Galaxy S20, S21, S22, S23, S24 oder neuer, und Z Flip/Fold-Modelle.<br>• <b>Google:</b> Pixel 3, 4, 5, 6, 7, 8 oder neuer.<br>• <b>Andere:</b> Huawei P40/Mate 40, Xiaomi 12T/13/14 oder höher.<br><br><b>So prüfen Sie es auf Ihrem Gerät:</b><br>Wählen Sie <b>*#06#</b> auf Ihrem Telefon. Wenn ein <b>EID</b>-Code auf dem Bildschirm angezeigt wird, ist Ihr Gerät eSIM-kompatibel!",
 		"insurance": "<b>🛡️ Premium Reiseversicherung</b><br><br>Reisen Sie sicher mit dem medizinischen Schutz von <b>Chubb</b>:<br><br>• <b>Sofortiger Abschluss:</b> In wenigen Sekunden unter <b>'Reise Aufwerten'</b> abschließen.<br>• <b>Flexible Kosten:</b> Nur <b>$3.00 USDc pro Tag</b>, angepasst an Ihre Reise.<br>• <b>Direkte Zahlung:</b> Wird automatisch von Ihrem USDc-Guthaben abgebucht.",
 		"tours":     "<b>🗺️ Civitatis Buchungs-Assistent</b><br><br>Buchen Sie Ausflüge und Transfers direkt mit Ihrem Crux-Guthaben:<br><br>• <b>Automatische Buchung:</b> Ein Crux-Bot füllt das Buchungsformular für Sie aus.<br>• <b>Wie starten:</b> Schreiben Sie <b>'tour'</b> oder <b>'civitatis'</b> im Chat, oder tippen Sie auf den Bot-Button unter <b>'Reise Aufwerten'</b>.",
 		"network":   "<b>🌐 Wie funktioniert Crux?</b><br><br>Crux rechnet Ihre USDc (digitale Dollar) bei QR-Zahlungen in Echtzeit zum besten Kurs in lokale Währung um, um den Händler sofort zu bezahlen.",
 		"limits":    "<b>⚙️ Kontolimits</b><br><br>Wir wenden standardmäßig folgende Sicherheitslimits an:<br><br>• <b>Tägliches Aufladelimit:</b> Bis zu <b>$5,000 USDc</b>.<br>• <b>Tägliches Ausgabenlimit:</b> Bis zu <b>$5,000 USDc</b>.<br><br>Schreiben Sie <b>'agent'</b>, um eine Erhöhung Ihrer Limits zu beantragen.",
 		"times":     "<b>⏱️ Bearbeitungszeiten bei Crux</b><br><br>Die Dauer Ihrer Transaktionen im Überblick:<br><br>• <b>Aufladungen:</b> Sofort. Das Guthaben ist direkt verfügbar.<br>• <b>QR-Zahlungen (Mercado Pago, Pix):</b> Sofort. Der Händler erhält sein Geld direkt.<br>• <b>Erstattungen:</b> Dauern <b>2 bis 5 Werktage</b>, bis sie auf Ihrer Karte eingehen.",
 		"agent":     "<b>👤 Support-Mitarbeiter</b><br><br>Ich habe ein Support-Ticket für Sie erstellt. Unser Support-Team wird den Fall prüfen und Sie unter Ihrer Nummer kontaktieren: <b>{phone}</b>.",
-		"default":   "<b>👋 Hallo! Ich bin der virtuelle Assistent von Crux.</b><br><br>Ich habe Ihre Frage leider nicht verstanden. Sie können mich fragen nach:<br><br>• <b>'Aufladung'</b> oder <b>'Karte'</b><br>• <b>'QR-Zahlung'</b> oder <b>'Pix'</b><br>• <b>'Gebühren'</b> oder <b>'Kosten'</b><br>• <b>'Rückerstattung'</b> oder <b>'Auszahlung'</b><br>• <b>'eSIM'</b>, <b>'Versicherung'</b> oder <b>'Touren'</b><br>• Schreiben Sie <b>'agent'</b>, um Hilfe von einem Mitarbeiter zu erhalten.",
+		"default":   "<b>👋 Hallo! Ich bin der virtuelle Assistent von Crux.</b><br><br>Ich habe Ihre Frage leider nicht verstanden. Ich bin hier, um Ihnen zu helfen. Sie können die Schnelltasten unten verwenden oder nach Ausflügen/Transfers oder der eSIM-Kompatibilität fragen:<br><br><div class='chat-quick-reply-container'><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"tour\")'>🗺️ Ausflug / Transfer buchen</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"esim kompatibilitat\")'>📶 Ist mein Handy kompatibel?</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"support\")'>👤 Support kontaktieren</button></div>",
 	},
 }
 
@@ -2400,7 +2405,11 @@ func handleSupportChat(w http.ResponseWriter, r *http.Request) {
 		} else if strings.Contains(msg, "qr") || strings.Contains(msg, "pag") || strings.Contains(msg, "comerc") || strings.Contains(msg, "pix") {
 			intent = "qr"
 		} else if strings.Contains(msg, "esim") || strings.Contains(msg, "chip") || strings.Contains(msg, "datos") || strings.Contains(msg, "internet") || strings.Contains(msg, "roam") || strings.Contains(msg, "conec") {
-			intent = "esim"
+			if strings.Contains(msg, "compat") || strings.Contains(msg, "sirve") || strings.Contains(msg, "funciona") || strings.Contains(msg, "modelo") || strings.Contains(msg, "celular") || strings.Contains(msg, "telefono") || strings.Contains(msg, "dispositivo") || strings.Contains(msg, "work") {
+				intent = "esim_compat"
+			} else {
+				intent = "esim"
+			}
 		} else if strings.Contains(msg, "segur") || strings.Contains(msg, "cobertur") || strings.Contains(msg, "poliz") || strings.Contains(msg, "medic") || strings.Contains(msg, "chubb") {
 			intent = "insurance"
 		} else if strings.Contains(msg, "tour") || strings.Contains(msg, "activi") || strings.Contains(msg, "excurs") || strings.Contains(msg, "civitatis") || strings.Contains(msg, "traslad") || strings.Contains(msg, "transfer") {
@@ -2427,7 +2436,11 @@ func handleSupportChat(w http.ResponseWriter, r *http.Request) {
 		} else if strings.Contains(msg, "qr") || strings.Contains(msg, "pay") || strings.Contains(msg, "merchant") || strings.Contains(msg, "pix") {
 			intent = "qr"
 		} else if strings.Contains(msg, "esim") || strings.Contains(msg, "sim") || strings.Contains(msg, "data") || strings.Contains(msg, "internet") || strings.Contains(msg, "roam") || strings.Contains(msg, "connect") {
-			intent = "esim"
+			if strings.Contains(msg, "compat") || strings.Contains(msg, "work") || strings.Contains(msg, "model") || strings.Contains(msg, "device") || strings.Contains(msg, "phone") || strings.Contains(msg, "support") {
+				intent = "esim_compat"
+			} else {
+				intent = "esim"
+			}
 		} else if strings.Contains(msg, "insur") || strings.Contains(msg, "cover") || strings.Contains(msg, "medic") || strings.Contains(msg, "policy") || strings.Contains(msg, "chubb") {
 			intent = "insurance"
 		} else if strings.Contains(msg, "tour") || strings.Contains(msg, "activ") || strings.Contains(msg, "excurs") || strings.Contains(msg, "civitatis") || strings.Contains(msg, "transfer") || strings.Contains(msg, "shuttl") {
@@ -2454,7 +2467,11 @@ func handleSupportChat(w http.ResponseWriter, r *http.Request) {
 		} else if strings.Contains(msg, "qr") || strings.Contains(msg, "pag") || strings.Contains(msg, "negoz") || strings.Contains(msg, "pix") {
 			intent = "qr"
 		} else if strings.Contains(msg, "esim") || strings.Contains(msg, "sim") || strings.Contains(msg, "dati") || strings.Contains(msg, "internet") || strings.Contains(msg, "roam") || strings.Contains(msg, "connes") {
-			intent = "esim"
+			if strings.Contains(msg, "compat") || strings.Contains(msg, "funziona") || strings.Contains(msg, "serv") || strings.Contains(msg, "modell") || strings.Contains(msg, "telefono") || strings.Contains(msg, "dispositivo") || strings.Contains(msg, "support") {
+				intent = "esim_compat"
+			} else {
+				intent = "esim"
+			}
 		} else if strings.Contains(msg, "assicur") || strings.Contains(msg, "copert") || strings.Contains(msg, "polizz") || strings.Contains(msg, "medic") || strings.Contains(msg, "chubb") {
 			intent = "insurance"
 		} else if strings.Contains(msg, "tour") || strings.Contains(msg, "attiv") || strings.Contains(msg, "escurs") || strings.Contains(msg, "civitatis") || strings.Contains(msg, "trasfer") {
@@ -2481,7 +2498,11 @@ func handleSupportChat(w http.ResponseWriter, r *http.Request) {
 		} else if strings.Contains(msg, "qr") || strings.Contains(msg, "pay") || strings.Contains(msg, "commer") || strings.Contains(msg, "pix") {
 			intent = "qr"
 		} else if strings.Contains(msg, "esim") || strings.Contains(msg, "sim") || strings.Contains(msg, "donne") || strings.Contains(msg, "internet") || strings.Contains(msg, "roam") || strings.Contains(msg, "connex") {
-			intent = "esim"
+			if strings.Contains(msg, "compat") || strings.Contains(msg, "fonction") || strings.Contains(msg, "serv") || strings.Contains(msg, "model") || strings.Contains(msg, "teleph") || strings.Contains(msg, "appareil") || strings.Contains(msg, "support") {
+				intent = "esim_compat"
+			} else {
+				intent = "esim"
+			}
 		} else if strings.Contains(msg, "assur") || strings.Contains(msg, "couvert") || strings.Contains(msg, "police") || strings.Contains(msg, "medic") || strings.Contains(msg, "chubb") {
 			intent = "insurance"
 		} else if strings.Contains(msg, "tour") || strings.Contains(msg, "activ") || strings.Contains(msg, "excurs") || strings.Contains(msg, "civitatis") || strings.Contains(msg, "transfer") {
@@ -2508,7 +2529,11 @@ func handleSupportChat(w http.ResponseWriter, r *http.Request) {
 		} else if strings.Contains(msg, "qr") || strings.Contains(msg, "zahl") || strings.Contains(msg, "bezahl") || strings.Contains(msg, "handl") {
 			intent = "qr"
 		} else if strings.Contains(msg, "esim") || strings.Contains(msg, "sim") || strings.Contains(msg, "daten") || strings.Contains(msg, "internet") || strings.Contains(msg, "roam") || strings.Contains(msg, "verbind") {
-			intent = "esim"
+			if strings.Contains(msg, "compat") || strings.Contains(msg, "funktio") || strings.Contains(msg, "modell") || strings.Contains(msg, "handy") || strings.Contains(msg, "telefon") || strings.Contains(msg, "gerat") || strings.Contains(msg, "unterst") {
+				intent = "esim_compat"
+			} else {
+				intent = "esim"
+			}
 		} else if strings.Contains(msg, "versich") || strings.Contains(msg, "abdeck") || strings.Contains(msg, "polic") || strings.Contains(msg, "mediz") || strings.Contains(msg, "chubb") {
 			intent = "insurance"
 		} else if strings.Contains(msg, "tour") || strings.Contains(msg, "aktiv") || strings.Contains(msg, "ausflug") || strings.Contains(msg, "civitatis") || strings.Contains(msg, "transfer") {
@@ -2524,21 +2549,111 @@ func handleSupportChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if intent == "tours" {
+		city := ""
+		step := 1
+		reply := ""
+
+		msgClean := strings.TrimSpace(strings.ToLower(req.Message))
+		if strings.Contains(msgClean, "buenos aires") || strings.Contains(msgClean, "buenos") || strings.Contains(msgClean, "aires") || msgClean == "ba" || msgClean == "ar" || strings.Contains(msgClean, "tango") || strings.Contains(msgClean, "querand") || strings.Contains(msgClean, "delta") || strings.Contains(msgClean, "tigre") || strings.Contains(msgClean, "san telmo") || strings.Contains(msgClean, "la boca") || strings.Contains(msgClean, "eze") || strings.Contains(msgClean, "aep") {
+			city = "buenos_aires"
+			step = 2
+		} else if strings.Contains(msgClean, "rio") || strings.Contains(msgClean, "río") || strings.Contains(msgClean, "janeiro") || msgClean == "br" || strings.Contains(msgClean, "cristo") || strings.Contains(msgClean, "redentor") || strings.Contains(msgClean, "azucar") || strings.Contains(msgClean, "azúcar") || strings.Contains(msgClean, "guanabara") || strings.Contains(msgClean, "favela") || strings.Contains(msgClean, "rocinha") || strings.Contains(msgClean, "gig") || strings.Contains(msgClean, "sdu") {
+			city = "rio"
+			step = 2
+		}
+
 		state.Lock()
 		state.ChatSessions[phoneVal] = &ChatSession{
-			Step: 1,
+			Step: step,
+			City: city,
 		}
 		state.Unlock()
 
-		reply := "¡Excelente! Con mi ayuda puedes reservar directamente actividades en Civitatis cobrando desde tus fondos de Crux. ¿En qué ciudad quieres realizar tu actividad? (Buenos Aires o Río de Janeiro)"
-		if lang == "en" {
-			reply = "Excellent! With my help you can book Civitatis activities directly, paying from your Crux balance. Which city do you want to book for? (Buenos Aires or Rio de Janeiro)"
-		} else if lang == "it" {
-			reply = "Eccellente! Con il mio aiuto puoi prenotare directamente le attività di Civitatis pagando dal tuo saldo Crux. In quale città vuoi prenotare? (Buenos Aires o Rio de Janeiro)"
-		} else if lang == "fr" {
-			reply = "Excellent ! Avec mon aide, vous pouvez réserver directement des activités Civitatis en payant depuis votre solde Crux. Pour quelle ville souhaitez-vous réserver ? (Buenos Aires ou Rio de Janeiro)"
-		} else if lang == "de" {
-			reply = "Hervorragend! Mit meiner Hilfe können Sie Civitatis-Aktivitäten direkt buchen und von Ihrem Crux-Guthaben bezahlen. Für welche Stadt möchten Sie buchen? (Buenos Aires oder Rio de Janeiro)"
+		if step == 2 {
+			if city == "buenos_aires" {
+				reply = "¡Excelente! He detectado que buscas actividades en Buenos Aires. Estas son las disponibles en Civitatis:\n" +
+					"1. Show de Tango en El Querandí ($60.00 USDc)\n" +
+					"2. Excursión al Delta del Tigre ($35.00 USDc)\n" +
+					"3. Tour Histórico por San Telmo y La Boca ($20.00 USDc)\n" +
+					"4. Traslado Privado Aeropuerto EZE/AEP ($30.00 USDc)\n\n" +
+					"Por favor, escribe el número (1-4) o el nombre de la actividad que deseas reservar."
+				if lang == "en" {
+					reply = "Excellent! I detected you are looking for activities in Buenos Aires. These are available on Civitatis:\n" +
+						"1. Tango Show at El Querandí ($60.00 USDc)\n" +
+						"2. Delta Tigre Excursion ($35.00 USDc)\n" +
+						"3. San Telmo & La Boca Historical Tour ($20.00 USDc)\n" +
+						"4. Private Airport Transfer EZE/AEP ($30.00 USDc)\n\n" +
+						"Please write the number (1-4) or the name of the activity you'd like to book."
+				} else if lang == "it" {
+					reply = "Eccellente! Ho rilevato che cerchi attività a Buenos Aires. Ecco quelle disponibili su Civitatis:\n" +
+						"1. Spettacolo di Tango a El Querandí ($60.00 USDc)\n" +
+						"2. Escursione al Delta del Tigre ($35.00 USDc)\n" +
+						"3. Tour Storico di San Telmo e La Boca ($20.00 USDc)\n" +
+						"4. Trasferimento Privato Aeroporto EZE/AEP ($30.00 USDc)\n\n" +
+						"Per favore, scrivi il numero (1-4) o il nome dell'attività che desideri prenotare."
+				} else if lang == "fr" {
+					reply = "Excellent ! J'ai détecté que vous recherchez des activités à Buenos Aires. Voici celles disponibles sur Civitatis :\n" +
+						"1. Spectacle de Tango à El Querandí (60.00 USDc)\n" +
+						"2. Excursion au Delta du Tigre (35.00 USDc)\n" +
+						"3. Visite Historique de San Telmo et La Boca (20.00 USDc)\n" +
+						"4. Transfert Privé Aéroport EZE/AEP (30.00 USDc)\n\n" +
+						"Veuillez écrire le numéro (1-4) ou le nom de l'activité que vous souhaitez réserver."
+				} else if lang == "de" {
+					reply = "Hervorragend! Ich habe erkannt, dass Sie nach Aktivitäten in Buenos Aires suchen. Diese sind bei Civitatis verfügbar:\n" +
+						"1. Tangoshow im El Querandí ($60.00 USDc)\n" +
+						"2. Ausflug zum Delta del Tigre ($35.00 USDc)\n" +
+						"3. Historische Tour durch San Telmo und La Boca ($20.00 USDc)\n" +
+						"4. Privater Flughafentransfer EZE/AEP ($30.00 USDc)\n\n" +
+						"Bitte geben Sie die Nummer (1-4) oder den Namen der gewünschten Aktivität an."
+				}
+			} else {
+				reply = "¡Excelente! He detectado que buscas actividades en Río de Janeiro. Estas son las disponibles en Civitatis:\n" +
+					"1. Tour al Cristo Redentor y Pan de Azúcar ($75.00 USDc)\n" +
+					"2. Paseo en Barco por Bahía de Guanabara ($40.00 USDc)\n" +
+					"3. Tour de Favela Rocinha ($25.00 USDc)\n" +
+					"4. Traslado Privado Aeropuerto GIG/SDU ($35.00 USDc)\n\n" +
+					"Por favor, escribe el número (1-4) o el nombre de la actividad que deseas reservar."
+				if lang == "en" {
+					reply = "Excellent! I detected you are looking for activities in Rio de Janeiro. These are available on Civitatis:\n" +
+						"1. Christ the Redeemer and Sugarloaf Tour ($75.00 USDc)\n" +
+						"2. Guanabara Bay Boat Tour ($40.00 USDc)\n" +
+						"3. Rocinha Favela Tour ($25.00 USDc)\n" +
+						"4. Private Airport Transfer GIG/SDU ($35.00 USDc)\n\n" +
+						"Please write the number (1-4) or the name of the activity you'd like to book."
+				} else if lang == "it" {
+					reply = "Eccellente! Ho rilevato che cerchi attività a Rio de Janeiro. Ecco quelle disponibili su Civitatis:\n" +
+						"1. Tour del Cristo Redentore e Pan di Zucchero ($75.00 USDc)\n" +
+						"2. Giro in Barca nella Baia di Guanabara ($40.00 USDc)\n" +
+						"3. Tour della Favela Rocinha ($25.00 USDc)\n" +
+						"4. Trasferimento Privato Aeroporto GIG/SDU ($35.00 USDc)\n\n" +
+						"Per favore, scrivi il numero (1-4) o il nome dell'attività che desideri prenotare."
+				} else if lang == "fr" {
+					reply = "Excellent ! J'ai détecté que vous recherchez des activités à Rio de Janeiro. Voici celles disponibles sur Civitatis :\n" +
+						"1. Visite du Corcovado et du Pain de Sucre (75.00 USDc)\n" +
+						"2. Balade en Bateau dans la Baie de Guanabara (40.00 USDc)\n" +
+						"3. Visite de la Favela Rocinha (25.00 USDc)\n" +
+						"4. Transfert Privé Aéroport GIG/SDU (35.00 USDc)\n\n" +
+						"Veuillez écrire le numéro (1-4) ou le nom de l'activité que vous souhaitez réserver."
+				} else if lang == "de" {
+					reply = "Hervorragend! Ich habe erkannt, dass Sie nach Aktivitäten in Rio de Janeiro suchen. Diese sind bei Civitatis verfügbar:\n" +
+						"1. Tour zum Zuckerhut und Christusstatue ($75.00 USDc)\n" +
+						"2. Bootsfahrt in der Guanabara-Bucht ($40.00 USDc)\n" +
+						"3. Rocinha Favela Tour ($25.00 USDc)\n" +
+						"4. Privater Flughafentransfer GIG/SDU ($35.00 USDc)\n\n" +
+						"Bitte geben Sie die Nummer (1-4) oder den Namen der gewünschten Aktivität an."
+				}
+			}
+		} else {
+			reply = "¡Excelente! Con mi ayuda puedes reservar directamente actividades en Civitatis cobrando desde tus fondos de Crux. ¿En qué ciudad quieres realizar tu actividad? (Buenos Aires o Río de Janeiro)"
+			if lang == "en" {
+				reply = "Excellent! With my help you can book Civitatis activities directly, paying from your Crux balance. Which city do you want to book for? (Buenos Aires or Rio de Janeiro)"
+			} else if lang == "it" {
+				reply = "Eccellente! Con il mio aiuto puoi prenotare directamente le attività di Civitatis pagando dal tuo saldo Crux. In quale città vuoi prenotare? (Buenos Aires o Rio de Janeiro)"
+			} else if lang == "fr" {
+				reply = "Excellent ! Avec mon aide, vous pouvez réserver directement des activités Civitatis en payant depuis votre solde Crux. Pour quelle ville souhaitez-vous réserver ? (Buenos Aires ou Rio de Janeiro)"
+			} else if lang == "de" {
+				reply = "Hervorragend! Mit meiner Hilfe können Sie Civitatis-Aktivitäten direkt buchen und von Ihrem Crux-Guthaben bezahlen. Für welche Stadt möchten Sie buchen? (Buenos Aires oder Rio de Janeiro)"
+			}
 		}
 
 		res := ChatResponse{

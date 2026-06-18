@@ -206,7 +206,7 @@ const translations = {
     support_tab_chat: "Chat de Soporte",
     support_tab_ticket: "Crear Ticket",
     chat_welcome_title: "Soporte Crux AI",
-    chat_welcome_msg: "¡Hola! Soy el asistente virtual de Crux. ¿En qué te puedo ayudar hoy? Puedes preguntarme sobre cargas de saldo, reembolsos, pagos QR o comisiones.",
+    chat_welcome_msg: "¡Hola! Soy el asistente virtual de Crux. Te puedo ayudar a contratar <b>Excursiones y Traslados</b> de Civitatis, o responder dudas sobre la <b>eSIM</b>.<br><br>Elige una opción rápida o escribe tu consulta:<br><br><div class='chat-quick-reply-container'><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"tour\")'>🗺️ Reservar Excursión / Traslado</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"compatibilidad esim\")'>📶 ¿Mi celular es compatible?</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"soporte\")'>👤 Hablar con Soporte</button></div>",
     chat_placeholder: "Pregúntale al bot de Crux...",
     chat_bot_typing: "Asistente de Crux escribiendo...",
     
@@ -504,7 +504,7 @@ const translations = {
     support_tab_chat: "Support Chat",
     support_tab_ticket: "Create Ticket",
     chat_welcome_title: "Crux AI Support",
-    chat_welcome_msg: "Hello! I am the Crux virtual assistant. How can I help you today? You can ask me about account loads, refunds, QR payments, or fees.",
+    chat_welcome_msg: "Hello! I am the Crux virtual assistant. I can help you book Civitatis <b>Excursions & Transfers</b>, or answer questions about the <b>eSIM</b>.<br><br>Choose a quick option or type your query:<br><br><div class='chat-quick-reply-container'><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"tour\")'>🗺️ Book Excursion / Transfer</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"esim compatibility\")'>📶 Is my phone compatible?</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"support\")'>👤 Speak to Support</button></div>",
     chat_placeholder: "Ask Crux bot...",
     chat_bot_typing: "Crux assistant typing...",
     
@@ -794,7 +794,7 @@ const translations = {
     support_tab_chat: "Chat di Supporto",
     support_tab_ticket: "Crea Ticket",
     chat_welcome_title: "Crux AI Supporto",
-    chat_welcome_msg: "Ciao! Sono l'assistente virtuale di Crux. Come posso aiutarti oggi? Puoi chiedermi di ricariche, rimborsi, pagamenti QR o commissioni.",
+    chat_welcome_msg: "Ciao! Sono l'assistente virtuale di Crux. Posso aiutarti a prenotare <b>Escursioni e Trasferimenti</b> di Civitatis, o rispondere a domande sull'<b>eSIM</b>.<br><br>Scegli un'opzione rapida o scrivi la tua richiesta:<br><br><div class='chat-quick-reply-container'><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"tour\")'>🗺️ Prenota Escursione / Trasferimento</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"compatibilita esim\")'>📶 Il mio telefono è compatibile?</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"supporto\")'>👤 Parla con il Supporto</button></div>",
     chat_placeholder: "Chiedi al bot Crux...",
     chat_bot_typing: "Assistente Crux sta scrivendo...",
     
@@ -1037,7 +1037,7 @@ const translations = {
     support_tab_chat: "Chat de Support",
     support_tab_ticket: "Créer un Ticket",
     chat_welcome_title: "Crux AI Support",
-    chat_welcome_msg: "Bonjour ! Je suis l'assistant virtuel de Crux. Comment puis-je vous aider aujourd'hui ? Vous pouvez me poser des questions sur les chargements, les remboursements, les paiements QR ou les frais.",
+    chat_welcome_msg: "Bonjour ! Je suis l'assistant virtuel de Crux. Je peux vous aider à réserver des <b>Excursions et Transferts</b> Civitatis, ou répondre à vos questions sur l'<b>eSIM</b>.<br><br>Choisissez une option rapide ou écrivez votre demande :<br><br><div class='chat-quick-reply-container'><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"tour\")'>🗺️ Réserver Excursion / Transfert</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"compatibilite esim\")'>📶 Mon téléphone est-il compatible ?</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"support\")'>👤 Parler au Support</button></div>",
     chat_placeholder: "Demandez au bot Crux...",
     chat_bot_typing: "Assistant Crux écrit...",
     
@@ -1280,7 +1280,7 @@ const translations = {
     support_tab_chat: "Support-Chat",
     support_tab_ticket: "Ticket Erstellen",
     chat_welcome_title: "Crux KI-Support",
-    chat_welcome_msg: "Hallo! Ich bin der virtuelle Assistent von Crux. Wie kann ich Ihnen heute helfen? Sie können mich zu Aufladungen, Rückerstattungen, QR-Zahlungen oder Gebühren fragen.",
+    chat_welcome_msg: "Hallo! Ich bin der virtuelle Assistent von Crux. Ich kann Ihnen helfen, Civitatis-<b>Ausflüge & Transfers</b> zu buchen oder Fragen zur <b>eSIM</b> zu beantworten.<br><br>Wählen Sie eine Schnelloption oder geben Sie Ihre Frage ein:<br><br><div class='chat-quick-reply-container'><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"tour\")'>🗺️ Ausflug / Transfer buchen</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"esim kompatibilitat\")'>📶 Ist mein Handy kompatibel?</button><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"support\")'>👤 Support kontaktieren</button></div>",
     chat_placeholder: "Fragen Sie den Crux-Bot...",
     chat_bot_typing: "Crux-Assistent schreibt...",
     

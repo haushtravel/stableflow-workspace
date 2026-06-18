@@ -1529,6 +1529,29 @@ textarea.input-field {
   40% { transform: scale(1); }
 }
 
+/* Quick Replies CSS */
+.chat-quick-reply-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.chat-quick-reply-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFF;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  font-weight: 500;
+}
+.chat-quick-reply-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
 .chat-input-bar {
   display: flex;
   border-top: 1px solid var(--divider-color);

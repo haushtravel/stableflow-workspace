@@ -3314,6 +3314,14 @@ function initChatbotWelcome() {
 }
 window.initChatbotWelcome = initChatbotWelcome;
 
+window.sendChatFromQuickReply = function(text) {
+  const input = document.getElementById('chat-message-input');
+  if (input) {
+    input.value = text;
+    handleChatSubmit();
+  }
+};
+
 async function handleChatSubmit() {
   const input = document.getElementById('chat-message-input');
   if (!input) return;
@@ -3329,6 +3337,71 @@ async function handleChatSubmit() {
   const phone = document.getElementById('phone-number').value || "+39 312 998 8776";
   const lang = state.lang;
 
+  let chatState = window.localChatState || { step: 0, city: '' };
+  window.localChatState = chatState;
+
+  const runLocalChatReply = () => {
+    setTimeout(() => {
+      hideTypingIndicator();
+      const dict = translations[state.lang] || translations['es'];
+      let reply = "";
+      const lowerText = text.toLowerCase();
+      
+      if (chatState.step === 1) {
+        const isBa = lowerText.includes("buenos") || lowerText.includes("aires") || lowerText.includes("ba");
+        const isRio = lowerText.includes("rio") || lowerText.includes("río");
+        if (isBa || isRio) {
+          const city = isBa ? "Buenos Aires" : "Río de Janeiro";
+          reply = state.lang === 'es'
+            ? `¡Excelente! Aprovisionando reserva para <strong>${city}</strong>...<br><br>• Conectando con el Host B2B...<br>• Completando datos del pasajero (${state.profile.name || 'Ian Taylor'})...<br>• Liquidando pago de cortesía ($0.00 USDc)...<br><br><strong>¡Voucher emitido exitosamente!</strong> El QR ya está disponible en tu Cuenta Personal.`
+            : `Awesome! Booking activity for <strong>${city}</strong>...<br><br>• Connecting to B2B Host...<br>• Filling traveler details (${state.profile.name || 'Ian Taylor'})...<br>• Settling complimentary payment ($0.00 USDc)...<br><br><strong>Voucher successfully issued!</strong> The QR code is now available in your Personal Account.`;
+          chatState.step = 0;
+          // Generate a Civitatis voucher
+          addVoucherAndSendEmail(`Civitatis Tour (${city})`, 0);
+        } else {
+          reply = state.lang === 'es'
+            ? "Lo siento, de momento solo puedo ayudarte a reservar actividades en <strong>Buenos Aires</strong> o <strong>Río de Janeiro</strong>. ¿Cuál prefieres?"
+            : "Sorry, I can currently only help you book activities in <strong>Buenos Aires</strong> or <strong>Río de Janeiro</strong>. Which one do you prefer?";
+        }
+      } else if ((lowerText.includes("esim") || lowerText.includes("chip") || lowerText.includes("sim")) && (lowerText.includes("compat") || lowerText.includes("sirve") || lowerText.includes("funciona") || lowerText.includes("modelo") || lowerText.includes("celular") || lowerText.includes("telefono") || lowerText.includes("teléfono") || lowerText.includes("disposit") || lowerText.includes("work") || lowerText.includes("phone") || lowerText.includes("device"))) {
+        reply = state.lang === 'es'
+          ? "<b>📶 Compatibilidad de eSIM de Crux</b><br><br>Tu teléfono debe ser compatible con la tecnología eSIM y estar liberado para cualquier operador. En general, los siguientes dispositivos son compatibles:<br><br>• <b>Apple:</b> iPhone XR, XS o modelos posteriores (incluyendo SE 2/3).<br>• <b>Samsung:</b> Galaxy S20, S21, S22, S23, S24 o posterior, y modelos Z Flip/Fold.<br>• <b>Google:</b> Pixel 3, 4, 5, 6, 7, 8 o posterior.<br>• <b>Otros:</b> Huawei P40/Mate 40, Xiaomi 12T/13/14 o superior.<br><br><b>¿Cómo comprobarlo en tu celular?</b><br>Marca <b>*#06#</b> en tu celular. Si en la pantalla figura un código llamado <b>EID</b>, ¡tu dispositivo es compatible con eSIM!"
+          : "<b>📶 eSIM Compatibility</b><br><br>Your phone must support eSIM technology and be carrier-unlocked. Generally, the following models are compatible:<br><br>• <b>Apple:</b> iPhone XR, XS or newer (including SE 2/3).<br>• <b>Samsung:</b> Galaxy S20, S21, S22, S23, S24 or newer, and Z Flip/Fold models.<br>• <b>Google:</b> Pixel 3, 4, 5, 6, 7, 8 or newer.<br>• <b>Others:</b> Huawei P40/Mate 40, Xiaomi 12T/13/14 or higher.<br><br><b>How to check on your device:</b><br>Dial <b>*#06#</b> on your phone. If you see an <b>EID</b> code on the screen, your device is compatible with eSIM!";
+      } else if (lowerText.includes("civitatis") || lowerText.includes("tour") || lowerText.includes("excurs") || lowerText.includes("reserv") || lowerText.includes("traslad") || lowerText.includes("transfer")) {
+        const isBa = lowerText.includes("buenos") || lowerText.includes("aires") || lowerText.includes("ba") || lowerText.includes("eze") || lowerText.includes("aep");
+        const isRio = lowerText.includes("rio") || lowerText.includes("río") || lowerText.includes("janeiro") || lowerText.includes("gig") || lowerText.includes("sdu");
+        if (isBa || isRio) {
+          const city = isBa ? "Buenos Aires" : "Río de Janeiro";
+          reply = state.lang === 'es'
+            ? `¡Excelente! Con mi ayuda puedes reservar directamente actividades en Civitatis cobrando desde tus fondos de Crux.<br><br>Estas son las actividades disponibles de Civitatis para <strong>${city}</strong>:<br><br>1. ${isBa ? 'Show de Tango en El Querandí ($60.00 USDc)' : 'Tour al Cristo Redentor y Pan de Azúcar ($75.00 USDc)'}<br>2. ${isBa ? 'Excursión al Delta del Tigre ($35.00 USDc)' : 'Paseo en Barco por Bahía de Guanabara ($40.00 USDc)'}<br>3. ${isBa ? 'Tour Histórico por San Telmo y La Boca ($20.00 USDc)' : 'Tour de Favela Rocinha ($25.00 USDc)'}<br>4. ${isBa ? 'Traslado Privado Aeropuerto EZE/AEP ($30.00 USDc)' : 'Traslado Privado Aeropuerto GIG/SDU ($35.00 USDc)'}<br><br>Por favor escribe el número (1-4) o el nombre de la actividad.`
+            : `Excellent! With my help you can book Civitatis activities directly, paying from your Crux balance.<br><br>Here are the Civitatis activities available for <strong>${city}</strong>:<br><br>1. ${isBa ? 'Tango Show at El Querandí ($60.00 USDc)' : 'Christ the Redeemer & Sugarloaf Tour ($75.00 USDc)'}<br>2. ${isBa ? 'Tigre Delta Excursion ($35.00 USDc)' : 'Guanabara Bay Boat Tour ($40.00 USDc)'}<br>3. ${isBa ? 'Historic Tour of San Telmo & La Boca ($20.00 USDc)' : 'Rocinha Favela Tour ($25.00 USDc)'}<br>4. ${isBa ? 'Private Airport Transfer EZE/AEP ($30.00 USDc)' : 'Private Airport Transfer GIG/SDU ($35.00 USDc)'}<br><br>Please type the number (1-4) or name of the activity.`;
+          chatState.step = 2; // Move state to select activity
+          chatState.city = isBa ? "buenos_aires" : "rio";
+        } else {
+          reply = state.lang === 'es'
+            ? "🗺️ <strong>Asistente de Reservas Crux</strong><br><br>¡Hola! Vamos a configurar tu tour. Por favor dime en qué ciudad deseas realizar tu actividad: <strong>Buenos Aires</strong> o <strong>Río de Janeiro</strong>."
+            : "🗺️ <strong>Crux Booking Assistant</strong><br><br>Hello! Let's get your tour reserved. Please tell me which city you are visiting: <strong>Buenos Aires</strong> or <strong>Río de Janeiro</strong>.";
+          chatState.step = 1;
+        }
+      } else if (lowerText.includes("carg") || lowerText.includes("load") || lowerText.includes("fond") || lowerText.includes("depo") || lowerText.includes("tarjeta") || lowerText.includes("card")) {
+        reply = dict.preload_desc;
+      } else if (lowerText.includes("reemb") || lowerText.includes("refund") || lowerText.includes("devol") || lowerText.includes("retir")) {
+        reply = dict.refund_desc;
+      } else if (lowerText.includes("qr") || lowerText.includes("pag") || lowerText.includes("pay")) {
+        reply = dict.scan_subtitle;
+      } else if (lowerText.includes("comis") || lowerText.includes("fee") || lowerText.includes("cost") || lowerText.includes("charg")) {
+        reply = dict.details_preload_fee + " / " + dict.details_refund_fee;
+      } else if (lowerText.includes("agent") || lowerText.includes("soport") || lowerText.includes("ticket") || lowerText.includes("humano")) {
+        const ticketId = 'inc_mock_' + Math.random().toString(36).substr(2, 6);
+        reply = dict.js_incident_sent_success.replace('{id}', ticketId);
+      } else {
+        reply = dict.chat_welcome_msg;
+      }
+      
+      appendChatBubble(reply, 'bot');
+    }, 1000);
+  };
+
   try {
     const res = await fetch(`${API_BASE}/api/support/chat`, {
       method: 'POST',
@@ -3338,83 +3411,24 @@ async function handleChatSubmit() {
 
     hideTypingIndicator();
 
-    let chatState = window.localChatState || { step: 0, city: '' };
-    window.localChatState = chatState;
-
-    const runLocalChatReply = () => {
-      setTimeout(() => {
-        hideTypingIndicator();
-        const dict = translations[state.lang] || translations['es'];
-        let reply = "";
-        const lowerText = text.toLowerCase();
-        
-        if (chatState.step === 1) {
-          const isBa = lowerText.includes("buenos") || lowerText.includes("aires") || lowerText.includes("ba");
-          const isRio = lowerText.includes("rio");
-          if (isBa || isRio) {
-            const city = isBa ? "Buenos Aires" : "Río de Janeiro";
-            reply = state.lang === 'es'
-              ? `¡Excelente! Aprovisionando reserva para <strong>${city}</strong>...<br><br>• Conectando con el Host B2B...<br>• Completando datos del pasajero (${state.profile.name || 'Ian Taylor'})...<br>• Liquidando pago de cortesía ($0.00 USDc)...<br><br><strong>¡Voucher emitido exitosamente!</strong> El QR ya está disponible en tu Cuenta Personal.`
-              : `Awesome! Booking activity for <strong>${city}</strong>...<br><br>• Connecting to B2B Host...<br>• Filling traveler details (${state.profile.name || 'Ian Taylor'})...<br>• Settling complimentary payment ($0.00 USDc)...<br><br><strong>Voucher successfully issued!</strong> The QR code is now available in your Personal Account.`;
-            chatState.step = 0;
-            // Generate a Civitatis voucher
-            addVoucherAndSendEmail(`Civitatis Tour (${city})`, 0);
-          } else {
-            reply = state.lang === 'es'
-              ? "Lo siento, de momento solo puedo ayudarte a reservar actividades en <strong>Buenos Aires</strong> o <strong>Río de Janeiro</strong>. ¿Cuál prefieres?"
-              : "Sorry, I can currently only help you book activities in <strong>Buenos Aires</strong> or <strong>Río de Janeiro</strong>. Which one do you prefer?";
-          }
-        } else if (lowerText.includes("civitatis") || lowerText.includes("tour") || lowerText.includes("excurs") || lowerText.includes("reserv")) {
-          reply = state.lang === 'es'
-            ? "🗺️ <strong>Asistente de Reservas Spree</strong><br><br>¡Hola! Vamos a configurar tu tour. Por favor dime en qué ciudad deseas realizar tu actividad: <strong>Buenos Aires</strong> o <strong>Río de Janeiro</strong>."
-            : "🗺️ <strong>Spree Booking Assistant</strong><br><br>Hello! Let's get your tour reserved. Please tell me which city you are visiting: <strong>Buenos Aires</strong> or <strong>Río de Janeiro</strong>.";
-          chatState.step = 1;
-        } else if (lowerText.includes("carg") || lowerText.includes("load") || lowerText.includes("fond") || lowerText.includes("depo") || lowerText.includes("tarjeta") || lowerText.includes("card")) {
-          reply = dict.preload_desc;
-        } else if (lowerText.includes("reemb") || lowerText.includes("refund") || lowerText.includes("devol") || lowerText.includes("retir")) {
-          reply = dict.refund_desc;
-        } else if (lowerText.includes("qr") || lowerText.includes("pag") || lowerText.includes("pay")) {
-          reply = dict.scan_subtitle;
-        } else if (lowerText.includes("comis") || lowerText.includes("fee") || lowerText.includes("cost") || lowerText.includes("charg")) {
-          reply = dict.details_preload_fee + " / " + dict.details_refund_fee;
-        } else if (lowerText.includes("agent") || lowerText.includes("soport") || lowerText.includes("ticket") || lowerText.includes("humano")) {
-          const ticketId = 'inc_mock_' + Math.random().toString(36).substr(2, 6);
-          reply = dict.js_incident_sent_success.replace('{id}', ticketId);
-        } else {
-          reply = dict.chat_welcome_msg;
-        }
-        
-        appendChatBubble(reply, 'bot');
-      }, 1000);
-    };
-
-    try {
-      const res = await fetch(`${API_BASE}/api/support/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, lang, phone })
-      });
-
-      hideTypingIndicator();
-
-      if (res.ok) {
-        const data = await res.json();
-        appendChatBubble(data.reply, 'bot');
-        
-        // Sincronizar el estado de la billetera (balance y transacciones) tras interactuar con el chatbot
-        await syncStateWithBackend();
-        
-        if (data.create_incident) {
-          console.log("[Support Chatbot] Escalación realizada. Se creó ticket en el backend.");
-        }
-      } else {
-        console.warn("Backend error in chatbot. Falling back to local simulation.");
-        runLocalChatReply();
+    if (res.ok) {
+      const data = await res.json();
+      appendChatBubble(data.reply, 'bot');
+      
+      // Sincronizar el estado de la billetera (balance y transacciones) tras interactuar con el chatbot
+      await syncStateWithBackend();
+      
+      if (data.create_incident) {
+        console.log("[Support Chatbot] Escalación realizada. Se creó ticket en el backend.");
       }
-    } catch (err) {
-      console.warn("Backend Go desconectado. Generando respuesta simulada local.");
+    } else {
+      console.warn("Backend error in chatbot. Falling back to local simulation.");
       runLocalChatReply();
     }
+  } catch (err) {
+    console.warn("Backend Go desconectado. Generando respuesta simulada local.");
+    runLocalChatReply();
+  }
 }
 
 function initSupport() {
