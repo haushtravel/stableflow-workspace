@@ -1,4 +1,4 @@
-﻿package main
+package main
 
 import (
 	"bufio"
@@ -994,11 +994,14 @@ func handlePreload(w http.ResponseWriter, r *http.Request) {
 
 	nowStr := "Hoy, " + time.Now().Format("15:04")
 
-	feePercent := 0.01
-	merchantName := "Pre-carga Tarjeta"
-	if req.PaymentMethod == "bank" {
-		feePercent = 0.003
-		merchantName = "Depósito Bancario (Bridge)"
+	feePercent := 0.01 // Default 1% for bank/ACH/SEPA/USDC
+	merchantName := "Depósito Bancario (Bridge)"
+	if req.PaymentMethod == "card" {
+		feePercent = 0.03
+		merchantName = "Pre-carga Tarjeta"
+	} else if req.PaymentMethod == "googlepay" || req.PaymentMethod == "applepay" {
+		feePercent = 0.02
+		merchantName = "Pre-carga Móvil"
 	}
 	fee := req.Amount * feePercent
 	netAmount := req.Amount - fee
@@ -1096,6 +1099,7 @@ func handleCheckout(w http.ResponseWriter, r *http.Request) {
 	var serviceFee float64
 	var gasFee float64
 	var totalUsdc float64
+	var spreadUsdc float64
 
 	if req.Amount <= 0 {
 		http.Error(w, "Monto inválido", http.StatusBadRequest)
@@ -1107,6 +1111,7 @@ func handleCheckout(w http.ResponseWriter, r *http.Request) {
 		serviceFee = 0.0
 		gasFee = 0.0
 		totalUsdc = req.Amount
+		spreadUsdc = 0.0
 	} else {
 		var exists bool
 		rate, exists = fxRates[req.Country]
@@ -1115,9 +1120,15 @@ func handleCheckout(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		rawUsdc := req.Amount / rate
-		serviceFee = rawUsdc * 0.03
-		gasFee = 0.10
-		totalUsdc = rawUsdc + serviceFee + gasFee
+		if rawUsdc <= 15.0 {
+			totalUsdc = rawUsdc
+			spreadUsdc = 0.0
+		} else {
+			totalUsdc = rawUsdc * 1.015 + 0.10
+			spreadUsdc = 0.015 * rawUsdc + 0.10
+		}
+		serviceFee = 0.0
+		gasFee = 0.0
 	}
 
 	state.Lock()
@@ -1148,13 +1159,6 @@ func handleCheckout(w http.ResponseWriter, r *http.Request) {
 		fiatSymbol = "$"
 	}
 
-	var spreadUsdc float64
-	if req.Country == "ars" {
-		spreadUsdc = (req.Amount / 1200.0) - (req.Amount / 1230.0)
-	} else if req.Country == "brl" {
-		spreadUsdc = (req.Amount / 5.0) - (req.Amount / 5.15)
-	}
-
 	newTx := Transaction{
 		ID:         txID,
 		Merchant:   req.Merchant,
@@ -1169,6 +1173,37 @@ func handleCheckout(w http.ResponseWriter, r *http.Request) {
 		SpreadUSDC: spreadUsdc,
 	}
 	state.Transactions = append([]Transaction{newTx}, state.Transactions...)
+
+	// Cashback Goroutine
+	if req.Country == "usd" {
+		go func(itemName string, purchaseAmount float64) {
+			time.Sleep(60 * time.Second)
+			state.Lock()
+			defer state.Unlock()
+
+			cashbackAmount := purchaseAmount * 0.05
+			state.Balance += cashbackAmount
+
+			cbTxID := fmt.Sprintf("tr_cashback_%d", rand.Intn(1000000))
+			cbNowStr := "Hoy, " + time.Now().Format("15:04")
+
+			cbTx := Transaction{
+				ID:         cbTxID,
+				Merchant:   fmt.Sprintf("Cashback: %s", itemName),
+				Fiat:       fmt.Sprintf("%.2f", cashbackAmount),
+				FiatSymbol: "$",
+				USDC:       fmt.Sprintf("%.2f", cashbackAmount),
+				Type:       "load",
+				Date:       cbNowStr,
+				Status:     "Completado",
+				FeeUSDC:    0.0,
+				GasUSDC:    0.0,
+				SpreadUSDC: 0.0,
+			}
+			state.Transactions = append([]Transaction{cbTx}, state.Transactions...)
+			log.Printf("[Cashback Goroutine] Acreditado $%.2f USDC de cashback para %s", cashbackAmount, itemName)
+		}(req.Merchant, req.Amount)
+	}
 
 	res := CheckoutRes{
 		Success:   true,
@@ -1248,7 +1283,7 @@ func handleRefund(w http.ResponseWriter, r *http.Request) {
 	// Simular procesamiento del refund
 	time.Sleep(1000 * time.Millisecond)
 
-	fee := req.Amount * 0.015
+	fee := req.Amount * 0.005
 	netReceived := req.Amount - fee
 	state.Balance -= req.Amount
 
@@ -1801,10 +1836,10 @@ type ChatResponse struct {
 
 var botReplies = map[string]map[string]string{
 	"es": {
-		"preload":   "<b>💳 ¿Cómo cargar saldo en tu billetera Crux?</b><br><br>Para agregar funds a tu cuenta, ve a la pestaña <b>'Cargar'</b> en el menú inferior. Puedes utilizar los siguientes métodos:<br><br>• <b>Apple Pay / Google Pay:</b> Acreditación instantánea (requiere biometría activa en tu dispositivo).<br>• <b>Tarjetas de Crédito / Débito:</b> Visa, Mastercard y otras tarjetas internacionales.<br><br><i>Nota:</i> Aplicamos una comisión del <b>1%</b> sobre el total cargado. Tus fondos se acreditarán de inmediato en <b>USDc</b> (dólares digitales), listos para gastar en LATAM.",
-		"refund":    "<b>💰 ¿Cómo retirar o reembolsar tus fondos?</b><br><br>Si tu viaje terminó y deseas devolver el saldo remanente a tu tarjeta de origen, ve a la pestaña <b>'Retirar'</b> en el menú inferior.<br><br>• <b>Comisión de retiro:</b> 1.5% sobre el total a reembolsar.<br>• <b>Tiempo de procesamiento:</b> El dinero impactará en tu cuenta bancaria internacional en un plazo de <b>2 a 5 días hábiles</b>.<br><br>Tus dólares digitales (USDc) se quemarán en la blockchain de Polygon y el reembolso se procesará de forma segura a través de Stripe.",
-		"qr":        "<b>📲 Pagos con códigos QR en LATAM</b><br><br>Crux te permite pagar de forma sencilla escaneando códigos QR locales en los comercios:<br><br>• <b>En Argentina 🇦🇷:</b> Escanea cualquier código de <b>Mercado Pago</b> o <b>MODO</b>. Pagas con tus USDc y el comercio recibe pesos (ARS) al instante.<br>• <b>En Brasil 🇧🇷:</b> Escanea códigos del sistema <b>Pix</b>. Pagas con tus USDc y el comercio recibe reales (BRL) al instante.<br><br><i>Comisiones:</i> Aplicamos una tarifa de servicio del <b>3%</b> y un costo transaccional fijo de <b>$0.10 USDc</b> por cada pago QR realizado.",
-		"fees":      "<b>📊 Estructura de comisiones de Crux</b><br><br>Mantenemos una política de tarifas simple y transparente:<br><br>• <b>Cargas de saldo (Fondeo):</b> 1% del monto depositado.<br>• <b>Pagos con códigos QR:</b> 3% de comisión de servicio + $0.10 USDc fijos.<br>• <b>Reembolsos (Retirar saldo):</b> 1.5% del monto a retirar.<br><br><b>¡Importante!</b> No cobramos comisiones ocultas, cargos de apertura, ni costos de mantenimiento mensual o por inactividad.",
+		"preload":   "<b>💳 ¿Cómo cargar saldo en tu billetera Crux?</b><br><br>Para agregar fondos a tu cuenta, ve a la pestaña <b>'Cargar'</b> en el menú inferior. Puedes utilizar los siguientes métodos:<br><br>• <b>Depósito/ACH/USDC:</b> 1% de comisión.<br>• <b>Apple Pay / Google Pay:</b> 2% de comisión.<br>• <b>Tarjetas de Crédito / Débito:</b> 3% de comisión.<br><br>Tus fondos se acreditarán de inmediato en <b>USDc</b> (dólares digitales), listos para gastar.",
+		"refund":    "<b>💰 ¿Cómo retirar o reembolsar tus fondos?</b><br><br>Si tu viaje terminó y deseas devolver el saldo remanente a tu tarjeta de origen, ve a la pestaña <b>'Retirar'</b> en el menú inferior.<br><br>• <b>Comisión de retiro:</b> 0.5% sobre el total a reembolsar.<br>• <b>Tiempo de procesamiento:</b> El dinero impactará en tu cuenta bancaria internacional en un plazo de <b>2 a 5 días hábiles</b>.<br><br>Tus dólares digitales (USDc) se quemarán en la blockchain y el reembolso se procesará de forma segura.",
+		"qr":        "<b>📲 Pagos con códigos QR en LATAM</b><br><br>Crux te permite pagar de forma sencilla escaneando códigos QR locales en los comercios:<br><br>• <b>En Argentina 🇦🇷:</b> Escanea cualquier código de <b>Mercado Pago</b> o <b>MODO</b>.<br>• <b>En Brasil 🇧🇷:</b> Escanea códigos del sistema <b>Pix</b>.<br><br><i>Comisiones:</i> No hay comisiones visibles de servicio ni de red. Para micropagos (≤ $15 USDc) el tipo de cambio es subsidiado (0% spread), y para macropagos (> $15 USDc) se incluye un spread del 1.5% + $0.10 USDc en el tipo de cambio.",
+		"fees":      "<b>📊 Estructura de comisiones de Crux</b><br><br>Mantenemos una política de tarifas simple y transparente:<br><br>• <b>Cargas de saldo (Fondeo):</b> 1% (ACH/USDC), 2% (Apple/Google Pay), 3% (Tarjetas).<br>• <b>Pagos con códigos QR:</b> Sin comisiones fijas visibles. Tipo de cambio subsidiado en compras ≤ $15 USDc y spread del 1.5% + $0.10 USDc en compras > $15 USDc.<br>• <b>Reembolsos (Retirar saldo):</b> 0.5% del monto a retirar.<br><br><b>¡Importante!</b> No cobramos comisiones ocultas, cargos de apertura, ni costos de mantenimiento mensual o por inactividad.",
 		"esim":      "<b>📶 eSIM Regional de Crux</b><br><br>Mantente conectado durante todo tu viaje sin pagar tarifas costosas de roaming:<br><br>• <b>¡Tu primera eSIM es de regalo!</b> Reclámala gratis en la pestaña <b>'Mejora tu viaje'</b>.<br>• <b>Cobertura:</b> Datos de alta velocidad en Argentina y Brasil.<br>• <b>Siguientes eSIMs:</b> Cada paquete de datos adicional de 10GB tiene un costo de <b>$15.00 USDc</b>.",
 		"insurance": "<b>🛡️ Seguro de Viaje Premium</b><br><br>Viaja con total tranquilidad gracias a nuestra cobertura médica y de equipaje completa respaldada por <b>Chubb</b>:<br><br>• <b>Contratación express:</b> Cotiza y contrata tu póliza en segundos desde la pestaña <b>'Mejora tu viaje'</b>.<br>• <b>Costo flexible:</b> Solo <b>$3.00 USDc por día</b>, adaptado a la duración de tu estancia y países de destino.<br>• <b>Pago directo:</b> Se debita de forma automática de tu saldo en dólares digitales (USDc).",
 		"tours":     "<b>🗺️ Reservas y Actividades Civitatis</b><br><br>¡Explora LATAM como un local! A través de nuestra alianza con <b>Civitatis</b>, puedes reservar tours, excursiones y traslados privados directamente con tu saldo de Crux:<br><br>• <b>Flujo asistido:</b> Un bot automatizado de Crux completará los formularios por ti.<br>• <b>Cómo iniciar:</b> Solo escribe <b>'tour'</b> o <b>'civitatis'</b> aquí en el chat, o pulsa el botón del bot en la sección <b>'Mejora tu viaje'</b> y dime en qué ciudad quieres realizar tu actividad (Buenos Aires o Río de Janeiro).",
@@ -1815,10 +1850,10 @@ var botReplies = map[string]map[string]string{
 		"default":   "<b>👋 ¡Hola! Soy el asistente virtual de Crux.</b><br><br>No logré comprender del todo tu consulta. Estoy aquí para guiarte en tus operaciones. Puedes preguntarme sobre:<br><br>• <b>'cargar saldo'</b> o <b>'tarjeta'</b><br>• <b>'pagos con QR'</b> o <b>'Pix'</b><br>• <b>'comisiones'</b> o <b>'costos'</b><br>• <b>'reembolsos'</b> o <b>'retirar'</b><br>• <b>'eSIM'</b>, <b>'seguros'</b> o <b>'tours'</b><br>• Escribe <b>'agente'</b> si necesitas hablar con un soporte humano.",
 	},
 	"en": {
-		"preload":   "<b>💳 How to load funds into your Crux wallet?</b><br><br>To add funds to your account, go to the <b>'Preload'</b> tab in the bottom menu. You can use the following methods:<br><br>• <b>Apple Pay / Google Pay:</b> Instant credit (requires active biometrics on your device).<br>• <b>Credit / Debit Cards:</b> Visa, Mastercard, and other international cards.<br><br><i>Note:</i> We charge a <b>1%</b> fee on the loaded amount. Your funds are credited instantly as <b>USDc</b> (digital dollars) in your account.",
-		"refund":    "<b>💰 How to withdraw or refund your funds?</b><br><br>If your trip is over and you want to return the remaining balance to your card, go to the <b>'Withdraw'</b> tab in the bottom menu.<br><br>• <b>Withdrawal Fee:</b> 1.5% on the total amount to be refunded.<br>• <b>Processing Time:</b> The money will reach your international bank account in <b>2 to 5 business days</b>.<br><br>Your digital dollars (USDc) will be burned on Polygon and refunded securely via Stripe.",
-		"qr":        "<b>📲 Paying with QR codes in LATAM</b><br><br>Crux allows you to easily pay by scanning local QR codes at merchants:<br><br>• <b>In Argentina 🇦🇷:</b> Scan any <b>Mercado Pago</b> or <b>MODO</b> QR code. You pay in USDc and the merchant receives ARS instantly.<br>• <b>In Brazil 🇧🇷:</b> Scan Pix QR codes. You pay in USDc and the merchant receives BRL instantly.<br><br><i>Fees:</i> We apply a <b>3%</b> service fee and a fixed transaction fee of <b>$0.10 USDc</b> for each QR payment.",
-		"fees":      "<b>📊 Crux Fee Structure</b><br><br>We keep our fees simple and transparent:<br><br>• <b>Preloads:</b> 1% of the deposited amount.<br>• <b>QR Payments:</b> 3% service fee + $0.10 USDc fixed transaction fee.<br>• <b>Refunds (Withdrawals):</b> 1.5% of the total refund.<br><br><b>Important!</b> We do not charge hidden fees, opening costs, or monthly maintenance/inactivity fees.",
+		"preload":   "<b>💳 How to load funds into your Crux wallet?</b><br><br>To add funds to your account, go to the <b>'Preload'</b> tab in the bottom menu. You can use the following methods:<br><br>• <b>Bank/ACH/USDC:</b> 1% fee.<br>• <b>Apple Pay / Google Pay:</b> 2% fee.<br>• <b>Credit / Debit Cards:</b> 3% fee.<br><br>Your funds are credited instantly as <b>USDc</b> (digital dollars) in your account.",
+		"refund":    "<b>💰 How to withdraw or refund your funds?</b><br><br>If your trip is over and you want to return the remaining balance to your card, go to the <b>'Withdraw'</b> tab in the bottom menu.<br><br>• <b>Withdrawal Fee:</b> 0.5% on the total amount to be refunded.<br>• <b>Processing Time:</b> The money will reach your bank account in <b>2 to 5 business days</b>.<br><br>Your digital dollars (USDc) will be burned and refunded securely.",
+		"qr":        "<b>📲 Paying with QR codes in LATAM</b><br><br>Crux allows you to easily pay by scanning local QR codes at merchants:<br><br>• <b>In Argentina 🇦🇷:</b> Scan any <b>Mercado Pago</b> or <b>MODO</b> QR code.<br>• <b>In Brazil 🇧🇷:</b> Scan Pix QR codes.<br><br><i>Fees:</i> No visible service or network fees. For micropayments (≤ $15 USDc) we use a subsidized rate (0% spread), and for macropayments (> $15 USDc) we include a 1.5% + $0.10 USDc spread in the exchange rate.",
+		"fees":      "<b>📊 Crux Fee Structure</b><br><br>We keep our fees simple and transparent:<br><br>• <b>Preloads:</b> 1% (ACH/USDC), 2% (Apple/Google Pay), 3% (Cards).<br>• <b>QR Payments:</b> No visible service/gas fees. Subsidized rate for purchases ≤ $15 USDc, and 1.5% + $0.10 USDc spread for purchases > $15 USDc.<br>• <b>Refunds (Withdrawals):</b> 0.5% of the total refund.<br><br><b>Important!</b> We do not charge hidden fees, opening costs, or monthly maintenance/inactivity fees.",
 		"esim":      "<b>📶 Crux Regional eSIM</b><br><br>Stay connected throughout your trip without paying expensive roaming fees:<br><br>• <b>Your first eSIM is free!</b> Claim it in the <b>'Improve Your Trip'</b> tab.<br>• <b>Coverage:</b> High-speed data in Argentina and Brazil.<br>• <b>Next eSIMs:</b> Each additional 10GB data pack costs <b>$15.00 USDc</b>.",
 		"insurance": "<b>🛡️ Premium Travel Insurance</b><br><br>Travel with peace of mind with our complete medical and baggage coverage backed by <b>Chubb</b>:<br><br>• <b>Express Purchase:</b> Get a quote and buy your policy in seconds from the <b>'Improve Your Trip'</b> tab.<br>• <b>Flexible Cost:</b> Only <b>$3.00 USDc per day</b>, tailored to your trip duration and destination.<br>• <b>Direct Payment:</b> Automatically debited from your digital dollar (USDc) balance.",
 		"tours":     "<b>🗺️ Civitatis Booking Assistant</b><br><br>Explore LATAM like a local! Through our partnership with <b>Civitatis</b>, you can book tours, excursions, and private transfers directly with your Crux balance:<br><br>• <b>Automated Booking:</b> A Crux bot will automatically fill out the booking details for you.<br>• <b>How to start:</b> Type <b>'tour'</b> or <b>'civitatis'</b> here in the chat, or click the bot button in <b>'Improve Your Trip'</b> to start.",
@@ -2371,6 +2406,14 @@ func main() {
 
 	// Redirigir logs para capturarlos en memoria y mostrarlos en el Admin Panel
 	log.SetOutput(io.MultiWriter(os.Stdout, memLogWriter))
+
+	// Verificar carga de API key
+	bridgeKey := os.Getenv("BRIDGE_API_KEY")
+	if bridgeKey != "" {
+		log.Printf("🔑 [Env] BRIDGE_API_KEY cargada con éxito (longitud: %d)", len(bridgeKey))
+	} else {
+		log.Println("⚠️ [Env] Advertencia: BRIDGE_API_KEY no encontrada en .env")
+	}
 
 	// Inicializar la semilla aleatoria
 	rand.Seed(time.Now().UnixNano())

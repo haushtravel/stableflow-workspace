@@ -193,7 +193,7 @@ function switchScreen(screenId) {
     syncStateWithBackend();
   } else if (screenId === 'screen-refund') {
     document.getElementById('refund-balance-display').innerText = `$${state.balance.toFixed(2)} USDc`;
-    const fee = state.balance * 0.015;
+    const fee = state.balance * 0.005;
     const receive = state.balance - fee;
     document.getElementById('refund-fee-display').innerText = `$${fee.toFixed(2)} USDc`;
     document.getElementById('refund-receive-display').innerText = `$${receive.toFixed(2)} USD`;
@@ -1408,7 +1408,13 @@ function initPreload() {
     document.getElementById('bank-modal-overlay').classList.remove('active');
 
     const runLocalCardPreload = () => {
-      const fee = selectedPreloadAmount * 0.01;
+      let feePercent = 0.01;
+      if (selectedPaymentType === 'card') {
+        feePercent = 0.03;
+      } else if (selectedPaymentType === 'googlepay') {
+        feePercent = 0.02;
+      }
+      const fee = selectedPreloadAmount * feePercent;
       const netReceived = selectedPreloadAmount - fee;
       state.balance += netReceived;
       state.transactions.unshift({
@@ -1432,7 +1438,7 @@ function initPreload() {
         <strong>${dict.details_host_tx || 'Transacción Host'}:</strong> tr_mock_${Math.random().toString(36).substr(2, 9)}<br>
         <strong>${dict.details_crypto_network || 'Red Cripto'}:</strong> Polygon (USDc)<br>
         <strong>${dict.details_amount_charged || 'Monto Cobrado'}:</strong> $${selectedPreloadAmount.toFixed(2)} USD<br>
-        <strong>${dict.details_preload_fee || 'Comisión de Carga (1%)'}:</strong> $${fee.toFixed(2)} USD<br>
+        <strong>${dict.details_preload_fee || `Comisión de Carga (${selectedPaymentType === 'card' ? '3%' : (selectedPaymentType === 'googlepay' ? '2%' : '1%')})`}:</strong> $${fee.toFixed(2)} USD<br>
         <strong>${dict.details_amount_credited || 'Monto Acreditado'}:</strong> $${netReceived.toFixed(2)} USDc<br>
         <strong>${dict.details_available_balance || 'Saldo Disponible'}:</strong> $${state.balance.toFixed(2)} USDc
         `
@@ -1469,7 +1475,7 @@ function initPreload() {
             <strong>${dict.details_host_tx || 'Transacción Host'}:</strong> ${data.tx_id}<br>
             <strong>${dict.details_crypto_network || 'Red Cripto'}:</strong> Polygon (USDc)<br>
             <strong>${dict.details_amount_charged || 'Monto Cobrado'}:</strong> $${selectedPreloadAmount.toFixed(2)} USD<br>
-            <strong>${dict.details_preload_fee || 'Comisión de Carga (1%)'}:</strong> $${(selectedPreloadAmount * 0.01).toFixed(2)} USD<br>
+            <strong>${dict.details_preload_fee || `Comisión de Carga (${selectedPaymentType === 'card' ? '3%' : (selectedPaymentType === 'googlepay' ? '2%' : '1%')})`}:</strong> $${(selectedPreloadAmount * (selectedPaymentType === 'card' ? 0.03 : (selectedPaymentType === 'googlepay' ? 0.02 : 0.01))).toFixed(2)} USD<br>
             <strong>${dict.details_amount_credited || 'Monto Acreditado'}:</strong> $${data.received_USDc.toFixed(2)} USDc<br>
             <strong>${dict.details_available_balance || 'Saldo Disponible'}:</strong> $${state.balance.toFixed(2)} USDc
             `
@@ -1635,11 +1641,11 @@ function openCheckout(country, amount, merchant) {
   const rate = fxRates[country];
   const rawUSDc = amount / rate;
   
-  // Estrategia híbrida china: 0% en micropagos <= $15 USDc, 3% en consumos mayores
+  // Spread cambiario en macropagos (> $15 USDc): 1.5% + 0.10 fijos
   const isMicropayment = rawUSDc <= 15.0;
-  const serviceFee = isMicropayment ? 0.0 : rawUSDc * 0.03;
-  const gasFee = 0.10;
-  const totalUSDc = rawUSDc + serviceFee + gasFee;
+  const totalUSDc = isMicropayment ? rawUSDc : rawUSDc * 1.015 + 0.10;
+  const serviceFee = 0.0;
+  const gasFee = 0.0;
   
   currentCheckoutData = {
     country,
@@ -1656,6 +1662,14 @@ function openCheckout(country, amount, merchant) {
 
   document.getElementById('checkout-merchant').innerText = dict.checkout_merchant.replace('{merchant}', merchant);
   document.getElementById('checkout-fiat-amount').innerText = country === 'ars' ? `$${amount.toLocaleString('es-AR')} ARS` : `R$${amount.toLocaleString('pt-BR')} BRL`;
+  
+  // Actualizar etiqueta del Tipo de Cambio dinámicamente (Subsidiado vs Normal)
+  const fxLabel = isMicropayment 
+    ? (dict.checkout_fx_subsidized || 'Tipo de Cambio (Subsidiado)') 
+    : (dict.checkout_fx_normal || 'Tipo de Cambio (Normal)');
+  const fxLabelEl = document.querySelector('[data-i18n="checkout_fx_label"]');
+  if (fxLabelEl) fxLabelEl.innerText = fxLabel;
+
   document.getElementById('checkout-fx-rate').innerText = `${fiatSymbol}${effectiveRate.toFixed(2)} ${currencyLabel} = 1 USDc`;
   document.getElementById('checkout-total-usd').innerText = `$${totalUSDc.toFixed(2)} USDc`;
   
@@ -1665,18 +1679,14 @@ function openCheckout(country, amount, merchant) {
   const savingsBox = document.getElementById('checkout-savings-indicator-box');
   const savingsDesc = document.getElementById('checkout-savings-desc-text');
   
-  // Mostrar u ocultar filas de comisión y red en la UI
+  // Ocultar filas de comisión y red en la UI (se reflejan en el spread cambiario)
   const feeRow = document.getElementById('checkout-fee').closest('.detail-row');
   if (feeRow) {
-    feeRow.style.display = 'flex';
-    document.getElementById('checkout-fee').innerText = isMicropayment 
-      ? (state.lang === 'es' ? '$0.00 USDc (Subvencionado)' : '$0.00 USDc (Subsidized)') 
-      : `$${serviceFee.toFixed(2)} USDc`;
+    feeRow.style.display = 'none';
   }
   const gasRow = document.getElementById('checkout-gas').closest('.detail-row');
   if (gasRow) {
-    gasRow.style.display = 'flex';
-    document.getElementById('checkout-gas').innerText = `$${gasFee.toFixed(2)} USDc`;
+    gasRow.style.display = 'none';
   }
   
   document.getElementById('checkout-title').innerText = country === 'ars' ? 'Pago QR (Mercado Pago / MODO)' : 'Pago QR (Pix)';
@@ -1937,7 +1947,7 @@ function initRefund() {
     if (state.balance <= 0) return;
     
     const refundAmount = state.balance;
-    const fee = refundAmount * 0.015;
+    const fee = refundAmount * 0.005;
     const netReceived = refundAmount - fee;
     
     switchScreen('screen-processing');
@@ -2797,6 +2807,8 @@ async function performActualPurchase(name, price) {
     renderTransactions();
     renderMarketItems();
     addVoucherAndSendEmail(name, price);
+    // Programar Cashback del 5% local
+    scheduleLocalCashback(name, price);
   };
 
   try {
@@ -2830,6 +2842,8 @@ async function performActualPurchase(name, price) {
       );
       renderMarketItems();
       addVoucherAndSendEmail(name, price);
+      // Programar Cashback del 5% en el backend
+      scheduleBackendCashback(name, price);
     } else {
       console.warn("Backend error in purchase. Falling back to local simulation.");
       runLocalPurchase();
@@ -4136,5 +4150,80 @@ function renderProfileTransactionsList() {
   });
 }
 window.renderProfileTransactionsList = renderProfileTransactionsList;
+
+// --- UTILIDADES DE CASHBACK Y NOTIFICACIÓN TOAST (CRUX) ---
+function showCashbackToast(amount, itemName) {
+  const toast = document.getElementById('cashback-toast');
+  const toastText = document.getElementById('cashback-toast-text');
+  if (toast && toastText) {
+    const isEs = state.lang === 'es' || !state.lang;
+    toastText.innerText = isEs 
+      ? `¡Reembolso Recibido! +$${amount.toFixed(2)} USDc por ${itemName}`
+      : `Cashback Received! +$${amount.toFixed(2)} USDc for ${itemName}`;
+    
+    // Activar animación de entrada visual
+    toast.style.display = 'flex';
+    setTimeout(() => {
+      toast.style.top = '20px';
+    }, 50);
+    
+    // Ocultar notificación tras 5 segundos
+    setTimeout(() => {
+      toast.style.top = '-100px';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 500);
+    }, 5000);
+  }
+}
+
+function scheduleLocalCashback(name, price) {
+  if (price <= 0) return;
+  const cashbackAmount = price * 0.05;
+  
+  console.log(`[Cashback] Programando 5% cashback ($${cashbackAmount.toFixed(2)} USDc) para ${name} en 60s`);
+  
+  setTimeout(() => {
+    state.balance += cashbackAmount;
+    
+    // Agregar registro al historial
+    state.transactions.unshift({
+      id: "tx_cashback_" + Date.now(),
+      merchant: `Cashback: ${name}`,
+      fiat: cashbackAmount.toFixed(2),
+      fiat_symbol: "$",
+      usdc: cashbackAmount.toFixed(2),
+      fee: "0.00",
+      net: cashbackAmount.toFixed(2),
+      type: "load",
+      date: "Hoy",
+      status: "Completado"
+    });
+    
+    // Actualizar UI
+    updateBalanceUI();
+    renderTransactions();
+    
+    // Mostrar Toast
+    showCashbackToast(cashbackAmount, name);
+  }, 60000);
+}
+
+function scheduleBackendCashback(name, price) {
+  if (price <= 0) return;
+  const cashbackAmount = price * 0.05;
+  
+  console.log(`[Cashback] Sincronización programada en backend para 5% cashback de ${name} en 60.5s`);
+  
+  setTimeout(async () => {
+    // Sincronizar balance y lista de transacciones actualizada del servidor
+    await syncStateWithBackend();
+    updateBalanceUI();
+    renderTransactions();
+    
+    // Mostrar Toast
+    showCashbackToast(cashbackAmount, name);
+  }, 60500);
+}
 
 
