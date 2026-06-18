@@ -1641,9 +1641,8 @@ function openCheckout(country, amount, merchant) {
   const rate = fxRates[country];
   const rawUSDc = amount / rate;
   
-  // Spread cambiario en macropagos (> $15 USDc): 1.5% + 0.10 fijos
-  const isMicropayment = rawUSDc <= 15.0;
-  const totalUSDc = isMicropayment ? rawUSDc : rawUSDc * 1.015 + 0.10;
+  // Spread cambiario: 1.5% + 0.10 fijos
+  const totalUSDc = rawUSDc * 1.015 + 0.10;
   const serviceFee = 0.0;
   const gasFee = 0.0;
   
@@ -1663,10 +1662,8 @@ function openCheckout(country, amount, merchant) {
   document.getElementById('checkout-merchant').innerText = dict.checkout_merchant.replace('{merchant}', merchant);
   document.getElementById('checkout-fiat-amount').innerText = country === 'ars' ? `$${amount.toLocaleString('es-AR')} ARS` : `R$${amount.toLocaleString('pt-BR')} BRL`;
   
-  // Actualizar etiqueta del Tipo de Cambio dinámicamente (Subsidiado vs Normal)
-  const fxLabel = isMicropayment 
-    ? (dict.checkout_fx_subsidized || 'Tipo de Cambio (Subsidiado)') 
-    : (dict.checkout_fx_normal || 'Tipo de Cambio (Normal)');
+  // Actualizar etiqueta del Tipo de Cambio
+  const fxLabel = dict.checkout_fx_normal || 'Tipo de Cambio (Normal)';
   const fxLabelEl = document.querySelector('[data-i18n="checkout_fx_label"]');
   if (fxLabelEl) fxLabelEl.innerText = fxLabel;
 
@@ -1743,18 +1740,12 @@ function openCheckout(country, amount, merchant) {
       const title = savingsBox.querySelector('.savings-text-wrapper div');
       if (title) title.innerText = state.lang === 'es' ? '¡Ahorro Cambiario!' : 'Exchange Savings!';
       
-      if (isMicropayment) {
-        savingsDesc.innerHTML = state.lang === 'es'
-          ? `<strong>¡Micropago Subvencionado!</strong> Crux exime la comisión del 3% en consumos menores a $15 USD, ahorrando además un 5-6% de tipo de cambio.`
-          : `<strong>Subsidized Micropayment!</strong> Crux waives the 3% service fee on transactions under $15 USD, saving an extra 5-6% on exchange rates.`;
+      if (state.lang === 'es') {
+        savingsDesc.innerHTML = `Obtienes un tipo de cambio paralelo, <strong>ahorrando $${savingsUSD.toFixed(2)} USDc</strong> frente a comisiones y recargos de tarjetas tradicionales.`;
+      } else if (state.lang === 'en') {
+        savingsDesc.innerHTML = `You get a parallel exchange rate, <strong>saving $${savingsUSD.toFixed(2)} USDc</strong> compared to traditional card fees and markups.`;
       } else {
-        if (state.lang === 'es') {
-          savingsDesc.innerHTML = `Obtienes un tipo de cambio paralelo, <strong>ahorrando $${savingsUSD.toFixed(2)} USDc</strong> frente a comisiones y recargos de tarjetas tradicionales.`;
-        } else if (state.lang === 'en') {
-          savingsDesc.innerHTML = `You get a parallel exchange rate, <strong>saving $${savingsUSD.toFixed(2)} USDc</strong> compared to traditional card fees and markups.`;
-        } else {
-          savingsDesc.innerHTML = `${dict.checkout_savings_desc.replace('{amount}', savingsUSD.toFixed(2))}`;
-        }
+        savingsDesc.innerHTML = `${dict.checkout_savings_desc.replace('{amount}', savingsUSD.toFixed(2))}`;
       }
     }
     

@@ -1120,13 +1120,8 @@ func handleCheckout(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		rawUsdc := req.Amount / rate
-		if rawUsdc <= 15.0 {
-			totalUsdc = rawUsdc
-			spreadUsdc = 0.0
-		} else {
-			totalUsdc = rawUsdc * 1.015 + 0.10
-			spreadUsdc = 0.015 * rawUsdc + 0.10
-		}
+		totalUsdc = rawUsdc * 1.015 + 0.10
+		spreadUsdc = 0.015 * rawUsdc + 0.10
 		serviceFee = 0.0
 		gasFee = 0.0
 	}
