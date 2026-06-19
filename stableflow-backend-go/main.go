@@ -249,6 +249,9 @@ type ChatSession struct {
 	TravelerName string  `json:"traveler_name"`
 	Date         string  `json:"date"`
 	Email        string  `json:"email"`
+	PeopleCount  string  `json:"people_count"`
+	FlightNumber string  `json:"flight_number"`
+	ArrivalTime  string  `json:"arrival_time"`
 }
 
 // WalletState contiene el balance, transacciones, OTPs activos, incidencias y descargas
@@ -2054,6 +2057,8 @@ type ChatResponse struct {
 	CreateIncident bool   `json:"create_incident"`
 	Category       string `json:"category"`
 	Subject        string `json:"subject"`
+	AutoNext       bool   `json:"auto_next"`
+	ShowSimulation bool   `json:"show_simulation"`
 }
 
 var botReplies = map[string]map[string]string{
@@ -2134,7 +2139,7 @@ var botReplies = map[string]map[string]string{
 	},
 }
 
-func processBookingStep(session *ChatSession, msg string, phone string) ChatResponse {
+func processBookingStep(session *ChatSession, msg string, phone string, lang string) ChatResponse {
 	state.Lock()
 	defer state.Unlock()
 
@@ -2142,13 +2147,23 @@ func processBookingStep(session *ChatSession, msg string, phone string) ChatResp
 
 	if msgClean == "cancelar" || msgClean == "salir" {
 		delete(state.ChatSessions, phone)
+		reply := "Reserva de Civitatis cancelada. ¿En qué más puedo ayudarte?"
+		if lang == "en" {
+			reply = "Civitatis booking canceled. What else can I help you with?"
+		} else if lang == "it" {
+			reply = "Prenotazione Civitatis annullata. In cos'altro posso aiutarti?"
+		} else if lang == "fr" {
+			reply = "Réservation Civitatis annulée. En quoi d'autre puis-je vous aider ?"
+		} else if lang == "de" {
+			reply = "Civitatis-Buchung abgebrochen. Womit kann ich Ihnen noch helfen?"
+		}
 		return ChatResponse{
-			Reply: "Reserva de Civitatis cancelada. ¿En qué más puedo ayudarte?",
+			Reply: reply,
 		}
 	}
 
 	switch session.Step {
-	case 1: // Esperando Ciudad
+	case 1: // Esperando Ciudad (flujo tradicional/catálogo)
 		if strings.Contains(msgClean, "buenos aires") || strings.Contains(msgClean, "buenos") || strings.Contains(msgClean, "aires") || msgClean == "ba" || msgClean == "ar" {
 			session.City = "buenos_aires"
 			session.Step = 2
@@ -2171,13 +2186,27 @@ func processBookingStep(session *ChatSession, msg string, phone string) ChatResp
 					"4. Traslado Privado Aeropuerto GIG/SDU ($35.00 USDc)\n\n" +
 					"Por favor, escribe el número (1-4) o el nombre de la actividad que deseas reservar.",
 			}
+		} else if strings.Contains(msgClean, "calafate") || strings.Contains(msgClean, "calaf") {
+			session.City = "el_calafate"
+			session.Step = 10
+			reply := "Genial. El Calafate es una ciudad hermosa. Contame más, ¿para qué fecha y para cuántas personas?"
+			if lang == "en" {
+				reply = "Great. El Calafate is a beautiful city. Tell me more, for what date and how many people?"
+			} else if lang == "it" {
+				reply = "Ottimo. El Calafate è una bellissima città. Dimmi di più, per quale data e quante persone?"
+			} else if lang == "fr" {
+				reply = "Génial. El Calafate est une ville magnifique. Dites-m'en plus, pour quelle date et pour combien de personnes ?"
+			} else if lang == "de" {
+				reply = "Großartig. El Calafate ist eine wunderschöne Stadt. Erzählen Sie mir mehr, für welches Datum und wie viele Personen?"
+			}
+			return ChatResponse{Reply: reply}
 		} else {
 			return ChatResponse{
-				Reply: "Lo siento, por ahora solo tengo actividades para Buenos Aires y Río de Janeiro. ¿En cuál de estas ciudades te gustaría hacer la actividad?",
+				Reply: "Lo siento, por ahora tengo actividades para Buenos Aires, Río de Janeiro y El Calafate. ¿En cuál de estas ciudades te gustaría hacer la actividad?",
 			}
 		}
 
-	case 2: // Esperando Actividad
+	case 2: // Esperando Actividad (Catálogo tradicional)
 		var selectedName string
 		var selectedPrice float64
 		validChoice := false
@@ -2196,9 +2225,14 @@ func processBookingStep(session *ChatSession, msg string, phone string) ChatResp
 				selectedPrice = 20.00
 				validChoice = true
 			} else if msgClean == "4" || strings.Contains(msgClean, "traslado") || strings.Contains(msgClean, "aeropuerto") || strings.Contains(msgClean, "eze") || strings.Contains(msgClean, "aep") {
-				selectedName = "Traslado Privado Aeropuerto EZE/AEP"
-				selectedPrice = 30.00
-				validChoice = true
+				session.Activity = "Traslado Privado Aeropuerto EZE/AEP"
+				session.Price = 30.00
+				session.Step = 10
+				reply := "Genial. Buenos Aires es una ciudad hermosa. Contame más, ¿para qué fecha y para cuántas personas?"
+				if lang == "en" {
+					reply = "Great. Buenos Aires is a beautiful city. Tell me more, for what date and how many people?"
+				}
+				return ChatResponse{Reply: reply}
 			}
 		} else if session.City == "rio" {
 			if msgClean == "1" || strings.Contains(msgClean, "cristo") || strings.Contains(msgClean, "redentor") || strings.Contains(msgClean, "azucar") || strings.Contains(msgClean, "azúcar") {
@@ -2214,9 +2248,14 @@ func processBookingStep(session *ChatSession, msg string, phone string) ChatResp
 				selectedPrice = 25.00
 				validChoice = true
 			} else if msgClean == "4" || strings.Contains(msgClean, "traslado") || strings.Contains(msgClean, "aeropuerto") || strings.Contains(msgClean, "gig") || strings.Contains(msgClean, "sdu") {
-				selectedName = "Traslado Privado Aeropuerto GIG/SDU"
-				selectedPrice = 35.00
-				validChoice = true
+				session.Activity = "Traslado Privado Aeropuerto GIG/SDU"
+				session.Price = 35.00
+				session.Step = 10
+				reply := "Genial. Río de Janeiro es una ciudad hermosa. Contame más, ¿para qué fecha y para cuántas personas?"
+				if lang == "en" {
+					reply = "Great. Rio de Janeiro is a beautiful city. Tell me more, for what date and how many people?"
+				}
+				return ChatResponse{Reply: reply}
 			}
 		}
 
@@ -2235,7 +2274,7 @@ func processBookingStep(session *ChatSession, msg string, phone string) ChatResp
 				"Por favor, indícame el NOMBRE COMPLETO del viajero principal y la FECHA del tour separados por coma (por ejemplo: Juan Pérez, 15/07/2026).", selectedName, selectedPrice),
 		}
 
-	case 3: // Esperando nombre de viajero y fecha
+	case 3: // Esperando nombre de viajero y fecha (Catálogo tradicional)
 		parts := strings.Split(msg, ",")
 		var name, date string
 		if len(parts) >= 2 {
@@ -2261,7 +2300,7 @@ func processBookingStep(session *ChatSession, msg string, phone string) ChatResp
 				"Ahora por favor indícame tu CORREO ELECTRÓNICO para enviarte el voucher de Civitatis.", name, date),
 		}
 
-	case 4: // Esperando Email
+	case 4: // Esperando Email (Catálogo tradicional)
 		email := strings.TrimSpace(msg)
 		if !strings.Contains(email, "@") || len(email) < 5 {
 			return ChatResponse{
@@ -2298,7 +2337,7 @@ func processBookingStep(session *ChatSession, msg string, phone string) ChatResp
 				session.Activity, session.TravelerName, session.Date, session.Email, session.Price),
 		}
 
-	case 5: // Esperando Confirmación
+	case 5: // Esperando Confirmación (Catálogo tradicional)
 		if msgClean == "sí" || msgClean == "si" || msgClean == "ok" || msgClean == "confirmar" {
 			if state.Balance < session.Price {
 				delete(state.ChatSessions, phone)
@@ -2336,6 +2375,328 @@ func processBookingStep(session *ChatSession, msg string, phone string) ChatResp
 			return ChatResponse{
 				Reply: "Confirmación no válida. Responde 'SÍ' o 'OK' para confirmar el pago, o escribe 'cancelar' para salir del proceso.",
 			}
+		}
+
+	case 9: // Esperando ciudad en el flujo conversacional de traslados
+		citySelected := ""
+		if strings.Contains(msgClean, "calafate") || strings.Contains(msgClean, "calaf") {
+			citySelected = "el_calafate"
+		} else if strings.Contains(msgClean, "buenos") || strings.Contains(msgClean, "aires") || msgClean == "ba" {
+			citySelected = "buenos_aires"
+		} else if strings.Contains(msgClean, "rio") || strings.Contains(msgClean, "río") {
+			citySelected = "rio"
+		}
+
+		if citySelected == "" {
+			return ChatResponse{
+				Reply: "Por favor, indícame en qué ciudad necesitas el traslado: Buenos Aires, Río de Janeiro o El Calafate.",
+			}
+		}
+
+		session.City = citySelected
+		session.Step = 10
+
+		cityName := "El Calafate"
+		if citySelected == "buenos_aires" {
+			cityName = "Buenos Aires"
+		} else if citySelected == "rio" {
+			cityName = "Río de Janeiro"
+		}
+
+		reply := fmt.Sprintf("Genial. %s es una ciudad hermosa. Contame más, ¿para qué fecha y para cuántas personas?", cityName)
+		if lang == "en" {
+			reply = fmt.Sprintf("Great. %s is a beautiful city. Tell me more, for what date and how many people?", cityName)
+		} else if lang == "it" {
+			reply = fmt.Sprintf("Ottimo. %s è una bellissima città. Dimmi di più, per quale data e quante persone?", cityName)
+		} else if lang == "fr" {
+			reply = fmt.Sprintf("Génial. %s est une ville magnifique. Dites-m'en plus, pour quelle date et pour combien de personnes ?", cityName)
+		} else if lang == "de" {
+			reply = fmt.Sprintf("Großartig. %s ist eine wunderschöne Stadt. Erzählen Sie mir mehr, für welches Datum und wie viele Personen?", cityName)
+		}
+		return ChatResponse{Reply: reply}
+
+	case 10: // Conversacional: Esperando fecha y cantidad de personas
+		people := "4"
+		for _, word := range []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "un", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve"} {
+			if strings.Contains(msgClean, word) {
+				switch word {
+				case "un":
+					people = "1"
+				case "dos":
+					people = "2"
+				case "tres":
+					people = "3"
+				case "cuatro":
+					people = "4"
+				case "cinco":
+					people = "5"
+				case "seis":
+					people = "6"
+				case "siete":
+					people = "7"
+				case "ocho":
+					people = "8"
+				case "nueve":
+					people = "9"
+				default:
+					people = word
+				}
+			}
+		}
+		session.PeopleCount = people
+
+		date := msg
+		if strings.Contains(msgClean, "para el ") {
+			idx := strings.Index(msgClean, "para el ")
+			date = msg[idx+8:]
+		} else if strings.Contains(msgClean, "el ") {
+			idx := strings.Index(msgClean, "el ")
+			date = msg[idx+3:]
+		}
+		session.Date = strings.TrimSpace(date)
+		session.Step = 11
+
+		cityName := "El Calafate"
+		if session.City == "buenos_aires" {
+			cityName = "Buenos Aires"
+		} else if session.City == "rio" {
+			cityName = "Río de Janeiro"
+		}
+
+		reply := fmt.Sprintf("Excelente, suena un buen plan. ¿Llegás a %s en un vuelo? Si es así, ¿a qué hora llega tu vuelo? ¿Conocés el número de vuelo?", cityName)
+		if lang == "en" {
+			reply = fmt.Sprintf("Excellent, sounds like a good plan. Are you arriving in %s on a flight? If so, what time does your flight arrive? Do you know the flight number?", cityName)
+		} else if lang == "it" {
+			reply = fmt.Sprintf("Eccellente, sembra un buon piano. Arrivi a %s con un volo? Se sì, a che ora arriva il tuo volo? Conosci il numero del volo?", cityName)
+		} else if lang == "fr" {
+			reply = fmt.Sprintf("Excellent, cela ressemble à un bon plan. Arrivez-vous à %s par un vol ? Si oui, à quelle heure votre vol arrive-t-il ? Connaissez-vous le numéro de vol ?", cityName)
+		} else if lang == "de" {
+			reply = fmt.Sprintf("Ausgezeichnet, das klingt nach einem guten Plan. Kommen Sie mit einem Flug in %s an? Wenn ja, um wie viel Uhr kommt Ihr Flug an? Kennen Sie die Flugnummer?", cityName)
+		}
+		return ChatResponse{Reply: reply}
+
+	case 11: // Conversacional: Esperando detalles del vuelo
+		session.FlightNumber = "AR 1115"
+		session.ArrivalTime = "13:00 hs"
+
+		msgUpper := strings.ToUpper(msg)
+		// Robust flight number parsing
+		idxAR := strings.Index(msgUpper, "AR")
+		if idxAR == -1 {
+			idxAR = strings.Index(msgUpper, "AV")
+		}
+		if idxAR == -1 {
+			idxAR = strings.Index(msgUpper, "LA")
+		}
+		
+		if idxAR != -1 {
+			// Extract digits after the code
+			rest := msgUpper[idxAR+2:]
+			var flightDigits []rune
+			for _, r := range rest {
+				if r >= '0' && r <= '9' {
+					flightDigits = append(flightDigits, r)
+				} else if r == ' ' {
+					// skip spaces to handle AR 11 11 15 -> AR 111115
+				} else {
+					break
+				}
+			}
+			if len(flightDigits) > 0 {
+				prefix := msgUpper[idxAR : idxAR+2]
+				session.FlightNumber = prefix + " " + string(flightDigits)
+			}
+		}
+
+		if strings.Contains(msgClean, " a las ") {
+			idx := strings.Index(msgClean, " a las ")
+			session.ArrivalTime = strings.TrimSpace(msg[idx+7:])
+		} else if strings.Contains(msgClean, " las ") {
+			idx := strings.Index(msgClean, " las ")
+			session.ArrivalTime = strings.TrimSpace(msg[idx+5:])
+		} else if strings.Contains(msgClean, " arriving at ") {
+			idx := strings.Index(msgClean, " arriving at ")
+			session.ArrivalTime = strings.TrimSpace(msg[idx+13:])
+		}
+
+		session.Step = 12
+
+		reply := "Excelente. Dame un minuto y te muestro lo que podemos ofrecerte."
+		if lang == "en" {
+			reply = "Excellent. Give me a minute and I'll show you what we can offer."
+		} else if lang == "it" {
+			reply = "Eccellente. Dammi un minuto e ti mostrerò cosa possiamo offrirti."
+		} else if lang == "fr" {
+			reply = "Excellent. Donnez-moi une minute et je vous montrerai ce que nous pouvons vous proposer."
+		} else if lang == "de" {
+			reply = "Ausgezeichnet. Geben Sie mir eine Minute und ich zeige Ihnen, was wir anbieten können."
+		}
+		return ChatResponse{
+			Reply:    reply,
+			AutoNext: true,
+		}
+
+	case 12: // Conversacional: Buscando / Mostrando Oferta (luego de la pausa del frontend)
+		price := 54.00
+		activityName := "Traslado Privado Aeropuerto - Hotel El Calafate"
+		if session.City == "buenos_aires" {
+			price = 30.00
+			activityName = "Traslado Privado Aeropuerto EZE/AEP"
+		} else if session.City == "rio" {
+			price = 35.00
+			activityName = "Traslado Privado Aeropuerto GIG/SDU"
+		}
+		session.Price = price
+		session.Activity = activityName
+		session.Step = 13
+
+		reply := fmt.Sprintf("Mira, ya tengo la solución hecha. El transfer te cuesta %.0f dólares, te va a estar esperando a la salida del aeropuerto con un cartelito a tu nombre (esto se llama meet and greet). Y lo podemos pagar ahora. ¿Querés que lo hagamos? Me encargo de todo por vos.", price)
+		btnText := "dale, excelente"
+		if lang == "en" {
+			reply = fmt.Sprintf("Look, I have the solution ready. The transfer costs %.0f dollars, they will be waiting for you at the airport exit with a sign with your name (this is called meet and greet). And we can pay for it now. Do you want me to proceed? I'll take care of everything for you.", price)
+			btnText = "go ahead, excellent"
+		} else if lang == "it" {
+			reply = fmt.Sprintf("Guarda, ho la soluzione pronta. Il trasferimento costa %.0f dollari, ti aspetteranno all'uscita dell'aeroporto con un cartello con il tuo nome (questo si chiama meet and greet). E possiamo pagarlo adesso. Vuoi che lo faccia? Mi occupo di tutto io.", price)
+			btnText = "procedi, eccellente"
+		} else if lang == "fr" {
+			reply = fmt.Sprintf("Regardez, j'ai la solution prête. Le transfert coûte %.0f dollars, ils vous attendront à la sortie de l'aéroport avec une pancarte à votre nom (cela s'appelle meet and greet). Et nous pouvons payer maintenant. Voulez-vous que je m'en occupe ? Je m'occupe de tout pour vous.", price)
+			btnText = "d'accord, excellent"
+		} else if lang == "de" {
+			reply = fmt.Sprintf("Schauen Sie, ich habe die Lösung bereit. Der Transfer kostet %.0f Dollar, man erwartet Sie am Flughafenausgang mit einem Schild mit Ihrem Namen (das nennt sich Meet and Greet). Und wir können es jetzt bezahlen. Möchten Sie, dass ich das mache? Ich kümmere mich um alles für Sie.", price)
+			btnText = "abgemacht, ausgezeichnet"
+		}
+
+		reply += fmt.Sprintf("<br><br><div class='chat-quick-reply-container'><button class='chat-quick-reply-btn' onclick='sendChatFromQuickReply(\"%s\")'>%s</button></div>", btnText, btnText)
+		return ChatResponse{Reply: reply}
+
+	case 13: // Conversacional: Awaiting "dale, excelente" and displaying receipt summary
+		session.Step = 14
+
+		reply := "Mira, este es el servicio que vamos a comprar. ¿Podés revisarlo? Así, si me das tu okay, lo compro por vos."
+		title := "Resumen de Reserva - Civitatis"
+		lblService := "Servicio"
+		lblDate := "Fecha"
+		lblPax := "Pasajeros"
+		lblFlight := "Vuelo"
+		lblHolder := "Titular"
+		lblTotal := "Precio Total"
+		btnBuyText := "Sí, he revisado y acepto. Comprar"
+		termsText := "Autorizo a Crux a debitar los fondos de mi saldo y confirmo que soy responsable de esta compra."
+
+		if lang == "en" {
+			reply = "Look, this is the service we are going to buy. Can you review it? If you give me your okay, I'll buy it for you."
+			title = "Booking Summary - Civitatis"
+			lblService = "Service"
+			lblDate = "Date"
+			lblPax = "Travelers"
+			lblFlight = "Flight"
+			lblHolder = "Holder"
+			lblTotal = "Total Price"
+			btnBuyText = "Yes, I have reviewed and accept. Buy"
+			termsText = "I authorize Crux to debit my balance and confirm that I am responsible for this purchase."
+		} else if lang == "it" {
+			reply = "Guarda, questo è il servicio que acquisteremo. Puoi controllarlo? Se mi dai il tuo okay, lo compro per te."
+			title = "Riepilogo Prenotazione - Civitatis"
+			lblService = "Servizio"
+			lblDate = "Data"
+			lblPax = "Passeggeri"
+			lblFlight = "Volo"
+			lblHolder = "Titolare"
+			lblTotal = "Prezzo Totale"
+			btnBuyText = "Sì, ho controllato e accetto. Acquista"
+			termsText = "Autorizzo Crux ad addebitare il mio saldo e confermo di essere responsabile di questo acquisto."
+		} else if lang == "fr" {
+			reply = "Regardez, c'est le service que nous allons acheter. Pouvez-vous le vérifier ? Si vous me donnez votre accord, je l'achète pour vous."
+			title = "Résumé de Réservation - Civitatis"
+			lblService = "Service"
+			lblDate = "Date"
+			lblPax = "Voyageurs"
+			lblFlight = "Vol"
+			lblHolder = "Titulaire"
+			lblTotal = "Prix Total"
+			btnBuyText = "Oui, j'ai vérifié et j'accepte. Acheter"
+			termsText = "J'autorise Crux à débiter mon solde et confirme que je suis responsable de cet achat."
+		} else if lang == "de" {
+			reply = "Schauen Sie, das ist der Service, den wir kaufen werden. Können Sie ihn überprüfen? Wenn Sie mir Ihr Einverständnis geben, kaufe ich ihn für Sie."
+			title = "Buchungsübersicht - Civitatis"
+			lblService = "Service"
+			lblDate = "Datum"
+			lblPax = "Reisende"
+			lblFlight = "Flug"
+			lblHolder = "Inhaber"
+			lblTotal = "Gesamtpreis"
+			btnBuyText = "Ja, ich habe überprüft und akzeptiere. Kaufen"
+			termsText = "Ich autorisiere Crux, mein Guthaben zu belasten, und bestätige, dass ich für diesen Kauf verantwortlich bin."
+		}
+
+		cardHTML := fmt.Sprintf(`<div class="chat-checkout-card">
+			<h3>%s</h3>
+			<p><b>%s:</b> <span>%s</span></p>
+			<p><b>%s:</b> <span>%s</span></p>
+			<p><b>%s:</b> <span>%s pax</span></p>
+			<p><b>%s:</b> <span>%s (%s)</span></p>
+			<p><b>%s:</b> <span>Ian Taylor</span></p>
+			<p class="chat-price"><b>%s:</b> <span>$%.2f USDc</span></p>
+			<label class="chat-accept-label">
+				<input type="checkbox" class="chat-agree-chk" onchange='const btn=this.closest(".chat-checkout-card").querySelector(".chat-checkout-btn"); btn.disabled=!this.checked;'>
+				%s
+			</label>
+			<button class="chat-checkout-btn" disabled onclick='sendChatFromQuickReply("sí, lo he revisado, está okay")'>%s</button>
+		</div>`, title, lblService, session.Activity, lblDate, session.Date, lblPax, session.PeopleCount, lblFlight, session.FlightNumber, session.ArrivalTime, lblHolder, lblTotal, session.Price, termsText, btnBuyText)
+
+		return ChatResponse{
+			Reply:          reply + "<br><br>" + cardHTML,
+			ShowSimulation: true,
+		}
+
+	case 14: // Conversacional: Compra Final y Deducción de Fondos
+		if strings.Contains(msgClean, "si") || strings.Contains(msgClean, "sí") || strings.Contains(msgClean, "ok") || strings.Contains(msgClean, "okay") || strings.Contains(msgClean, "comprar") {
+			if state.Balance < session.Price {
+				delete(state.ChatSessions, phone)
+				reply := fmt.Sprintf("Error en el pago: Saldo insuficiente ($%.2f USDc disponible, precio $%.2f USDc). Reserva cancelada.", state.Balance, session.Price)
+				if lang == "en" {
+					reply = fmt.Sprintf("Payment error: Insufficient balance ($%.2f USDc available, price $%.2f USDc). Booking canceled.", state.Balance, session.Price)
+				}
+				return ChatResponse{Reply: reply}
+			}
+
+			state.Balance -= session.Price
+
+			txID := fmt.Sprintf("tr_civitatis_%d", rand.Intn(1000000))
+			nowStr := "Hoy, " + time.Now().Format("15:04")
+
+			newTx := Transaction{
+				ID:         txID,
+				Merchant:   fmt.Sprintf("%s (Civitatis ag_aid=64324)", session.Activity),
+				Fiat:       fmt.Sprintf("%.2f", session.Price),
+				FiatSymbol: "$",
+				USDC:       fmt.Sprintf("%.2f", session.Price),
+				Type:       "pay",
+				Date:       nowStr,
+				Status:     "Completado",
+			}
+			state.Transactions = append([]Transaction{newTx}, state.Transactions...)
+
+			delete(state.ChatSessions, phone)
+
+			reply := fmt.Sprintf("¡Compra exitosa! Se han debitado $%.2f USDc de tu cuenta.<br><br>El bot ha completado la compra en Civitatis usando el código de referido ag_aid=64324.<br>Tu voucher con código <b>CIV-540-CALAFATE</b> ha sido enviado a tu correo registrado (ian.taylor@example.com).<br><br>¡Disfruta tu viaje!", session.Price)
+			if lang == "en" {
+				reply = fmt.Sprintf("Purchase successful! $%.2f USDc has been debited from your account.<br><br>The bot has completed the purchase on Civitatis using referral code ag_aid=64324.<br>Your voucher with code <b>CIV-540-CALAFATE</b> has been sent to your registered email (ian.taylor@example.com).<br><br>Enjoy your trip!", session.Price)
+			} else if lang == "it" {
+				reply = fmt.Sprintf("Acquisto riuscito! $%.2f USDc è stato addebitato dal tuo account.<br><br>Il bot ha completato l'acquisto su Civitatis utilizzando il codice di riferimento ag_aid=64324.<br>Il tuo voucher con il codice <b>CIV-540-CALAFATE</b> è stato inviato alla tua email registrata (ian.taylor@example.com).<br><br>Buon viaggio!", session.Price)
+			} else if lang == "fr" {
+				reply = fmt.Sprintf("Achat réussi ! $%.2f USDc ont été débités de votre compte.<br><br>Le bot a finalisé l'achat sur Civitatis avec le code de parrainage ag_aid=64324.<br>Votre voucher avec le code <b>CIV-540-CALAFATE</b> a été envoyé à votre adresse e-mail enregistrée (ian.taylor@example.com).<br><br>Bon voyage !", session.Price)
+			} else if lang == "de" {
+				reply = fmt.Sprintf("Kauf erfolgreich! $%.2f USDc wurden von Ihrem Konto abgebucht.<br><br>Der Bot hat den Kauf auf Civitatis unter Verwendung des Empfehlungscodes ag_aid=64324 abgeschlossen.<br>Ihr Gutschein mit dem Code <b>CIV-540-CALAFATE</b> wurde an Ihre registrierte E-Mail-Adresse (ian.taylor@example.com) gesendet.<br><br>Gute Reise!", session.Price)
+			}
+
+			return ChatResponse{Reply: reply}
+		} else {
+			reply := "Confirmación no válida. Confirma el pago para comprar el servicio, o escribe 'cancelar' para salir."
+			if lang == "en" {
+				reply = "Invalid confirmation. Please confirm payment to buy the service, or write 'cancel' to exit."
+			}
+			return ChatResponse{Reply: reply}
 		}
 	}
 
@@ -2378,7 +2739,7 @@ func handleSupportChat(w http.ResponseWriter, r *http.Request) {
 	state.Unlock()
 
 	if exists && session.Step > 0 {
-		res := processBookingStep(session, req.Message, phoneVal)
+		res := processBookingStep(session, req.Message, phoneVal, lang)
 		time.Sleep(800 * time.Millisecond)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(res)
@@ -2554,12 +2915,34 @@ func handleSupportChat(w http.ResponseWriter, r *http.Request) {
 		reply := ""
 
 		msgClean := strings.TrimSpace(strings.ToLower(req.Message))
-		if strings.Contains(msgClean, "buenos aires") || strings.Contains(msgClean, "buenos") || strings.Contains(msgClean, "aires") || msgClean == "ba" || msgClean == "ar" || strings.Contains(msgClean, "tango") || strings.Contains(msgClean, "querand") || strings.Contains(msgClean, "delta") || strings.Contains(msgClean, "tigre") || strings.Contains(msgClean, "san telmo") || strings.Contains(msgClean, "la boca") || strings.Contains(msgClean, "eze") || strings.Contains(msgClean, "aep") {
-			city = "buenos_aires"
-			step = 2
-		} else if strings.Contains(msgClean, "rio") || strings.Contains(msgClean, "río") || strings.Contains(msgClean, "janeiro") || msgClean == "br" || strings.Contains(msgClean, "cristo") || strings.Contains(msgClean, "redentor") || strings.Contains(msgClean, "azucar") || strings.Contains(msgClean, "azúcar") || strings.Contains(msgClean, "guanabara") || strings.Contains(msgClean, "favela") || strings.Contains(msgClean, "rocinha") || strings.Contains(msgClean, "gig") || strings.Contains(msgClean, "sdu") {
-			city = "rio"
-			step = 2
+		isTransferQuery := strings.Contains(msgClean, "traslado") || strings.Contains(msgClean, "transfer") || strings.Contains(msgClean, "shuttle") || strings.Contains(msgClean, "aeropuerto") || strings.Contains(msgClean, "eze") || strings.Contains(msgClean, "aep") || strings.Contains(msgClean, "gig") || strings.Contains(msgClean, "sdu")
+
+		if isTransferQuery || strings.Contains(msgClean, "calafate") || strings.Contains(msgClean, "calaf") {
+			// Conversational transfer flow
+			if strings.Contains(msgClean, "calafate") || strings.Contains(msgClean, "calaf") {
+				city = "el_calafate"
+				step = 10
+			} else if strings.Contains(msgClean, "buenos") || strings.Contains(msgClean, "aires") || msgClean == "ba" {
+				city = "buenos_aires"
+				step = 10
+			} else if strings.Contains(msgClean, "rio") || strings.Contains(msgClean, "río") {
+				city = "rio"
+				step = 10
+			} else {
+				// No city detected yet for transfer flow
+				step = 9
+			}
+		} else {
+			// Traditional catalog flow
+			if strings.Contains(msgClean, "buenos") || strings.Contains(msgClean, "aires") || msgClean == "ba" {
+				city = "buenos_aires"
+				step = 2
+			} else if strings.Contains(msgClean, "rio") || strings.Contains(msgClean, "río") {
+				city = "rio"
+				step = 2
+			} else {
+				step = 1
+			}
 		}
 
 		state.Lock()
@@ -2569,7 +2952,36 @@ func handleSupportChat(w http.ResponseWriter, r *http.Request) {
 		}
 		state.Unlock()
 
-		if step == 2 {
+		// Generate the initial reply
+		if step == 10 {
+			cityName := "El Calafate"
+			if city == "buenos_aires" {
+				cityName = "Buenos Aires"
+			} else if city == "rio" {
+				cityName = "Río de Janeiro"
+			}
+			reply = fmt.Sprintf("Genial. %s es una ciudad hermosa. Contame más, ¿para qué fecha y para cuántas personas?", cityName)
+			if lang == "en" {
+				reply = fmt.Sprintf("Great. %s is a beautiful city. Tell me more, for what date and how many people?", cityName)
+			} else if lang == "it" {
+				reply = fmt.Sprintf("Ottimo. %s è una bellissima città. Dimmi di più, per quale data e quante persone?", cityName)
+			} else if lang == "fr" {
+				reply = fmt.Sprintf("Génial. %s est une ville magnifique. Dites-m'en plus, pour quelle date et pour combien de personnes ?", cityName)
+			} else if lang == "de" {
+				reply = fmt.Sprintf("Großartig. %s is eine wunderschöne Stadt. Erzählen Sie mir mehr, für welches Datum und wie viele Personen?", cityName)
+			}
+		} else if step == 9 {
+			reply = "Genial. ¿Para qué ciudad (Buenos Aires, Río de Janeiro o El Calafate) necesitas el traslado?"
+			if lang == "en" {
+				reply = "Great. For which city (Buenos Aires, Rio de Janeiro or El Calafate) do you need the transfer?"
+			} else if lang == "it" {
+				reply = "Ottimo. Per quale città (Buenos Aires, Rio de Janeiro o El Calafate) hai bisogno del trasferimento?"
+			} else if lang == "fr" {
+				reply = "Génial. Pour quelle ville (Buenos Aires, Rio de Janeiro ou El Calafate) avez-vous besoin du transfert ?"
+			} else if lang == "de" {
+				reply = "Großartig. Für welche Stadt (Buenos Aires, Rio de Janeiro oder El Calafate) benötigen Sie den Transfer?"
+			}
+		} else if step == 2 {
 			if city == "buenos_aires" {
 				reply = "¡Excelente! He detectado que buscas actividades en Buenos Aires. Estas son las disponibles en Civitatis:\n" +
 					"1. Show de Tango en El Querandí ($60.00 USDc)\n" +
@@ -2584,27 +2996,6 @@ func handleSupportChat(w http.ResponseWriter, r *http.Request) {
 						"3. San Telmo & La Boca Historical Tour ($20.00 USDc)\n" +
 						"4. Private Airport Transfer EZE/AEP ($30.00 USDc)\n\n" +
 						"Please write the number (1-4) or the name of the activity you'd like to book."
-				} else if lang == "it" {
-					reply = "Eccellente! Ho rilevato che cerchi attività a Buenos Aires. Ecco quelle disponibili su Civitatis:\n" +
-						"1. Spettacolo di Tango a El Querandí ($60.00 USDc)\n" +
-						"2. Escursione al Delta del Tigre ($35.00 USDc)\n" +
-						"3. Tour Storico di San Telmo e La Boca ($20.00 USDc)\n" +
-						"4. Trasferimento Privato Aeroporto EZE/AEP ($30.00 USDc)\n\n" +
-						"Per favore, scrivi il numero (1-4) o il nome dell'attività che desideri prenotare."
-				} else if lang == "fr" {
-					reply = "Excellent ! J'ai détecté que vous recherchez des activités à Buenos Aires. Voici celles disponibles sur Civitatis :\n" +
-						"1. Spectacle de Tango à El Querandí (60.00 USDc)\n" +
-						"2. Excursion au Delta du Tigre (35.00 USDc)\n" +
-						"3. Visite Historique de San Telmo et La Boca (20.00 USDc)\n" +
-						"4. Transfert Privé Aéroport EZE/AEP (30.00 USDc)\n\n" +
-						"Veuillez écrire le numéro (1-4) ou le nom de l'activité que vous souhaitez réserver."
-				} else if lang == "de" {
-					reply = "Hervorragend! Ich habe erkannt, dass Sie nach Aktivitäten in Buenos Aires suchen. Diese sind bei Civitatis verfügbar:\n" +
-						"1. Tangoshow im El Querandí ($60.00 USDc)\n" +
-						"2. Ausflug zum Delta del Tigre ($35.00 USDc)\n" +
-						"3. Historische Tour durch San Telmo und La Boca ($20.00 USDc)\n" +
-						"4. Privater Flughafentransfer EZE/AEP ($30.00 USDc)\n\n" +
-						"Bitte geben Sie die Nummer (1-4) oder den Namen der gewünschten Aktivität an."
 				}
 			} else {
 				reply = "¡Excelente! He detectado que buscas actividades en Río de Janeiro. Estas son las disponibles en Civitatis:\n" +
@@ -2620,39 +3011,19 @@ func handleSupportChat(w http.ResponseWriter, r *http.Request) {
 						"3. Rocinha Favela Tour ($25.00 USDc)\n" +
 						"4. Private Airport Transfer GIG/SDU ($35.00 USDc)\n\n" +
 						"Please write the number (1-4) or the name of the activity you'd like to book."
-				} else if lang == "it" {
-					reply = "Eccellente! Ho rilevato che cerchi attività a Rio de Janeiro. Ecco quelle disponibili su Civitatis:\n" +
-						"1. Tour del Cristo Redentore e Pan di Zucchero ($75.00 USDc)\n" +
-						"2. Giro in Barca nella Baia di Guanabara ($40.00 USDc)\n" +
-						"3. Tour della Favela Rocinha ($25.00 USDc)\n" +
-						"4. Trasferimento Privato Aeroporto GIG/SDU ($35.00 USDc)\n\n" +
-						"Per favore, scrivi il numero (1-4) o il nome dell'attività che desideri prenotare."
-				} else if lang == "fr" {
-					reply = "Excellent ! J'ai détecté que vous recherchez des activités à Rio de Janeiro. Voici celles disponibles sur Civitatis :\n" +
-						"1. Visite du Corcovado et du Pain de Sucre (75.00 USDc)\n" +
-						"2. Balade en Bateau dans la Baie de Guanabara (40.00 USDc)\n" +
-						"3. Visite de la Favela Rocinha (25.00 USDc)\n" +
-						"4. Transfert Privé Aéroport GIG/SDU (35.00 USDc)\n\n" +
-						"Veuillez écrire le numéro (1-4) ou le nom de l'activité que vous souhaitez réserver."
-				} else if lang == "de" {
-					reply = "Hervorragend! Ich habe erkannt, dass Sie nach Aktivitäten in Rio de Janeiro suchen. Diese sind bei Civitatis verfügbar:\n" +
-						"1. Tour zum Zuckerhut und Christusstatue ($75.00 USDc)\n" +
-						"2. Bootsfahrt in der Guanabara-Bucht ($40.00 USDc)\n" +
-						"3. Rocinha Favela Tour ($25.00 USDc)\n" +
-						"4. Privater Flughafentransfer GIG/SDU ($35.00 USDc)\n\n" +
-						"Bitte geben Sie die Nummer (1-4) oder den Namen der gewünschten Aktivität an."
 				}
 			}
 		} else {
-			reply = "¡Excelente! Con mi ayuda puedes reservar directamente actividades en Civitatis cobrando desde tus fondos de Crux. ¿En qué ciudad quieres realizar tu actividad? (Buenos Aires o Río de Janeiro)"
+			// step == 1
+			reply = "¡Excelente! Con mi ayuda puedes reservar directamente actividades en Civitatis cobrando desde tus fondos de Crux. ¿En qué ciudad quieres realizar tu actividad? (Buenos Aires, Río de Janeiro o El Calafate)"
 			if lang == "en" {
-				reply = "Excellent! With my help you can book Civitatis activities directly, paying from your Crux balance. Which city do you want to book for? (Buenos Aires or Rio de Janeiro)"
+				reply = "Excellent! With my help you can book Civitatis activities directly, paying from your Crux balance. Which city do you want to book for? (Buenos Aires, Rio de Janeiro or El Calafate)"
 			} else if lang == "it" {
-				reply = "Eccellente! Con il mio aiuto puoi prenotare directamente le attività di Civitatis pagando dal tuo saldo Crux. In quale città vuoi prenotare? (Buenos Aires o Rio de Janeiro)"
+				reply = "Eccellente! Con il mio aiuto puoi prenotare direttamente le attività di Civitatis pagando dal tuo saldo Crux. In quale città vuoi prenotare? (Buenos Aires, Rio de Janeiro o El Calafate)"
 			} else if lang == "fr" {
-				reply = "Excellent ! Avec mon aide, vous pouvez réserver directement des activités Civitatis en payant depuis votre solde Crux. Pour quelle ville souhaitez-vous réserver ? (Buenos Aires ou Rio de Janeiro)"
+				reply = "Excellent ! Avec mon aide, vous pouvez réserver directement des activités Civitatis en payant depuis votre solde Crux. Pour quelle ville souhaitez-vous réserver ? (Buenos Aires, Rio de Janeiro ou El Calafate)"
 			} else if lang == "de" {
-				reply = "Hervorragend! Mit meiner Hilfe können Sie Civitatis-Aktivitäten direkt buchen und von Ihrem Crux-Guthaben bezahlen. Für welche Stadt möchten Sie buchen? (Buenos Aires oder Rio de Janeiro)"
+				reply = "Hervorragend! Mit meiner Hilfe können Sie Civitatis-Aktivitäten direkt buchen und von Ihrem Crux-Guthaben bezahlen. Für welche Stadt möchten Sie buchen? (Buenos Aires, Rio de Janeiro oder El Calafate)"
 			}
 		}
 

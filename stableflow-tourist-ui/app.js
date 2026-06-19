@@ -3245,13 +3245,21 @@ function appendChatBubble(text, sender) {
   if (!history) return;
 
   const bubbleContainer = document.createElement('div');
-  bubbleContainer.className = `chat-bubble-container ${sender}`;
+  if (sender === 'bot-status') {
+    bubbleContainer.className = 'chat-bubble-container bot status';
+  } else {
+    bubbleContainer.className = `chat-bubble-container ${sender}`;
+  }
 
   const avatar = document.createElement('div');
   avatar.className = 'chat-avatar';
-  avatar.innerHTML = sender === 'bot' 
-    ? '<i class="fa-solid fa-robot"></i>' 
-    : '<i class="fa-solid fa-user"></i>';
+  if (sender === 'bot-status') {
+    avatar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+  } else {
+    avatar.innerHTML = sender === 'bot' 
+      ? '<i class="fa-solid fa-robot"></i>' 
+      : '<i class="fa-solid fa-user"></i>';
+  }
 
   const bubble = document.createElement('div');
   bubble.className = 'chat-bubble';
@@ -3413,14 +3421,61 @@ async function handleChatSubmit() {
 
     if (res.ok) {
       const data = await res.json();
-      appendChatBubble(data.reply, 'bot');
       
-      // Sincronizar el estado de la billetera (balance y transacciones) tras interactuar con el chatbot
-      await syncStateWithBackend();
-      
-      if (data.create_incident) {
-        console.log("[Support Chatbot] Escalación realizada. Se creó ticket en el backend.");
-      }
+      const processChatbotResponse = async (chatData) => {
+        if (chatData.show_simulation) {
+          showTypingIndicator();
+          await new Promise(r => setTimeout(r, 1000));
+          hideTypingIndicator();
+          appendChatBubble("🔍 Conectando con la API de Civitatis...", "bot-status");
+          
+          showTypingIndicator();
+          await new Promise(r => setTimeout(r, 1000));
+          hideTypingIndicator();
+          appendChatBubble("📋 Completando datos de pasajero registrado (Ian Taylor)...", "bot-status");
+          
+          showTypingIndicator();
+          await new Promise(r => setTimeout(r, 1000));
+          hideTypingIndicator();
+          appendChatBubble("⚡ Verificando disponibilidad de plazas en el sistema...", "bot-status");
+          
+          showTypingIndicator();
+          await new Promise(r => setTimeout(r, 1000));
+          hideTypingIndicator();
+        }
+
+        appendChatBubble(chatData.reply, 'bot');
+        
+        await syncStateWithBackend();
+        
+        if (chatData.create_incident) {
+          console.log("[Support Chatbot] Escalación realizada. Se creó ticket en el backend.");
+        }
+
+        if (chatData.auto_next) {
+          showTypingIndicator();
+          await new Promise(r => setTimeout(r, 3500));
+          hideTypingIndicator();
+
+          try {
+            showTypingIndicator();
+            const autoRes = await fetch(`${API_BASE}/api/support/chat`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ message: 'auto_next', lang, phone })
+            });
+            hideTypingIndicator();
+            if (autoRes.ok) {
+              const autoData = await autoRes.json();
+              await processChatbotResponse(autoData);
+            }
+          } catch (autoErr) {
+            console.error("Auto next fetch failed:", autoErr);
+          }
+        }
+      };
+
+      await processChatbotResponse(data);
     } else {
       console.warn("Backend error in chatbot. Falling back to local simulation.");
       runLocalChatReply();
