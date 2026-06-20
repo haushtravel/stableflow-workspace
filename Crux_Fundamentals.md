@@ -36,9 +36,9 @@ Crux adapta la estrategia comercial del duopolio chino Alipay/WeChat Pay utiliza
     *   **ACH, SEPA y depósitos de USDC nativo**: **1.0%** de comisión.
     *   **Tarjetas de Crédito/Débito (Stripe)**: **3.0%** de comisión (para cubrir los costos de adquirencia de Stripe y mitigar contracargos).
     *   **Apple Pay / Google Pay**: **2.0%** de comisión (subsidio estratégico del costo real menos 0.5% para incentivar la adopción móvil).
-2.  **Pagos QR (Spread Cambiario)**:
-    *   **Micropagos (≤ $15 USDc)**: **0.0% de comisión**. Se utiliza un **Tipo de Cambio Subsidiado** (conversión limpia de USDC a fíat sin spread) como estrategia de atracción de usuarios (*loss-leader*).
-    *   **Macropagos (> $15 USDc)**: Se utiliza un **Tipo de Cambio Normal** que incorpora de manera invisible un **spread cambiario de 1.5% + $0.10 USDc fijos**. El usuario no ve cargos extra visibles en su checkout, eliminando la fricción psicológica de las comisiones externas.
+2.  **Pagos QR (Spread Cambiario Uniforme)**:
+    *   Se aplica un **spread cambiario de 1.5% + $0.10 USDc** a todas las transacciones de checkout (eliminando la distinción o subsidio en micropagos para simplificar el modelo y consolidar la rentabilidad).
+    *   Tanto las comisiones de servicio como las de red asociadas se muestran ocultas (fijadas en 0.00 en la interfaz del usuario), integrando el spread de manera invisible en el tipo de cambio cotizado.
 3.  **Reembolsos / Retiros**:
     *   **0.5%** de comisión de salida al reembolsar saldo no utilizado de vuelta a la tarjeta del usuario.
 4.  **Marketplace Turístico ("Mejora tu Viaje")**:
@@ -46,19 +46,18 @@ Crux adapta la estrategia comercial del duopolio chino Alipay/WeChat Pay utiliza
     *   Beneficio al usuario: **5% de Cashback** diferido (se le cobra el 100% y se deposita el 5% de reembolso automático exactamente **1 minuto** después en su billetera). Esto fomenta la fidelización del usuario mientras Crux retiene un 5% de margen neto limpio.
 
 ### Simulación de Rentabilidad (Estancia de 10 días en Brasil)
-Para un gasto promedio de $175 USD diarios (Total del viaje: $1,750 USD) compuesto por 50% fondeo ACH y 50% fondeo Tarjeta, y un consumo de 80 micropagos y 13 macropagos, más $215 USD de compras en el Marketplace:
+Para un gasto promedio de $175 USD diarios (Total del viaje: $1,750 USD) compuesto por 50% fondeo ACH y 50% fondeo Tarjeta, y un consumo de 93 transacciones de pago QR (por ejemplo, 80 compras pequeñas y 13 medianas/grandes), más $215 USD de compras en el Marketplace:
 
 | Módulo Transaccional | Volumen | Comisión / Spread | Ingreso Bruto | Costo / COGS | Margen Neto |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Fondeo (ACH/SEPA/USDC)** | $875.00 USDc | 1.0% | $8.75 USDc | $2.63 USDc (Bridge 0.3%) | $6.12 USDc |
 | **Fondeo (Tarjeta Stripe)** | $875.00 USDc | 3.0% | $26.25 USDc | $21.88 USDc (Stripe 2.5%) | $4.37 USDc |
-| **QR Micropagos (≤ $15)** | $560.00 USDc | 0% (Subsidiado) | $0.00 USDc | $4.00 USDc (80 tx × $0.05) | -$4.00 USDc |
-| **QR Macropagos (> $15)** | $975.00 USDc | 1.5% + $0.10 (Spread) | $15.93 USDc | $0.65 USDc (13 tx × $0.05) | $15.28 USDc |
+| **Pagos QR (Spread Cambiario)** | $1,535.00 USDc | 1.5% + $0.10 | $32.33 USDc | $4.65 USDc (93 tx × $0.05) | $27.68 USDc |
 | **Marketplace (Tours/Seguros)**| $215.00 USDc | 10.0% (Partner Fee) | $21.50 USDc | $10.75 USDc (5% Cashback) | $10.75 USDc |
-| **Consolidado** | **$2,840.00 USDc**| **2.50% Promedio** | **$72.43 USDc** | **$39.91 USDc** | **$32.52 USDc** |
+| **Consolidado** | **$3,500.00 USDc**| **2.54% Promedio** | **$88.83 USDc** | **$39.91 USDc** | **$48.92 USDc** |
 
 > [!TIP]
-> **Rentabilidad del Modelo**: Esta estructura rinde un **margen de utilidad del 44.9%** sobre ingresos y captura un **take rate neto de 1.86%** sobre el volumen total de fondeo, garantizando la viabilidad a largo plazo de la plataforma y eliminando el riesgo de pérdidas operativas en adquirencia.
+> **Rentabilidad del Modelo**: Esta estructura unificada rinde un **margen de utilidad del 55.1%** sobre ingresos y captura un **take rate neto de 2.80%** sobre el volumen total de fondeo ($1,750 USD), garantizando la viabilidad financiera a largo plazo de la plataforma y mejorando sustancialmente los unit economics del proyecto sin añadir cargos visibles que generen fricción en el usuario.
 
 ---
 
