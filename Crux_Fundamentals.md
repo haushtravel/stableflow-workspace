@@ -123,15 +123,22 @@ Para proveer una experiencia nativa sin fricción, Crux integra componentes líd
 
 ---
 
-## 6. Marco Regulatorio y Licencias Requeridas
+## 6. Arquitectura Legal: Modelo de Patrocinio Regulatorio (License-Light)
 
-Para operar legalmente como una plataforma de pagos transfronteriza, Crux requiere estructurar un esquema híbrido de licencias:
+Para operar desde el día uno con velocidad y minimizar los costos de cumplimiento, Crux no actúa como una entidad financiera autorizada de forma directa. En su lugar, Crux se estructura como un **Proveedor de Servicios Tecnológicos (Technology Service Provider - TSP)** que delega la custodia, transmisión de dinero y liquidación en socios regulados a través de APIs.
 
-### En los Mercados de Fondeo (EE. UU. y Europa)
-1.  **Registro MSB (Money Services Business)** ante la FinCEN en los Estados Unidos.
-2.  **Licencias de Transmisor de Dinero (MTL)** en los estados donde se capten fondos directamente, o en su defecto, operar mediante convenios de marca blanca con socios regulados (*Authorized Delegate*) como Bridge.xyz / Stripe.
+### 1. Rieles de Fondeo / Captación (EE. UU. y Europa)
+Crux no capta ni custodia fondos fíat directamente. Delega esta responsabilidad en **Bridge.xyz** (que opera como transmisor de dinero registrado y socio de Stripe) y procesadores adquirentes asociados (Stripe).
+*   **Rol de Crux**: Interfaz de usuario (front-end) y enrutador de datos.
+*   **Rol del Socio Regulado**: Bridge.xyz recibe las transferencias (ACH/SEPA/Wire), procesa el pago con tarjeta, y realiza la acuñación y custodia de los dólares digitales (USDC). El flujo legal y los términos de servicio establecen que el usuario abre una cuenta administrada (*Managed Account*) bajo la licencia del socio regulado.
 
-### En los Mercados de Destino (LATAM)
-1.  **Brasil**: Registrarse como Institución de Pago (IP) bajo la modalidad de Iniciador de Transacciones de Pago (ITP) regulado por el Banco Central de Brasil (BCB), lo que permite interactuar de forma nativa con los endpoints del ecosistema Open Finance y la red Pix.
-2.  **Argentina**: Inscripción en el registro de Proveedores de Servicios de Pago (PSP) que ofrecen cuentas de pago (PCDP) ante el Banco Central de la República Argentina (BCRA).
-3.  **Colombia**: Operar bajo el sandbox regulatorio del Banco de la República de Colombia para la integración con la red nacional de pagos inmediatos Bre-B, o asociarse con una Sociedad de Especializada en Depósitos y Pagos Electrónicos (SEDPE).
+### 2. Rieles de Liquidación Local (LATAM Outbound)
+Crux no ejecuta liquidaciones cambiarias ni transferencias fíat locales de forma directa. Se integra con motores de liquidez y orquestadores locales (*BaaS* y *Off-Ramp Partners*):
+*   **Brasil (Pix)**: En lugar de registrarse ante el BCB, Crux opera mediante una **Institución de Pago asociada (IP/ITP)** o un proveedor de Banking-as-a-Service (p. ej., Fitbank, Dock o Bitso Brasil). El socio procesa la conversión final de USDC a Reales y liquida la transacción en el sistema Pix.
+*   **Argentina (Mercado Pago / MODO)**: Crux no se registra como Proveedor de Servicios de Pago (PSP) ante el BCRA. Los rieles de entrada y salida local (CVU/CBU) y la conversión cambiaria se delegan en un socio PSP liquidante registrado (p. ej., Bitso Argentina o Pomelo).
+*   **Colombia (Bre-B / Transfiya)**: Crux se apoya en una entidad financiera local autorizada (SEDPE o banco comercial) que tiene acceso directo a la cámara de compensación y ejecuta el payout local en Pesos Colombianos.
+
+### 3. Obligaciones y Responsabilidades Tecnológicas de Crux
+Aunque Crux no requiere licencias financieras directas, sí debe cumplir con estándares y auditorías de seguridad:
+*   **Cumplimiento PCI-DSS**: Para transferir tokens de tarjetas de forma segura sin tocar datos bancarios críticos en texto plano.
+*   **Enrutamiento eKYC / AML**: Crux actúa como el canalizador del proceso eKYC, pero la validación final y la inclusión en listas negras/sanciones corre por cuenta de los socios financieros regulados (como Bridge.xyz), quienes aprueban la cuenta según sus políticas de cumplimiento.
