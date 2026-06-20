@@ -3965,28 +3965,60 @@ function simulateEmailSend(subject, bodyHtml) {
   const subEl = document.getElementById('mail-toast-subject');
   const bodyEl = document.getElementById('mail-toast-body');
   
-  if (toast && subEl && bodyEl) {
-    subEl.innerText = subject;
-    // Strip HTML tags for the notification body excerpt
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = bodyHtml;
-    const textExcerpt = tempDiv.textContent || tempDiv.innerText || "";
-    bodyEl.innerText = textExcerpt;
-    
-    toast.classList.remove('toast-exit');
-    toast.style.display = 'block';
-    
-    // Clear any existing timeout on the toast
-    if (window.mailToastTimeout) clearTimeout(window.mailToastTimeout);
-    
-    window.mailToastTimeout = setTimeout(() => {
-      toast.classList.add('toast-exit');
-      setTimeout(() => {
-        toast.style.display = 'none';
-        toast.classList.remove('toast-exit');
-      }, 400); // matches slideUpToast animation duration
-    }, 4000);
-  }
+  const recipient = state.profile.email || 'ian.taylor@example.com';
+  const isEs = state.lang === 'es';
+
+  // Real email POST request to backend Go service
+  fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to: recipient,
+      subject: subject,
+      body: bodyHtml
+    })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error("HTTP error " + res.status);
+    return res.json();
+  })
+  .then(data => {
+    if (toast && subEl && bodyEl) {
+      if (data.sent) {
+        subEl.innerText = isEs ? "Email Real Enviado" : "Real Email Sent";
+        bodyEl.innerText = isEs ? `Para: ${recipient}` : `To: ${recipient}`;
+      } else {
+        subEl.innerText = isEs ? "Simulación de Email" : "Email Simulation";
+        bodyEl.innerText = subject;
+        console.info("SMTP no configurado en backend, correo registrado en logs.");
+      }
+      showMailToast(toast);
+    }
+  })
+  .catch(err => {
+    console.warn("Error al intentar enviar correo real via backend. Usando simulación local.", err);
+    if (toast && subEl && bodyEl) {
+      subEl.innerText = isEs ? "Simulación de Email" : "Email Simulation";
+      bodyEl.innerText = subject;
+      showMailToast(toast);
+    }
+  });
+}
+
+function showMailToast(toast) {
+  toast.classList.remove('toast-exit');
+  toast.style.display = 'block';
+  
+  // Clear any existing timeout on the toast
+  if (window.mailToastTimeout) clearTimeout(window.mailToastTimeout);
+  
+  window.mailToastTimeout = setTimeout(() => {
+    toast.classList.add('toast-exit');
+    setTimeout(() => {
+      toast.style.display = 'none';
+      toast.classList.remove('toast-exit');
+    }, 300); // matches slideUpToast animation duration
+  }, 3500); // hide slightly faster for snappy feel
 }
 
 function addVoucherAndSendEmail(serviceName, price) {

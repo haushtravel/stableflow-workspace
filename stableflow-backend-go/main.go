@@ -5,6 +5,7 @@ import (
 	"bytes"
 	crand "crypto/rand"
 	"crypto/subtle"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"math/big"
 	"math/rand"
 	"net/http"
+	"net/smtp"
 	"net/url"
 	"os"
 	"strings"
@@ -3086,6 +3088,144 @@ func handleAdminLogs(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(logs)
 }
 
+type SendEmailReq struct {
+	To      string `json:"to"`
+	Subject string `json:"subject"`
+	Body    string `json:"body"`
+}
+
+func sendSMTPEmail(to, subject, bodyHTML string) error {
+	host := os.Getenv("SMTP_HOST")
+	port := os.Getenv("SMTP_PORT")
+	user := os.Getenv("SMTP_USER")
+	pass := os.Getenv("SMTP_PASS")
+	from := os.Getenv("SMTP_FROM")
+
+	if host == "" || port == "" || user == "" || pass == "" {
+		return fmt.Errorf("SMTP environment variables not configured (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS are required)")
+	}
+
+	if from == "" {
+		from = user
+	}
+
+	header := make(map[string]string)
+	header["From"] = from
+	header["To"] = to
+	header["Subject"] = subject
+	header["MIME-Version"] = "1.0"
+	header["Content-Type"] = "text/html; charset=\"UTF-8\""
+
+	message := ""
+	for k, v := range header {
+		message += fmt.Sprintf("%s: %s\r\n", k, v)
+	}
+	message += "\r\n" + bodyHTML
+
+	addr := fmt.Sprintf("%s:%s", host, port)
+	auth := smtp.PlainAuth("", user, pass, host)
+
+	if port == "465" {
+		tlsconfig := &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         host,
+		}
+
+		conn, err := tls.Dial("tcp", addr, tlsconfig)
+		if err != nil {
+			return fmt.Errorf("tls.Dial error: %w", err)
+		}
+		defer conn.Close()
+
+		c, err := smtp.NewClient(conn, host)
+		if err != nil {
+			return fmt.Errorf("smtp.NewClient error: %w", err)
+		}
+		defer c.Quit()
+
+		if err = c.Auth(auth); err != nil {
+			return fmt.Errorf("auth error: %w", err)
+		}
+
+		if err = c.Mail(user); err != nil {
+			return fmt.Errorf("mail from error: %w", err)
+		}
+
+		if err = c.Rcpt(to); err != nil {
+			return fmt.Errorf("rcpt to error: %w", err)
+		}
+
+		w, err := c.Data()
+		if err != nil {
+			return fmt.Errorf("data write error: %w", err)
+		}
+
+		_, err = w.Write([]byte(message))
+		if err != nil {
+			return fmt.Errorf("write message error: %w", err)
+		}
+
+		err = w.Close()
+		if err != nil {
+			return fmt.Errorf("close writer error: %w", err)
+		}
+
+		return nil
+	}
+
+	err := smtp.SendMail(addr, auth, user, []string{to}, []byte(message))
+	if err != nil {
+		return fmt.Errorf("smtp.SendMail error: %w", err)
+	}
+
+	return nil
+}
+
+func handleSendEmail(w http.ResponseWriter, r *http.Request) {
+	if setupCORS(&w, r) {
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req SendEmailReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "JSON inválido", http.StatusBadRequest)
+		return
+	}
+
+	if req.To == "" || req.Subject == "" || req.Body == "" {
+		http.Error(w, "Faltan campos requeridos (to, subject, body)", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("[Email Service] Intentando enviar email a %s con asunto '%s'", req.To, req.Subject)
+
+	err := sendSMTPEmail(req.To, req.Subject, req.Body)
+	if err != nil {
+		log.Printf("⚠️ [Email Service] No se pudo enviar el correo real: %v. Fallback: Correo impreso en consola.", err)
+		
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": true,
+			"sent":    false,
+			"error":   err.Error(),
+			"message": "SMTP no configurado o error al enviar. El correo se registró en los logs del servidor.",
+		})
+		return
+	}
+
+	log.Printf("📧 [Email Service] Correo enviado exitosamente a %s", req.To)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"sent":    true,
+		"message": "Correo enviado con éxito.",
+	})
+}
+
 func loadEnv() {
 	file, err := os.Open(".env")
 	if err != nil {
@@ -3150,6 +3290,7 @@ func main() {
 	http.HandleFunc("/api/admin/simulate-incident", adminMiddleware(handleAdminSimulateIncident))
 	http.HandleFunc("/api/admin/logs", adminMiddleware(handleAdminLogs))
 	http.HandleFunc("/api/support/chat", handleSupportChat)
+	http.HandleFunc("/api/send-email", handleSendEmail)
 
 	port := os.Getenv("PORT")
 	if port == "" {
