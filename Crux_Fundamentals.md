@@ -38,12 +38,14 @@ Crux adapta la estrategia comercial del duopolio chino Alipay/WeChat Pay utiliza
     *   **Apple Pay / Google Pay**: **2.0%** de comisión (subsidio estratégico del costo real menos 0.5% para incentivar la adopción móvil).
 2.  **Pagos QR (Spread Cambiario Uniforme)**:
     *   Se aplica un **spread cambiario de 1.5% + $0.10 USDc** a todas las transacciones de checkout (eliminando la distinción o subsidio en micropagos para simplificar el modelo y consolidar la rentabilidad).
-    *   Tanto las comisiones de servicio como las de red asociadas se muestran ocultas (fijadas en 0.00 en la interfaz del usuario), integrando el spread de manera invisible en el tipo de cambio cotizado.
+    *   En la interfaz de pago se informa de manera clara y directa únicamente el tipo de cambio cotizado final (sin desglosar el spread ni comparativas de ahorro para mantener el principio de que "menos es más").
+    *   **Transparencia de Monetización**: Para los usuarios interesados en conocer el modelo de negocio, se integra una sección explicativa en **Soporte** que detalla de forma transparente cómo se sostiene Crux: a través de un **Spread Justo** en el cambio de divisas y **Comisiones de Mayorista** otorgadas por proveedores de servicios del marketplace.
 3.  **Reembolsos / Retiros**:
     *   **0.5%** de comisión de salida al reembolsar saldo no utilizado de vuelta a la tarjeta del usuario.
 4.  **Marketplace Turístico ("Mejora tu Viaje")**:
     *   Comisión cobrada a proveedores: **10%** en promedio.
-    *   Beneficio al usuario: **5% de Cashback** diferido (se le cobra el 100% y se deposita el 5% de reembolso automático exactamente **1 minuto** después en su billetera). Esto fomenta la fidelización del usuario mientras Crux retiene un 5% de margen neto limpio.
+    *   **Gancho de Adquisición (eSIM Gratis)**: Los usuarios pueden reclamar su primera eSIM regional de regalo (cobertura de datos) en la pestaña "Mejora tu viaje".
+    *   **Cashback**: Beneficio de **5% de Cashback** diferido en compras del marketplace (se cobra el 100% y se deposita el 5% de reembolso automático exactamente **1 minuto** después en su billetera). Esto fomenta la fidelización del usuario mientras Crux retiene un 5% de margen neto limpio.
 
 ### Simulación de Rentabilidad (Estancia de 10 días en Brasil)
 Para un gasto promedio de $175 USD diarios (Total del viaje: $1,750 USD) compuesto por 50% fondeo ACH y 50% fondeo Tarjeta, y un consumo de 93 transacciones de pago QR (por ejemplo, 80 compras pequeñas y 13 medianas/grandes), más $215 USD de compras en el Marketplace:
@@ -63,30 +65,29 @@ Para un gasto promedio de $175 USD diarios (Total del viaje: $1,750 USD) compues
 
 ## 3. Cumplimiento Normativo: Prevención de Lavado de Dinero (AML) y KYC
 
-Para mitigar riesgos delictivos y cumplir con las regulaciones de la Red de Control de Delitos Financieros (FinCEN) y el Grupo de Acción Financiera Internacional (GAFI), Crux implementa un flujo de identificación de cliente (KYC) progresivo y escalonado por niveles.
+Para mitigar riesgos delictivos, cumplir con las regulaciones de la FinCEN y GAFI, y contar con la información del usuario para futuras compras recurrentes, Crux exige completar el flujo de identificación (KYC) desde el inicio de las operaciones financieras. Este proceso se integra de forma natural y fluida durante el onboarding, alineándose con el modus operandi habitual de las aplicaciones de pagos modernas.
 
 ```mermaid
 flowchart TD
-    Tier1[Tier 1: Acceso Express\nSMS OTP\nLímite: $20/pago, $250 total] -->|Sube Pasaporte OCR| Tier2[Tier 2: Nivel Completo\nOCR + Video Liveness\nLímite: $2,000/mes]
-    Tier2 -->|Lectura de Chip NFC| Tier3[Tier 3: Nivel Nómada\nCriptografía PACE/BAC\nLímite: $10,000/mes]
+    Tier1[Tier 1: Registro SMS OTP\nBúsqueda y navegación\nOperaciones financieras bloqueadas] -->|eKYC Estándar Obligatorio| Tier2[Tier 2: Nivel Completo\nOCR Pasaporte + Video Liveness\nLímite: $5,000/mes]
+    Tier2 -->|Lectura NFC Pasaporte| Tier3[Tier 3: Nivel Nómada (Opcional)\nCriptografía PACE/BAC\nLímite: $10,000/mes\n(Postergado en MVP)]
 ```
 
-### Arquitectura Técnico de los Niveles de Verificación
+### Arquitectura Técnica de los Niveles de Verificación
 
-#### Tier 1: Acceso Express (Prevención de lavado de baja escala)
-*   **Identificación**: Número de teléfono internacional + validación del dispositivo.
-*   **Restricciones de AML**: Prohibido el marketplace de compras grandes, prohibido el envío de dinero P2P. Cuenta rígidamente confinada a compras P2M (Peer-to-Merchant) cotidianas de bajo valor.
+#### Tier 1: Registro Express (Solo Lectura)
+*   **Identificación**: Número de teléfono internacional + validación del dispositivo mediante SMS OTP.
+*   **Restricciones**: El usuario puede explorar el catálogo, configurar su perfil y consultar FAQs, pero no puede fondear la billetera, realizar pagos QR ni comprar servicios del marketplace.
 
-#### Tier 2: Nivel Completo (eKYC Turista)
-*   **Identificación**: Escaneo OCR de alta resolución del pasaporte nacional, extrayendo los datos de la Zona de Lectura Mecánica (MRZ).
-*   **Prueba de Vida (Liveness Check)**: Captura de video facial analizada en tiempo real mediante algoritmos de biometría activa contra suplantaciones y deepfakes generados por Inteligencia Artificial (ZOLOZ Deeper / Sumsub).
+#### Tier 2: Nivel Completo (KYC Obligatorio de Entrada)
+*   **Identificación**: Escaneo OCR de alta resolución del pasaporte nacional (extrayendo datos de la Zona de Lectura Mecánica MRZ) y una **Prueba de Vida (Liveness Check)** con captura de video facial analizada en tiempo real (ZOLOZ / Sumsub).
+*   **Requisito de Operación**: Este nivel es **obligatorio** para habilitar el fondeo de saldo y cualquier compra o pago QR dentro de la plataforma. La recolección de esta identidad desde el día uno asegura la trazabilidad legal y facilita eventuales compras futuras sin fricciones repetidas.
 *   **AML Screening**: Contraste automatizado de datos del pasaporte con listas internacionales de sanciones (OFAC, ONU) y Personas Expuestas Políticamente (PEP).
 
-#### Tier 3: Nivel Nómada (Criptografía eIDV)
-*   **Identificación**: Lectura de chips NFC de pasaportes biométricos electrónicos (ePassports) que cumplen con el estándar **OACI/ICAO 9303**.
-*   **Protocolo de Seguridad**:
-    1.  **BAC (Basic Access Control)** y **PACE (Password Authenticated Connection Establishment)** para generar canales seguros y evitar la lectura inalámbrica maliciosa (skimming).
-    2.  **Autenticación Pasiva (PA)** para verificar la firma digital del chip contra las claves de las autoridades de certificación de los países emisores (CSCA). Esto ofrece protección absoluta contra falsificaciones de documentos físicos.
+#### Tier 3: Nivel Nómada (eIDV Avanzado - Opcional/Postergado)
+*   **Identificación**: Lectura de chips NFC de pasaportes biométricos electrónicos (OACI 9303).
+*   **Estado**: Postergado para versiones avanzadas del sistema. Funcionará como un tier voluntario para usuarios de alto volumen.
+*   **Protocolo de Seguridad**: BAC/PACE para canal seguro y Autenticación Pasiva (PA) para validación de firma digital del país emisor contra claves CSCA.
 
 ---
 
@@ -120,6 +121,21 @@ Para proveer una experiencia nativa sin fricción, Crux integra componentes líd
 1.  **Bridge.xyz (Stripe Platform)**: Utilizado para la orquestación y fondeo de entrada (*Inbound*). Recibe dólares y euros de transferencias bancarias de bajo costo (ACH en EE. UU., SEPA en Europa) y acuña/liquida stablecoins (USDC) en las redes de bajo coste Layer 2 (Base) o Solana.
 2.  **Motor de Payout Local (Local Off-Ramps)**: Integración con procesadores locales B2B para transformar los tokens USDC del backend de Crux en moneda fiat local instantánea (Reales, Pesos argentinos o colombianos) depositada directamente en el código QR del comercio al momento de escanear.
 3.  **Fact + Action Overlay (Separación de Orquestación y Pago)**: Al igual que en los mini-programas chinos, cuando el marketplace de Crux vende un servicio (ej. Seguro Chubb, eSIM regional o Tour de Civitatis), el proveedor tercero jamás accede a las llaves criptográficas ni datos financieros del usuario. La app de Crux superpone una ventana modal nativa de pago, procesando la liquidación en segundo plano de manera atómica.
+
+### 4. Mitigación de Latencias y Redundancia (Resiliencia Transaccional)
+Para evitar que la dependencia de múltiples APIs (Base/Solana, Bridge, Bitso, Rieles locales) afecte la experiencia en el punto de venta presencial, Crux implementa cuatro contramedidas de diseño de sistemas:
+
+1.  **Desacoplamiento mediante Buffer de Fíat Pre-fondeado (Pre-funding)**:
+    *   Crux mantiene cuentas corporativas pre-fondeadas con saldos en fíat local (Reales, Pesos argentinos) directamente en las entidades de rampa de salida local (como Bitso Business).
+    *   Al momento de pagar con QR, el socio local ejecuta la transferencia de forma inmediata (latencia < 1.5s) debitando del buffer pre-fondeado.
+    *   En paralelo y de forma asíncrona (fuera del camino crítico del usuario), el backend de Crux transfiere los dólares digitales (USDC) en la blockchain para reponer y liquidar el colateral en la cuenta de Bitso.
+2.  **Enrutamiento Multiproveedor con Failover Activo-Pasivo (Multi-routing)**:
+    *   Crux integra un socio principal de rampa de salida (Bitso) y canales redundantes alternativos (por ejemplo, fitbank/Dock en Brasil o Pomelo en Argentina).
+    *   Si la API del proveedor principal sufre interrupciones o latencias superiores a 1000ms, el backend redirige automáticamente la orden de pago al proveedor secundario en menos de 500ms.
+3.  **Autorización Optimista para Micropagos**:
+    *   En pagos de consumo rápido inferiores a $10 USDc (como cafés o transporte), una vez que el backend de Crux verifica localmente en su base de datos que el usuario cuenta con balance suficiente, se emite la orden de transferencia fíat inmediata al comercio, liquidando el saldo de manera asíncrona en el ledger interno.
+4.  **Precalentamiento de Conexiones (Connection Pre-warming)**:
+    *   Tan pronto como el usuario abre la cámara del escáner de códigos QR en la aplicación, se establece y precalienta un canal de comunicación WebSockets seguro con el backend de Crux, ahorrando valiosos milisegundos en el handshake de red al momento de pulsar "Pagar".
 
 ---
 
