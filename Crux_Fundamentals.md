@@ -137,6 +137,20 @@ Para evitar que la dependencia de múltiples APIs (Base/Solana, Bridge, Bitso, R
 4.  **Precalentamiento de Conexiones (Connection Pre-warming)**:
     *   Tan pronto como el usuario abre la cámara del escáner de códigos QR en la aplicación, se establece y precalienta un canal de comunicación WebSockets seguro con el backend de Crux, ahorrando valiosos milisegundos en el handshake de red al momento de pulsar "Pagar".
 
+### 5. Eficiencia de Capital y Gestión de Liquidez (Optimización del Capital Inmovilizado)
+Para evitar que el crecimiento del volumen transaccional exija a Crux congelar un capital de trabajo millonario en las cuentas de los partners locales, se implementan tres estrategias financieras y técnicas:
+
+1.  **Rebalanceo Algorítmico Continuo con "Micro-Buffers"**:
+    *   En lugar de mantener fondos equivalentes a días o semanas de transacciones en Bitso (BRL/ARS), Crux mantiene un **micro-buffer de liquidez dinámico** equivalente a solo **2 horas de volumen proyectado en hora pico** (ej. $10,000 USDc).
+    *   Un sistema automatizado de tesorería monitorea el saldo en tiempo real. Cuando el buffer cae por debajo de un umbral crítico (ej. 30%), el backend de Crux dispara automáticamente una transferencia de USDC desde su cuenta de tesorería en blockchain (Solana/Base, que liquidan en segundos y cuestan fracciones de centavo) hacia Bitso, convirtiéndolos inmediatamente en fíat local para recargar el buffer.
+    *   Esto permite rotar el mismo capital de trabajo docenas de veces al día, reduciendo la necesidad de capital inmovilizado en más de un **90%**.
+2.  **Líneas de Sobregiro y Post-liquidación B2B (Post-funded Overdraft)**:
+    *   A medida que el volumen transaccional se consolida, Crux negocia con Bitso Business (u otros proveedores locales de BaaS) una **línea de crédito intradía o sobregiro (overdraft facility)** respaldada en colateral cripto (USDc depositado en un smart contract multifirma o cuenta de custodia).
+    *   El partner local ejecuta los Pix/transferencias instantáneas al comercio permitiendo que la cuenta fíat de Crux corra en balance negativo temporal.
+    *   Al final del día o a intervalos preestablecidos de pocas horas, Crux realiza un único asentamiento (*settlement*) neto enviando un lote de USDC para saldar el balance negativo. Esto reduce el capital fíat inmovilizado a **cero**.
+3.  **Compensación de Lotes de Bajo Costo (Micro-Batching)**:
+    *   En lugar de realizar conversiones individuales instantáneas de USDC a fíat por cada micropago (lo cual incurre en costos fijos de red y spreads de FX subóptimos), las órdenes de pago de Pix se ejecutan inmediatamente desde el buffer corporativo, y las operaciones blockchain de reposición se consolidan y ejecutan en micro-lotes de forma asíncrona cada 5 o 10 minutos.
+
 ---
 
 ## 6. Arquitectura Legal: Modelo de Patrocinio Regulatorio (License-Light)
